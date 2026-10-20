@@ -1,6 +1,6 @@
-use std::net::{SocketAddr, UdpSocket};
+use std::net::SocketAddr;
 use std::time::Duration;
-use tokio::net::TcpStream;
+use tokio::net::{TcpStream, UdpSocket};
 use tokio::time::timeout;
 use serde::{Deserialize, Serialize};
 use crate::state::{DiscoveredDevice, SharedState};
@@ -22,7 +22,7 @@ impl DiscoveryEngine {
     /// Broadcast presence over UDP periodically
     pub fn start_broadcaster(device_id: String, hostname: String, port: u16) {
         tokio::spawn(async move {
-            let socket = match UdpSocket::bind("0.0.0.0:0") {
+            let socket = match UdpSocket::bind("0.0.0.0:0").await {
                 Ok(s) => s,
                 Err(e) => {
                     eprintln!("UDP broadcast bind error: {:?}", e);
@@ -42,7 +42,7 @@ impl DiscoveryEngine {
             let target: SocketAddr = "255.255.255.255:52899".parse().unwrap();
 
             loop {
-                let _ = socket.send_to(json.as_bytes(), target);
+                let _ = socket.send_to(json.as_bytes(), target).await;
                 tokio::time::sleep(Duration::from_secs(5)).await;
             }
         });
@@ -51,17 +51,17 @@ impl DiscoveryEngine {
     /// Listen for UDP broadcasts from other ApexConnect nodes on LAN
     pub fn start_listener(state: SharedState) {
         tokio::spawn(async move {
-            let socket = match UdpSocket::bind(format!("0.0.0.0:{}", DISCOVERY_PORT)) {
+            let socket = match UdpSocket::bind(format!("0.0.0.0:{}", DISCOVERY_PORT)).await {
                 Ok(s) => s,
                 Err(e) => {
-                    eprintln!("UDP discovery listener error: {:?}", e);
+                    eprintln!("[Uyarı] UDP keşif dinleyicisi başlatılamadı (Port meşgul olabilir): {:?}", e);
                     return;
                 }
             };
 
             let mut buf = [0u8; 1024];
             loop {
-                if let Ok((len, src)) = socket.recv_from(&mut buf) {
+                if let Ok((len, src)) = socket.recv_from(&mut buf).await {
                     if let Ok(pkt) = serde_json::from_slice::<DiscoveryPacket>(&buf[..len]) {
                         if pkt.magic == "APEX_DISCOVER_V1" {
                             let ip = src.ip().to_string();

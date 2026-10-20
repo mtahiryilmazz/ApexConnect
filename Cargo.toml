@@ -1,6 +1,6 @@
 [package]
 name = "apex_connect"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 
 [dependencies]
@@ -14,6 +14,9 @@ jpeg-encoder = "0.6"
 rand = "0.8"
 chrono = { version = "0.4", features = ["serde"] }
 futures-util = "0.3"
+aes-gcm = "0.10"
+sha2 = "0.10"
+base64 = "0.22"
 windows = { version = "0.58", features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",

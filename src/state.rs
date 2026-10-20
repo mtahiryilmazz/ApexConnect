@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use crate::file_transfer::FileTransferManager;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HostInfo {
@@ -37,6 +38,7 @@ pub struct AppState {
     pub info: Mutex<HostInfo>,
     pub address_book: Mutex<Vec<AddressBookItem>>,
     pub discovered: Mutex<HashMap<String, DiscoveredDevice>>,
+    pub file_transfer: Arc<FileTransferManager>,
 }
 
 pub type SharedState = Arc<AppState>;
@@ -54,6 +56,7 @@ impl AppState {
             }),
             address_book: Mutex::new(Vec::new()),
             discovered: Mutex::new(HashMap::new()),
+            file_transfer: Arc::new(FileTransferManager::new()),
         }
     }
 }

@@ -7,6 +7,10 @@ let canvas, ctx;
 let lastFrameTime = performance.now();
 let frameCount = 0;
 let fps = 0;
+let latency = 0;
+let bytesReceived = 0;
+let bandwidth = 0;
+let pingInterval = null;
 let remoteWidth = 1920;
 let remoteHeight = 1080;
 
@@ -18,19 +22,30 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   loadHostInfo();
   loadAddressBook();
+  loadFileList();
+  initDropZone();
 });
 
-// Tab Switcher
-function switchTab(tabId) {
+// WinUI 3 Navigation Tab Switcher
+function switchNavTab(tabId) {
   currentTab = tabId;
-  document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.fluent-view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
-  const targetPane = document.getElementById(tabId);
-  if (targetPane) targetPane.classList.add('active');
+  const targetView = document.getElementById(tabId);
+  if (targetView) targetView.classList.add('active');
 
-  const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(tabId));
+  const activeBtn = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
   if (activeBtn) activeBtn.classList.add('active');
+
+  if (tabId === 'files-tab') {
+    loadFileList();
+  }
+}
+
+// Backward compatibility
+function switchTab(tabId) {
+  switchNavTab(tabId);
 }
 
 // Fetch Host & QuickSupport Info
@@ -42,10 +57,45 @@ async function loadHostInfo() {
 
     document.getElementById('my-device-id').innerText = formatApexId(hostInfo.device_id);
     document.getElementById('my-device-pin').innerText = hostInfo.pin;
-    document.getElementById('host-ip-display').innerText = `${hostInfo.local_ip}:${hostInfo.port}`;
-    document.getElementById('mobile-direct-url').innerText = `http://${hostInfo.local_ip}:${hostInfo.port}`;
+    
+    const ipDisplay = `${hostInfo.local_ip}:${hostInfo.port}`;
+    const titlebarIp = document.getElementById('titlebar-ip-status');
+    if (titlebarIp) titlebarIp.innerText = `Hazır: ${ipDisplay}`;
+    
+    const hostIpDisp = document.getElementById('host-ip-display');
+    if (hostIpDisp) hostIpDisp.innerText = ipDisplay;
+
+    const directUrl = document.getElementById('mobile-direct-url');
+    if (directUrl) directUrl.innerText = `http://${hostInfo.local_ip}:${hostInfo.port}`;
   } catch (err) {
     console.error('Host info error:', err);
+  }
+}
+
+function copyDeviceId() {
+  if (hostInfo && hostInfo.device_id) {
+    navigator.clipboard.writeText(hostInfo.device_id.replace(/\s+/g, ''));
+    alert(`Apex Cihaz ID panoya kopyalandı: ${formatApexId(hostInfo.device_id)}`);
+  }
+}
+
+function regeneratePinPrompt() {
+  alert('Geçici PIN güvenlik gereği oturum yeniden başladığında otomatik olarak yenilenir.');
+}
+
+function simulateWindowControl(action) {
+  if (action === 'min') {
+    alert('Uygulama arka planda ve sistem tepsisinde çalışmaya devam ediyor.');
+  } else if (action === 'max') {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  } else if (action === 'close') {
+    if (confirm('ApexConnect penceresini kapatmak istiyor musunuz?')) {
+      window.close();
+    }
   }
 }
 
@@ -237,6 +287,9 @@ function startRemoteSession(target, pin) {
   if (activeWs) {
     activeWs.close();
   }
+  if (pingInterval) {
+    clearInterval(pingInterval);
+  }
 
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl = `${protocol}//${window.location.host}/ws/client?target=${encodeURIComponent(target)}&pin=${encodeURIComponent(pin)}`;
@@ -250,6 +303,13 @@ function startRemoteSession(target, pin) {
 
   activeWs.onopen = () => {
     document.getElementById('viewer-target-title').innerText = `Bağlı: ${target}`;
+    
+    // Heartbeat & Ping RTT loop
+    pingInterval = setInterval(() => {
+      if (activeWs && activeWs.readyState === WebSocket.OPEN) {
+        activeWs.send(JSON.stringify({ type: 'ping', timestamp: Date.now() }));
+      }
+    }, 2000);
   };
 
   activeWs.onmessage = (event) => {
@@ -261,10 +321,20 @@ function startRemoteSession(target, pin) {
           remoteHeight = msg.height;
           canvas.width = remoteWidth;
           canvas.height = remoteHeight;
+        } else if (msg.type === 'pong') {
+          latency = Date.now() - msg.timestamp;
+          updateStatsDisplay();
+        } else if (msg.type === 'file_progress') {
+          updateUploadProgress(msg.id, msg.received);
+        } else if (msg.type === 'file_complete') {
+          finishUploadProgress(msg.name);
         }
       } catch (e) {}
     } else {
       // Binary JPEG frame
+      const byteLength = event.data.byteLength || 0;
+      bytesReceived += byteLength;
+
       const blob = new Blob([event.data], { type: 'image/jpeg' });
       createImageBitmap(blob).then(bitmap => {
         if (canvas.width !== bitmap.width || canvas.height !== bitmap.height) {
@@ -280,9 +350,11 @@ function startRemoteSession(target, pin) {
         const now = performance.now();
         if (now - lastFrameTime >= 1000) {
           fps = Math.round((frameCount * 1000) / (now - lastFrameTime));
+          bandwidth = Math.round(bytesReceived / 1024);
           frameCount = 0;
+          bytesReceived = 0;
           lastFrameTime = now;
-          document.getElementById('session-stats').innerText = `${fps} FPS | Canlı`;
+          updateStatsDisplay();
         }
       });
     }
@@ -291,6 +363,7 @@ function startRemoteSession(target, pin) {
   activeWs.onclose = () => {
     document.getElementById('viewer-target-title').innerText = 'Bağlantı Kapandı';
     document.getElementById('session-stats').innerText = '0 FPS | Offline';
+    if (pingInterval) clearInterval(pingInterval);
   };
 
   activeWs.onerror = (err) => {
@@ -299,10 +372,20 @@ function startRemoteSession(target, pin) {
   };
 }
 
+function updateStatsDisplay() {
+  const statsEl = document.getElementById('session-stats');
+  if (statsEl) {
+    statsEl.innerText = `${fps} FPS | ${latency} ms | ${bandwidth} KB/s`;
+  }
+}
+
 function closeSession() {
   if (activeWs) {
     activeWs.close();
     activeWs = null;
+  }
+  if (pingInterval) {
+    clearInterval(pingInterval);
   }
   document.getElementById('nav-viewer-btn').style.display = 'none';
   switchTab('quick-connect');
@@ -389,11 +472,31 @@ function initCanvasEvents() {
   canvas.addEventListener('touchend', (e) => {
     const duration = performance.now() - touchStartTime;
     if (activeWs && activeWs.readyState === WebSocket.OPEN) {
-      // Short tap = left click, long tap = right click
       const btn = duration > 500 ? 2 : 0;
       activeWs.send(JSON.stringify({ type: 'mouse_click', button: btn }));
     }
   }, { passive: true });
+}
+
+// Session Controls
+function changeQuality(val) {
+  if (activeWs && activeWs.readyState === WebSocket.OPEN) {
+    activeWs.send(JSON.stringify({ type: 'set_quality', quality: parseInt(val) }));
+  }
+}
+
+function changeMonitor(mode) {
+  if (activeWs && activeWs.readyState === WebSocket.OPEN) {
+    activeWs.send(JSON.stringify({ type: 'set_monitor', monitor: mode }));
+  }
+}
+
+function sendClipboardPrompt() {
+  const text = prompt('Uzak bilgisayarın panosuna (clipboard) yapıştırılacak metin:');
+  if (text && activeWs && activeWs.readyState === WebSocket.OPEN) {
+    activeWs.send(JSON.stringify({ type: 'clipboard', text }));
+    alert('Metin uzak panoya başarıyla aktarıldı.');
+  }
 }
 
 function sendCtrlAltDel() {
@@ -428,6 +531,175 @@ function toggleFullscreen() {
   } else {
     document.exitFullscreen();
   }
+}
+
+// File Transfer Engine
+async function loadFileList() {
+  const tbody = document.getElementById('files-table-body');
+  try {
+    const res = await fetch('/api/files');
+    const files = await res.json();
+
+    if (!files || files.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+            Transfer klasöründe henüz dosya yok. Yukarıdaki alana dosya sürükleyip yükleyebilirsiniz.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = files.map(f => `
+      <tr>
+        <td><strong>📄 ${escapeHtml(f.name)}</strong></td>
+        <td><code>${formatFileSize(f.size)}</code></td>
+        <td style="color: var(--text-muted); font-size: 0.8rem;">${f.modified || '-'}</td>
+        <td>
+          <a class="btn btn-primary btn-sm" href="/api/files/download/${encodeURIComponent(f.name)}" download>
+            ⬇️ İndir
+          </a>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="4" style="color: #ef4444; text-align: center;">Dosya listesi alınamadı: ${err.message}</td></tr>`;
+  }
+}
+
+async function openRemoteFolder() {
+  try {
+    await fetch('/api/files/open-folder');
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function initDropZone() {
+  const dropZone = document.getElementById('file-drop-zone');
+  if (!dropZone) return;
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropZone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    }, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+    }, false);
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files.length > 0) {
+      uploadFile(files[0]);
+    }
+  });
+}
+
+function handleFileSelect(event) {
+  const files = event.target.files;
+  if (files.length > 0) {
+    uploadFile(files[0]);
+  }
+}
+
+let activeUploadFile = null;
+
+function uploadFile(file) {
+  if (!activeWs || activeWs.readyState !== WebSocket.OPEN) {
+    alert('Dosya yüklemek için önce aktif bir canlı oturum başlatmalısınız veya sunucuya bağlı olmalısınız.');
+    return;
+  }
+
+  activeUploadFile = file;
+  const fileId = Date.now().toString();
+  const chunkSize = 64 * 1024; // 64 KB chunks
+  let offset = 0;
+
+  document.getElementById('upload-progress-container').style.display = 'block';
+  document.getElementById('upload-filename').innerText = `Yükleniyor: ${file.name} (${formatFileSize(file.size)})`;
+  document.getElementById('upload-percentage').innerText = '0%';
+  document.getElementById('upload-progress-bar').style.width = '0%';
+
+  // Send start packet
+  activeWs.send(JSON.stringify({
+    type: 'file_start',
+    id: fileId,
+    name: file.name,
+    size: file.size
+  }));
+
+  const reader = new FileReader();
+
+  function readNextChunk() {
+    if (offset < file.size) {
+      const slice = file.slice(offset, offset + chunkSize);
+      reader.onload = (e) => {
+        const arrayBuffer = e.target.result;
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        const base64 = btoa(binary);
+
+        activeWs.send(JSON.stringify({
+          type: 'file_chunk',
+          id: fileId,
+          offset: offset,
+          data: base64
+        }));
+
+        offset += bytes.byteLength;
+        const pct = Math.round((offset / file.size) * 100);
+        document.getElementById('upload-percentage').innerText = `${pct}%`;
+        document.getElementById('upload-progress-bar').style.width = `${pct}%`;
+
+        setTimeout(readNextChunk, 10);
+      };
+      reader.readAsArrayBuffer(slice);
+    } else {
+      activeWs.send(JSON.stringify({
+        type: 'file_end',
+        id: fileId
+      }));
+    }
+  }
+
+  readNextChunk();
+}
+
+function updateUploadProgress(fileId, receivedBytes) {
+  if (activeUploadFile && activeUploadFile.size > 0) {
+    const pct = Math.round((receivedBytes / activeUploadFile.size) * 100);
+    document.getElementById('upload-percentage').innerText = `${pct}%`;
+    document.getElementById('upload-progress-bar').style.width = `${pct}%`;
+  }
+}
+
+function finishUploadProgress(fileName) {
+  document.getElementById('upload-filename').innerText = `Yükleme Tamamlandı: ${fileName}`;
+  document.getElementById('upload-percentage').innerText = '100%';
+  document.getElementById('upload-progress-bar').style.width = '100%';
+  setTimeout(() => {
+    document.getElementById('upload-progress-container').style.display = 'none';
+    loadFileList();
+  }, 2000);
 }
 
 function escapeHtml(str) {

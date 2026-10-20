@@ -235,4 +235,69 @@ impl InputSimulator {
             SendInput(&[ctrl_down, alt_down, del_down, del_up, alt_up, ctrl_up], std::mem::size_of::<INPUT>() as i32);
         }
     }
+
+    pub fn key_down(&self, key: &str, _code: &str) {
+        if let Some(vk) = map_key_to_vk(key) {
+            unsafe {
+                let input = INPUT {
+                    r#type: INPUT_KEYBOARD,
+                    Anonymous: INPUT_0 {
+                        ki: KEYBDINPUT {
+                            wVk: vk,
+                            wScan: 0,
+                            dwFlags: windows::Win32::UI::Input::KeyboardAndMouse::KEYBD_EVENT_FLAGS(0),
+                            time: 0,
+                            dwExtraInfo: 0,
+                        },
+                    },
+                };
+                SendInput(&[input], std::mem::size_of::<INPUT>() as i32);
+            }
+        }
+    }
+
+    pub fn key_up(&self, key: &str, _code: &str) {
+        if let Some(vk) = map_key_to_vk(key) {
+            unsafe {
+                let input = INPUT {
+                    r#type: INPUT_KEYBOARD,
+                    Anonymous: INPUT_0 {
+                        ki: KEYBDINPUT {
+                            wVk: vk,
+                            wScan: 0,
+                            dwFlags: KEYEVENTF_KEYUP,
+                            time: 0,
+                            dwExtraInfo: 0,
+                        },
+                    },
+                };
+                SendInput(&[input], std::mem::size_of::<INPUT>() as i32);
+            }
+        }
+    }
+}
+
+fn map_key_to_vk(key: &str) -> Option<VIRTUAL_KEY> {
+    use windows::Win32::UI::Input::KeyboardAndMouse::*;
+    match key {
+        "Enter" => Some(VK_RETURN),
+        "Backspace" => Some(VK_BACK),
+        "Tab" => Some(VK_TAB),
+        "Escape" => Some(VK_ESCAPE),
+        "Space" | " " => Some(VK_SPACE),
+        "ArrowUp" => Some(VK_UP),
+        "ArrowDown" => Some(VK_DOWN),
+        "ArrowLeft" => Some(VK_LEFT),
+        "ArrowRight" => Some(VK_RIGHT),
+        "Shift" => Some(VK_SHIFT),
+        "Control" => Some(VK_CONTROL),
+        "Alt" => Some(VK_MENU),
+        "Delete" => Some(VK_DELETE),
+        "Home" => Some(VK_HOME),
+        "End" => Some(VK_END),
+        "PageUp" => Some(VK_PRIOR),
+        "PageDown" => Some(VK_NEXT),
+        "CapsLock" => Some(VK_CAPITAL),
+        _ => None,
+    }
 }

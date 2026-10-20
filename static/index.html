@@ -1,239 +1,457 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ApexConnect - Bilgi İşlem Uzak Bağlantı & Cihaz Yönetimi</title>
+  <title>ApexConnect - Windows Fluent IT Uzak Masaüstü</title>
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header>
-    <div class="logo-area">
-      <div class="logo-icon">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-        </svg>
-      </div>
-      <div class="logo-text">
-        <h1>ApexConnect</h1>
-        <span>IT Remote Support & Device Mesh (Rust)</span>
-      </div>
-    </div>
-
-    <nav class="nav-tabs">
-      <button class="tab-btn active" onclick="switchTab('quick-connect')">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-        Hızlı Bağlantı
-      </button>
-      <button class="tab-btn" onclick="switchTab('network-discovery')">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        Ağ Keşfi
-      </button>
-      <button class="tab-btn" onclick="switchTab('address-book')">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-        Adres Defteri
-      </button>
-      <button class="tab-btn" id="nav-viewer-btn" onclick="switchTab('remote-viewer')" style="display: none;">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-        Canlı Oturum
-      </button>
-    </nav>
-
-    <div class="host-badge">
-      <div class="dot"></div>
-      <span id="host-status-text">Sunucu Aktif</span>
-      <strong id="host-ip-display" style="color: #60a5fa; margin-left: 4px;">...</strong>
-    </div>
-  </header>
-
-  <main>
-    <!-- TAB 1: QUICK CONNECT & SOS CLIENT INFO -->
-    <section id="quick-connect" class="tab-pane active">
-      <div class="grid-2">
-        <!-- Sol: Bu Bilgisayarın Paylaşım Bilgileri (QuickSupport / Sunucu) -->
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #60a5fa;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-              Bu Bilgisayarı Yönetime Aç
-            </h2>
-            <span class="badge badge-online">Bağlantıya Hazır</span>
+  <!-- Windows 11 Fluent App Container -->
+  <div class="window-shell">
+    
+    <!-- WinUI 3 Custom Titlebar -->
+    <header class="fluent-titlebar">
+      <div class="titlebar-drag-area">
+        <div class="app-branding">
+          <div class="app-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
           </div>
-
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-            Bilgi işlem personelinin bu cihaza erişmesi için aşağıdaki 9 haneli ID ve PIN kodunu paylaşın:
-          </p>
-
-          <div class="qs-id-box">
-            <div class="qs-label">Cihaz Kimliği (Apex ID)</div>
-            <div class="qs-code" id="my-device-id">--- --- ---</div>
-            <div class="qs-pin">Geçici PIN: <span id="my-device-pin">----</span></div>
-          </div>
-
-          <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-md); padding: 12px; font-size: 0.82rem;">
-            <div style="font-weight: 600; color: #60a5fa; margin-bottom: 4px;">📱 Mobil Tarayıcı ile Bağlan:</div>
-            Telefonunuzun veya tabletinizin tarayıcısından açın:<br>
-            <strong id="mobile-direct-url" style="color: #fff; word-break: break-all;">http://...:8080</strong>
-          </div>
+          <span class="app-name">ApexConnect</span>
+          <span class="app-version-badge">v1.0.0 WinUI</span>
         </div>
 
-        <!-- Sağ: Başka Bir Bilgisayara Bağlan -->
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #3b82f6;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
-              Uzak Bilgisayara Bağlan
-            </h2>
-          </div>
-
-          <form id="connect-form" onsubmit="event.preventDefault(); initiateConnection();">
-            <div class="form-group">
-              <label class="form-label" for="target-input">Hedef Apex ID veya IP Adresi</label>
-              <input type="text" id="target-input" class="form-control" placeholder="Örn: 482 190 321 veya 192.168.1.55" required>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="pin-input">Bağlantı PIN Kodu / Parola</label>
-              <input type="password" id="pin-input" class="form-control" placeholder="4 haneli PIN veya sabit parola" required>
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1.25rem;">
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-              Oturumu Başlat
-            </button>
-          </form>
-
-          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.8rem; color: var(--text-muted);">Sık bağlandığınız makineler için:</span>
-            <button class="btn btn-secondary btn-sm" onclick="switchTab('address-book')">Adres Defteri →</button>
-          </div>
+        <div class="titlebar-status-pill">
+          <span class="pulse-indicator"></span>
+          <span id="titlebar-ip-status">Hazır: 127.0.0.1:8080</span>
         </div>
       </div>
-    </section>
 
-    <!-- TAB 2: NETWORK DISCOVERY (AĞ KEŞFİ) -->
-    <section id="network-discovery" class="tab-pane">
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <h2 class="card-title">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #10b981;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              Yerel Ağ Cihaz Keşif Modülü
-            </h2>
-            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
-              Bağlı olduğunuz yerel ağdaki (LAN/Subnet) aktif bilgisayarları, ApexConnect istemcilerini ve açık cihazları otomatik tarayın.
-            </p>
-          </div>
-
-          <div style="display: flex; gap: 8px;">
-            <button class="btn btn-primary btn-sm" id="btn-scan" onclick="startNetworkScan()">
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              Ağı Tara
-            </button>
-          </div>
-        </div>
-
-        <div class="table-responsive">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Durum</th>
-                <th>Cihaz / Host Adı</th>
-                <th>IP Adresi</th>
-                <th>Apex ID</th>
-                <th>Bağlantı Türü</th>
-                <th>İşlemler</th>
-              </tr>
-            </thead>
-            <tbody id="scan-results-body">
-              <tr>
-                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-                  Ağ taramasını başlatmak için yukarıdaki <strong>"Ağı Tara"</strong> butonuna tıklayın.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <!-- Windows Native Window Controls -->
+      <div class="window-controls">
+        <button class="win-btn win-minimize" title="Simge Durumuna Küçült" onclick="simulateWindowControl('min')">
+          <svg width="10" height="1" viewBox="0 0 10 1"><path fill="currentColor" d="M0 0h10v1H0z"/></svg>
+        </button>
+        <button class="win-btn win-maximize" title="Ekranı Kapla" onclick="simulateWindowControl('max')">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path fill="currentColor" fill-rule="evenodd" d="M0 0v10h10V0H0zm9 9H1V1h8v8z"/></svg>
+        </button>
+        <button class="win-btn win-close" title="Kapat" onclick="simulateWindowControl('close')">
+          <svg width="10" height="10" viewBox="0 0 10 10"><path fill="currentColor" fill-rule="evenodd" d="M0 0l5 5-5 5 1 1 5-5 5 5 1-1-5-5 5-5-1-1-5 5-5-5-1 1z"/></svg>
+        </button>
       </div>
-    </section>
+    </header>
 
-    <!-- TAB 3: ADDRESS BOOK (ADRES DEFTERİ) -->
-    <section id="address-book" class="tab-pane">
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <h2 class="card-title">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #f59e0b;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-              Bilgi İşlem Adres Defteri & Envanter
-            </h2>
-            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
-              Şirket veya kurum bilgisayarlarını departmanlara göre kaydedin ve tek tıkla doğrudan bağlanın.
-            </p>
-          </div>
+    <!-- Main Navigation & Workspace Layout -->
+    <div class="fluent-workspace">
+      
+      <!-- WinUI 3 NavigationView Sidebar -->
+      <aside class="fluent-sidebar">
+        <div class="nav-group">
+          <button class="nav-item active" data-tab="quick-connect" onclick="switchNavTab('quick-connect')">
+            <div class="nav-indicator"></div>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span class="nav-label">Hızlı Bağlantı</span>
+          </button>
 
-          <button class="btn btn-secondary btn-sm" onclick="showAddDeviceModal()">
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Yeni Cihaz Ekle
+          <button class="nav-item" data-tab="network-discovery" onclick="switchNavTab('network-discovery')">
+            <div class="nav-indicator"></div>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <span class="nav-label">Ağ Keşfi</span>
+          </button>
+
+          <button class="nav-item" data-tab="address-book" onclick="switchNavTab('address-book')">
+            <div class="nav-indicator"></div>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            <span class="nav-label">Adres Defteri</span>
+          </button>
+
+          <button class="nav-item" data-tab="files-tab" onclick="switchNavTab('files-tab')">
+            <div class="nav-indicator"></div>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+            <span class="nav-label">Dosya Yöneticisi</span>
+          </button>
+
+          <button class="nav-item nav-viewer-item" id="nav-viewer-btn" data-tab="remote-viewer" onclick="switchNavTab('remote-viewer')" style="display: none;">
+            <div class="nav-indicator"></div>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span class="nav-label">Canlı Oturum</span>
+            <span class="live-dot-badge"></span>
           </button>
         </div>
 
-        <div class="table-responsive">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Durum</th>
-                <th>Cihaz Adı</th>
-                <th>Departman / Etiket</th>
-                <th>Apex ID / IP</th>
-                <th>Notlar</th>
-                <th>Son Bağlantı</th>
-                <th>İşlem</th>
-              </tr>
-            </thead>
-            <tbody id="address-book-body">
-              <!-- JS ile dinamik doldurulur -->
-            </tbody>
-          </table>
+        <div class="nav-footer">
+          <button class="nav-item" data-tab="settings-tab" onclick="switchNavTab('settings-tab')">
+            <div class="nav-indicator"></div>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span class="nav-label">Ayarlar</span>
+          </button>
         </div>
-      </div>
-    </section>
+      </aside>
 
-    <!-- TAB 4: REMOTE DESKTOP LIVE VIEWER (CANLI EKRAN & DOKUNMATİK MOBİL MOD) -->
-    <section id="remote-viewer" class="tab-pane">
-      <div id="viewer-container">
-        <div class="viewer-toolbar">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span class="badge badge-online">Canlı Oturum</span>
-            <strong id="viewer-target-title" style="font-size: 0.9rem;">Bağlantı Kuruluyor...</strong>
-            <span id="session-stats" style="font-size: 0.75rem; color: var(--text-muted); margin-left: 8px;">0 FPS | 0 ms</span>
+      <!-- Content Area with Acrylic Backdrop -->
+      <main class="fluent-content">
+        
+        <!-- ==================== TAB 1: QUICK CONNECT ==================== -->
+        <section id="quick-connect" class="fluent-view active">
+          <div class="view-header">
+            <h1 class="view-title">Uzak Masaüstü Bağlantısı</h1>
+            <p class="view-subtitle">AnyDesk ve RustDesk mimarisinde yerel ve uzak cihaz kontrol merkezi.</p>
           </div>
 
-          <div style="display: flex; gap: 6px;">
-            <button class="btn btn-secondary btn-sm" onclick="sendCtrlAltDel()" title="Ctrl+Alt+Del Tuş Kombinasyonu Gönder">
-              Ctrl+Alt+Del
-            </button>
-            <button class="btn btn-secondary btn-sm" onclick="toggleFullscreen()" title="Tam Ekran">
-              Tam Ekran
-            </button>
-            <button class="btn btn-danger btn-sm" onclick="closeSession()">
-              Bağlantıyı Kes
+          <div class="fluent-grid-2">
+            <!-- Sol Kart: Bu Bilgisayarın Bilgileri -->
+            <div class="fluent-card highlight-card">
+              <div class="card-top">
+                <div class="card-icon blue-glow">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                </div>
+                <div>
+                  <h3 class="card-heading">Bu Cihazı Yönetime Aç</h3>
+                  <span class="badge badge-success">Bağlantıya Hazır</span>
+                </div>
+              </div>
+
+              <p class="card-desc">IT uzmanınızın bu bilgisayarı uzaktan yönetmesi için ID ve PIN kodunu iletin:</p>
+
+              <div class="fluent-id-card">
+                <div class="id-row">
+                  <span class="id-label">Apex Cihaz Kimliği</span>
+                  <button class="icon-action-btn" onclick="copyDeviceId()" title="Kopyala">📋</button>
+                </div>
+                <div class="id-display-box" id="my-device-id">--- --- ---</div>
+
+                <div class="pin-row">
+                  <div class="pin-info">
+                    <span class="id-label">Geçici PIN Kodu:</span>
+                    <strong class="pin-value" id="my-device-pin">----</strong>
+                  </div>
+                  <button class="btn btn-subtle btn-xs" onclick="regeneratePinPrompt()">🔄 Yenile</button>
+                </div>
+              </div>
+
+              <div class="info-card-subtle">
+                <div class="info-icon">📱</div>
+                <div class="info-text">
+                  <strong>Mobil Tarayıcı ile Doğrudan Bağlanın:</strong>
+                  <span id="mobile-direct-url">http://...:8080</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sağ Kart: Uzak Bilgisayara Bağlan -->
+            <div class="fluent-card">
+              <div class="card-top">
+                <div class="card-icon primary-glow">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                </div>
+                <div>
+                  <h3 class="card-heading">Uzak Cihaza Bağlan</h3>
+                  <span class="text-muted" style="font-size: 0.8rem;">İstemci Oturumu Başlatıcı</span>
+                </div>
+              </div>
+
+              <form id="connect-form" onsubmit="event.preventDefault(); initiateConnection();" class="fluent-form">
+                <div class="form-item">
+                  <label class="fluent-label" for="target-input">Hedef Apex ID veya Yerel IP</label>
+                  <div class="input-with-icon">
+                    <span class="input-icon">💻</span>
+                    <input type="text" id="target-input" class="fluent-input" placeholder="Örn: 744 972 033 veya 192.168.1.55" required>
+                  </div>
+                </div>
+
+                <div class="form-item">
+                  <label class="fluent-label" for="pin-input">Güvenlik PIN / Parola</label>
+                  <div class="input-with-icon">
+                    <span class="input-icon">🔑</span>
+                    <input type="password" id="pin-input" class="fluent-input" placeholder="4 haneli PIN kodu" required>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-fluent-primary btn-block">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  Oturumu Başlat
+                </button>
+              </form>
+
+              <div class="quick-history-box">
+                <span class="text-muted" style="font-size: 0.8rem;">Kayıtlı Cihazlar:</span>
+                <button class="btn btn-subtle btn-xs" onclick="switchNavTab('address-book')">Adres Defterini Aç →</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 2: NETWORK DISCOVERY ==================== -->
+        <section id="network-discovery" class="fluent-view">
+          <div class="view-header flex-between">
+            <div>
+              <h1 class="view-title">Yerel Ağ Cihaz Keşif Radarı</h1>
+              <p class="view-subtitle">Bağlı olduğunuz alt ağdaki (LAN/Subnet) aktif ApexConnect istemcilerini tarayın.</p>
+            </div>
+            <button class="btn btn-fluent-primary btn-sm" id="btn-scan" onclick="startNetworkScan()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              Ağı Tara
             </button>
           </div>
-        </div>
 
-        <div class="canvas-wrapper" id="canvas-wrapper">
-          <canvas id="remote-canvas" tabindex="0"></canvas>
-        </div>
+          <div class="fluent-card table-card">
+            <div class="table-responsive">
+              <table class="fluent-table">
+                <thead>
+                  <tr>
+                    <th>Durum</th>
+                    <th>Cihaz / Host Adı</th>
+                    <th>IP Adresi</th>
+                    <th>Apex ID</th>
+                    <th>Hizmet Türü</th>
+                    <th>İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody id="scan-results-body">
+                  <tr>
+                    <td colspan="6" class="table-empty">
+                      Ağdaki cihazları listelemek için <strong>"Ağı Tara"</strong> butonuna basın.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
 
-        <!-- Mobil Cihazlar İçin Dokunmatik Kontroller -->
-        <div class="mobile-controls">
-          <button class="fab-btn" onclick="sendLeftClick()" title="Sol Tık">🖱️L</button>
-          <button class="fab-btn" onclick="sendRightClick()" title="Sağ Tık">🖱️R</button>
-          <button class="fab-btn" onclick="toggleVirtualKeyboard()" title="Klavye">⌨️</button>
-        </div>
-      </div>
-    </section>
-  </main>
+        <!-- ==================== TAB 3: ADDRESS BOOK ==================== -->
+        <section id="address-book" class="fluent-view">
+          <div class="view-header flex-between">
+            <div>
+              <h1 class="view-title">Adres Defteri & Cihaz Envanteri</h1>
+              <p class="view-subtitle">Şirket ve kurum bilgisayarlarını departmanlara göre organize edin ve tek tıkla bağlanın.</p>
+            </div>
+            <button class="btn btn-fluent-primary btn-sm" onclick="showAddDeviceModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              Yeni Cihaz Ekle
+            </button>
+          </div>
+
+          <div class="fluent-card table-card">
+            <div class="table-responsive">
+              <table class="fluent-table">
+                <thead>
+                  <tr>
+                    <th>Durum</th>
+                    <th>Cihaz Adı</th>
+                    <th>Grup / Departman</th>
+                    <th>Hedef ID / IP</th>
+                    <th>Notlar</th>
+                    <th>Son Bağlantı</th>
+                    <th>İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody id="address-book-body">
+                  <!-- JS dinamik doldurur -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 4: FILE MANAGER ==================== -->
+        <section id="files-tab" class="fluent-view">
+          <div class="view-header flex-between">
+            <div>
+              <h1 class="view-title">Güvenli Dosya Transfer Yöneticisi</h1>
+              <p class="view-subtitle">Parçalı (chunked) dosya aktarımı. Dosyalar <code>Downloads\ApexConnect</code> dizininde saklanır.</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-subtle btn-sm" onclick="openRemoteFolder()">📂 Klasörü Aç</button>
+              <button class="btn btn-fluent-primary btn-sm" onclick="loadFileList()">🔄 Yenile</button>
+            </div>
+          </div>
+
+          <div class="drop-zone" id="file-drop-zone" onclick="document.getElementById('file-upload-input').click()">
+            <div class="drop-icon">☁️</div>
+            <div class="drop-title">Dosyaları buraya sürükleyin veya tıklayarak seçin</div>
+            <div class="drop-desc">64 KB parçalı şifreli aktarım, sınırsız dosya boyutu</div>
+            <input type="file" id="file-upload-input" style="display: none;" onchange="handleFileSelect(event)">
+          </div>
+
+          <div id="upload-progress-container" class="upload-progress-card" style="display: none;">
+            <div class="progress-info">
+              <span id="upload-filename">Dosya yükleniyor...</span>
+              <strong id="upload-percentage">0%</strong>
+            </div>
+            <div class="fluent-progress-track">
+              <div id="upload-progress-bar" class="fluent-progress-fill"></div>
+            </div>
+          </div>
+
+          <div class="fluent-card table-card" style="margin-top: 1.5rem;">
+            <div class="table-responsive">
+              <table class="fluent-table">
+                <thead>
+                  <tr>
+                    <th>Dosya Adı</th>
+                    <th>Boyut</th>
+                    <th>Son Değiştirilme</th>
+                    <th>İşlem</th>
+                  </tr>
+                </thead>
+                <tbody id="files-table-body">
+                  <!-- JS dinamik doldurur -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 5: WINUI 3 SETTINGS MENU ==================== -->
+        <section id="settings-tab" class="fluent-view">
+          <div class="view-header">
+            <h1 class="view-title">Uygulama ve Güvenlik Ayarları</h1>
+            <p class="view-subtitle">Ekran motoru optimizasyonu, şifreleme ve ağ yapılandırma seçenekleri.</p>
+          </div>
+
+          <div class="settings-group">
+            <h2 class="settings-group-title">Ekran ve Performans Motoru</h2>
+            
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Adaptif Değişen Kare (Dirty-Rect) Tespiti</div>
+                <div class="setting-desc">Ekran hareketsizken gereksiz kare aktarımını durdurarak CPU kullanımını %0'a ve ağ trafiğini ~0 Kbps'e düşürür.</div>
+              </div>
+              <label class="fluent-switch">
+                <input type="checkbox" id="setting-dirty-rect" checked>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Maksimum Kare Hızı Limiti</div>
+                <div class="setting-desc">Düşük gecikmeli akıcı ekran deneyimi için hedef FPS değeri.</div>
+              </div>
+              <select class="fluent-select" id="setting-fps-limit">
+                <option value="30" selected>30 FPS (Standart Dengeli)</option>
+                <option value="60">60 FPS (Ultra Akıcı - Oyun / CAD)</option>
+                <option value="15">15 FPS (Düşük Bant Genişliği)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h2 class="settings-group-title">Ağ ve Keşif</h2>
+            
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Otomatik Port Çakışma Koruması</div>
+                <div class="setting-desc">8080 portu meşgul olduğunda çökmek yerine 8081-8090 aralığında otomatik boş port bulur.</div>
+              </div>
+              <span class="badge badge-success">Aktif (Otomatik)</span>
+            </div>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Yerel Ağ UDP Keşif Yayını (Port 52899)</div>
+                <div class="setting-desc">Diğer ApexConnect cihazlarının bu makineyi otomatik keşfetmesine izin verin.</div>
+              </div>
+              <label class="fluent-switch">
+                <input type="checkbox" id="setting-udp-discovery" checked>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h2 class="settings-group-title">Kriptografi ve Güvenlik</h2>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Uçtan Uca Şifreleme (E2EE)</div>
+                <div class="setting-desc">AES-256-GCM ve SHA-256 tabanlı oturum anahtarı türetimi ile tüm ekran ve girdi paketlerini şifreler.</div>
+              </div>
+              <span class="badge badge-success">AES-256-GCM Aktif</span>
+            </div>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Pano (Clipboard) Senkronizasyonu</div>
+                <div class="setting-desc">Uzak yönetici ile Windows panosu arasında metin transferine izin ver.</div>
+              </div>
+              <label class="fluent-switch">
+                <input type="checkbox" id="setting-clipboard-sync" checked>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h2 class="settings-group-title">Uygulama Hakkında</h2>
+            <div class="fluent-card about-card">
+              <div style="font-weight: 600; font-size: 1.1rem; color: #fff;">ApexConnect v1.0.0</div>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin: 6px 0 12px 0;">
+                AnyDesk, TeamViewer ve RustDesk tersine mühendislik analizleriyle geliştirilmiş yüksek performanslı Windows Uzak Masaüstü ekosistemi.
+              </p>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-subtle btn-xs" onclick="window.open('https://github.com/mtahiryilmazz/ApexConnect', '_blank')">GitHub Deposu</button>
+                <button class="btn btn-subtle btn-xs" onclick="switchNavTab('quick-connect')">Geri Dön</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 6: REMOTE VIEWER ==================== -->
+        <section id="remote-viewer" class="fluent-view viewer-fullscreen-view">
+          <div id="viewer-container">
+            
+            <!-- WinUI 3 Floating Command Island -->
+            <div class="floating-island-toolbar">
+              <div class="island-left">
+                <span class="live-pill"><span class="pulse-indicator"></span> CANLI</span>
+                <strong id="viewer-target-title" class="target-title">Bağlanılıyor...</strong>
+                <span id="session-stats" class="stats-pill">0 FPS | 0 ms | 0 KB/s</span>
+              </div>
+
+              <div class="island-right">
+                <select id="quality-select" onchange="changeQuality(this.value)" class="island-select" title="Görüntü Kalitesi">
+                  <option value="40">Kalite: Düşük (%40)</option>
+                  <option value="65" selected>Kalite: Normal (%65)</option>
+                  <option value="85">Kalite: Yüksek (%85)</option>
+                </select>
+
+                <select id="monitor-select" onchange="changeMonitor(this.value)" class="island-select" title="Monitör Seçimi">
+                  <option value="primary" selected>Ana Monitör</option>
+                  <option value="virtual">Tüm Ekranlar</option>
+                </select>
+
+                <button class="island-btn" onclick="sendClipboardPrompt()" title="Panoya Metin Gönder">📋 Pano</button>
+                <button class="island-btn" onclick="switchNavTab('files-tab')" title="Dosya Transferi">📁 Dosyalar</button>
+                <button class="island-btn" onclick="sendCtrlAltDel()" title="Ctrl+Alt+Del">Ctrl+Alt+Del</button>
+                <button class="island-btn" onclick="toggleFullscreen()" title="Tam Ekran">⛶</button>
+                <button class="island-btn btn-danger-pill" onclick="closeSession()" title="Bağlantıyı Kes">✕ Çıkış</button>
+              </div>
+            </div>
+
+            <!-- Canvas Workspace -->
+            <div class="canvas-viewport" id="canvas-wrapper">
+              <canvas id="remote-canvas" tabindex="0"></canvas>
+            </div>
+
+            <!-- Mobile Floating Action Controls -->
+            <div class="mobile-controls">
+              <button class="fab-btn" onclick="sendLeftClick()" title="Sol Tık">🖱️L</button>
+              <button class="fab-btn" onclick="sendRightClick()" title="Sağ Tık">🖱️R</button>
+              <button class="fab-btn" onclick="toggleVirtualKeyboard()" title="Klavye">⌨️</button>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
 
   <script src="/static/app.js"></script>
 </body>

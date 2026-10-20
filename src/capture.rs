@@ -1,4 +1,5 @@
 use std::io::Cursor;
+use std::sync::atomic::{AtomicU64, Ordering};
 use jpeg_encoder::{ColorType, Encoder};
 use windows::Win32::Foundation::HWND;
 use windows::Win32::Graphics::Gdi::{
@@ -6,23 +7,75 @@ use windows::Win32::Graphics::Gdi::{
     ReleaseDC, SelectObject, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS,
     HGDIOBJ, SRCCOPY,
 };
-use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
+use windows::Win32::UI::WindowsAndMessaging::{
+    GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN, SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN,
+    SM_XVIRTUALSCREEN, SM_YVIRTUALSCREEN,
+};
+
+pub enum CaptureMode {
+    PrimaryMonitor,
+    VirtualDesktop,
+}
 
 pub struct ScreenCapture {
+    pub x: i32,
+    pub y: i32,
     pub width: i32,
     pub height: i32,
+    pub mode: CaptureMode,
+    last_frame_hash: AtomicU64,
+    last_keyframe_time: std::sync::Mutex<std::time::Instant>,
 }
 
 impl ScreenCapture {
     pub fn new() -> Self {
+        Self::with_mode(CaptureMode::PrimaryMonitor)
+    }
+
+    pub fn with_mode(mode: CaptureMode) -> Self {
         unsafe {
-            let width = GetSystemMetrics(SM_CXSCREEN);
-            let height = GetSystemMetrics(SM_CYSCREEN);
-            Self { width, height }
+            let (x, y, width, height) = match mode {
+                CaptureMode::PrimaryMonitor => {
+                    let w = GetSystemMetrics(SM_CXSCREEN);
+                    let h = GetSystemMetrics(SM_CYSCREEN);
+                    (0, 0, w, h)
+                }
+                CaptureMode::VirtualDesktop => {
+                    let vx = GetSystemMetrics(SM_XVIRTUALSCREEN);
+                    let vy = GetSystemMetrics(SM_YVIRTUALSCREEN);
+                    let vw = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+                    let vh = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+                    (vx, vy, vw, vh)
+                }
+            };
+
+            Self {
+                x,
+                y,
+                width,
+                height,
+                mode,
+                last_frame_hash: AtomicU64::new(0),
+                last_keyframe_time: std::sync::Mutex::new(std::time::Instant::now()),
+            }
         }
     }
 
-    pub fn capture_frame(&self, quality: u8) -> Result<Vec<u8>, String> {
+    /// Fast 64-bit sampled checksum for dirty frame detection
+    fn compute_buffer_hash(buf: &[u8]) -> u64 {
+        let mut hash: u64 = 0xcbf29ce484222325;
+        // Sample every 16th byte for ultra-fast dirty checking across millions of pixels
+        for &byte in buf.iter().step_by(16) {
+            hash ^= byte as u64;
+            hash = hash.wrapping_mul(0x100000001b3);
+        }
+        hash
+    }
+
+    /// Captures the screen. If dirty detection is active and the frame hasn't changed,
+    /// returns Ok(None) to avoid redundant JPEG encoding and network congestion.
+    /// A forced keyframe is emitted at least once every 2 seconds.
+    pub fn capture_frame_adaptive(&self, quality: u8, force_full: bool) -> Result<Option<Vec<u8>>, String> {
         unsafe {
             let hdc_screen = GetDC(HWND(std::ptr::null_mut()));
             if hdc_screen.0.is_null() {
@@ -44,7 +97,7 @@ impl ScreenCapture {
 
             let old_obj = SelectObject(hdc_mem, HGDIOBJ(hbitmap.0));
 
-            // Copy screen to memory DC
+            // Copy screen region to memory DC
             let _ = BitBlt(
                 hdc_mem,
                 0,
@@ -52,8 +105,8 @@ impl ScreenCapture {
                 self.width,
                 self.height,
                 hdc_screen,
-                0,
-                0,
+                self.x,
+                self.y,
                 SRCCOPY,
             );
 
@@ -79,7 +132,8 @@ impl ScreenCapture {
                 }; 1],
             };
 
-            let buf_size = (self.width * self.height * 4) as usize;
+            let pixel_count = (self.width * self.height) as usize;
+            let buf_size = pixel_count * 4;
             let mut bgra_buf: Vec<u8> = vec![0u8; buf_size];
 
             let lines = GetDIBits(
@@ -92,7 +146,7 @@ impl ScreenCapture {
                 DIB_RGB_COLORS,
             );
 
-            // Clean up GDI handles
+            // Clean up GDI handles immediately
             SelectObject(hdc_mem, old_obj);
             let _ = DeleteObject(HGDIOBJ(hbitmap.0));
             let _ = DeleteDC(hdc_mem);
@@ -102,23 +156,48 @@ impl ScreenCapture {
                 return Err("GetDIBits failed to copy pixels".to_string());
             }
 
-            // Convert BGRA to RGB
-            let mut rgb_buf = Vec::with_capacity((self.width * self.height * 3) as usize);
-            for chunk in bgra_buf.chunks_exact(4) {
-                rgb_buf.push(chunk[2]); // R
-                rgb_buf.push(chunk[1]); // G
-                rgb_buf.push(chunk[0]); // B
+            // Check if frame changed (dirty detection)
+            let current_hash = Self::compute_buffer_hash(&bgra_buf);
+            let prev_hash = self.last_frame_hash.swap(current_hash, Ordering::Relaxed);
+
+            let mut keyframe_guard = self.last_keyframe_time.lock().unwrap();
+            let elapsed = keyframe_guard.elapsed();
+            let need_keyframe = force_full || elapsed >= std::time::Duration::from_millis(2000);
+
+            if !need_keyframe && current_hash == prev_hash {
+                // Screen has not changed! Save CPU and bandwidth
+                return Ok(None);
             }
 
-            // Compress to JPEG
-            let mut jpeg_bytes = Vec::new();
+            *keyframe_guard = std::time::Instant::now();
+
+            // High-speed BGRA -> RGB conversion without vector re-allocations
+            let mut rgb_buf = vec![0u8; pixel_count * 3];
+            for i in 0..pixel_count {
+                let bgra_idx = i * 4;
+                let rgb_idx = i * 3;
+                rgb_buf[rgb_idx] = bgra_buf[bgra_idx + 2];     // R
+                rgb_buf[rgb_idx + 1] = bgra_buf[bgra_idx + 1]; // G
+                rgb_buf[rgb_idx + 2] = bgra_buf[bgra_idx];     // B
+            }
+
+            // Compress to JPEG with requested quality
+            let mut jpeg_bytes = Vec::with_capacity(65536);
             let mut cursor = Cursor::new(&mut jpeg_bytes);
             let encoder = Encoder::new(&mut cursor, quality);
             encoder
                 .encode(&rgb_buf, self.width as u16, self.height as u16, ColorType::Rgb)
                 .map_err(|e| format!("JPEG encode error: {:?}", e))?;
 
-            Ok(jpeg_bytes)
+            Ok(Some(jpeg_bytes))
+        }
+    }
+
+    /// Legacy synchronous capture (always returns JPEG bytes)
+    pub fn capture_frame(&self, quality: u8) -> Result<Vec<u8>, String> {
+        match self.capture_frame_adaptive(quality, true)? {
+            Some(data) => Ok(data),
+            None => Err("No frame captured".to_string()),
         }
     }
 }
