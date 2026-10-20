@@ -23,6 +23,10 @@ pub struct AddressBookItem {
     pub saved_pin: String,
     pub is_online: bool,
     pub last_connected: Option<String>,
+    #[serde(default)]
+    pub is_trusted_unattended: bool,
+    #[serde(default)]
+    pub auth_token: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -32,6 +36,12 @@ pub struct DiscoveredDevice {
     pub device_id: Option<String>,
     pub service_type: String,
     pub is_online: bool,
+    #[serde(default)]
+    pub is_sos: bool,
+    #[serde(default)]
+    pub user_name: Option<String>,
+    #[serde(default)]
+    pub status_note: Option<String>,
 }
 
 pub struct AppState {

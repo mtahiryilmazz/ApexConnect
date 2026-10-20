@@ -62,8 +62,8 @@ if ($LASTEXITCODE -ne 0) {
     Write-Error "Birim testleri basarisiz oldu!"
 }
 
-Write-Host "`nRelease derlemesi olusturuluyor..." -ForegroundColor Cyan
-& cargo build --release
+Write-Host "`nRelease derlemesi olusturuluyor (apex_connect & apex_qs)..." -ForegroundColor Cyan
+& cargo build --release --bin apex_connect --bin apex_qs
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Release derlemesi basarisiz oldu!"
 }

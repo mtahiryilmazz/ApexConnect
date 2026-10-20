@@ -26,6 +26,8 @@ impl AddressBookManager {
                 saved_pin: "1234".to_string(),
                 is_online: true,
                 last_connected: Some("Bugün 14:30".to_string()),
+                is_trusted_unattended: true,
+                auth_token: None,
             },
             AddressBookItem {
                 id: "2".to_string(),
@@ -36,6 +38,8 @@ impl AddressBookManager {
                 saved_pin: "".to_string(),
                 is_online: true,
                 last_connected: Some("Dün 18:20".to_string()),
+                is_trusted_unattended: true,
+                auth_token: None,
             },
             AddressBookItem {
                 id: "3".to_string(),
@@ -46,6 +50,8 @@ impl AddressBookManager {
                 saved_pin: "".to_string(),
                 is_online: false,
                 last_connected: None,
+                is_trusted_unattended: false,
+                auth_token: None,
             },
         ]
     }

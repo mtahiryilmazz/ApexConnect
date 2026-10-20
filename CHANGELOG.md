@@ -26,9 +26,17 @@ Bu proje [Semantik Versiyonlama (SemVer)](https://semver.org/lang/tr/) standartl
   - Dinamik kalite ayarlayıcı (Düşük %40, Normal %65, Yüksek %85).
   - Canlı oturum sırasında uzak bilgisayarın panosuna (clipboard) doğrudan metin gönderme (`clip.exe` entegrasyonu).
   - Sürükle-bırak (Drag & Drop) dosya yükleme alanı, anlık yükleme ilerleme çubuğu ve dosya listesi.
+- **Mini Hızlı Bağlantı Aracı (ApexConnect QuickSupport - `src/bin/quicksupport.rs`)**:
+  - Şirket çalışanlarının kurulumsuz tek tıkla çalıştırabileceği taşınabilir (portable) hafif `.exe` paketi (`apex_qs.exe`).
+  - Açıldığı anda otomatik 9 haneli Apex ID ve PIN üretimi.
+  - Aynı ağdaki IT masasına 3 saniyede bir otomatik acil durum (SOS) UDP anonsu (`APEX_SOS_V1`).
+- **Güvenilen Cihaz & Gözetimsiz Erişim (Trusted Unattended Access - `src/server.rs` & `src/state.rs`)**:
+  - IT Adres Defterinde kayıtlı ve güvenilen cihaz olarak işaretlenmiş istemciler için PIN onayına gerek kalmadan doğrudan tam yetkili oturum başlatma.
 - **Gelişmiş Girdi Simülasyonu (`src/input.rs`)**:
   - `key_down` ve `key_up` sanal tuş eşlemeleri (Enter, Backspace, Tab, Yön tuşları, vb.).
   - Windows `SendInput` ile akıcı fare hareketi, sağ tık, tekerlek ve Ctrl+Alt+Del desteği.
+- **Kurumsal Dağıtım Paketi Hazırlayıcı (`scripts/build_distribution.ps1`)**:
+  - `apex_connect.exe` ve `apex_qs.exe` ikililerini tek komutla derleyip `dist/` klasörüne hazır dağıtım paketi olarak çıkarma.
 
 ### 🐛 Hata Düzeltmeleri ve Canlı Analiz Bulguları (Bug Fixes)
 - **Kritik Port Çakışması (`Os 10048 AddrInUse`) Giderildi**:

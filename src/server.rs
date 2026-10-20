@@ -160,10 +160,27 @@ async fn ws_handler(
 ) -> Response {
     let host_pin = state.info.lock().unwrap().pin.clone();
 
-    // Verify PIN if provided (or if connecting to self)
-    if let Some(pin) = query.pin {
-        if !pin.is_empty() && pin != host_pin {
-            return (StatusCode::UNAUTHORIZED, "Invalid PIN").into_response();
+    // Check if target or connecting client is a trusted unattended device in address book
+    let is_trusted_device = if let Some(target) = &query.target {
+        let clean_target = target.replace(" ", "");
+        let book = state.address_book.lock().unwrap();
+        book.iter().any(|item| {
+            item.is_trusted_unattended && (
+                item.target.replace(" ", "") == clean_target 
+                || item.id == clean_target 
+                || item.saved_pin == query.pin.clone().unwrap_or_default()
+            )
+        })
+    } else {
+        false
+    };
+
+    // If not trusted unattended device, verify PIN if provided
+    if !is_trusted_device {
+        if let Some(pin) = query.pin {
+            if !pin.is_empty() && pin != host_pin {
+                return (StatusCode::UNAUTHORIZED, "Geçersiz PIN").into_response();
+            }
         }
     }
 
