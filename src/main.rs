@@ -7,7 +7,7 @@ use tokio::net::TcpListener;
 
 use apex_connect::address_book::AddressBookManager;
 use apex_connect::discovery::DiscoveryEngine;
-use apex_connect::gui::GuiLauncher;
+use apex_connect::native_admin::NativeAdminGui;
 use apex_connect::server::create_router;
 use apex_connect::state::AppState;
 
@@ -105,15 +105,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("  💻  Yerel Erişim        : \x1b[1;34mhttp://localhost:{}\x1b[0m", selected_port);
     println!("  📡  Ağ Keşfi (UDP)      : Port {} üzerinden aktif", apex_connect::discovery::DISCOVERY_PORT);
     println!("  ===============================================================");
-    println!("  [Bilgi] Web yönetim paneli tarayıcınızda otomatik başlatılıyor...");
-    println!("  [Bilgi] Çıkış yapmak için pencereyi kapatın veya Ctrl+C tuşlayın.\n");
+    println!("  [Bilgi] Web portal arka planda aktif (Mobil ve Web tarayıcı erişimleri için).");
+    println!("  [Bilgi] Pure Win32 Native Fluent Yönetim Konsolu başlatılıyor...\n");
 
-    // Automatically open standalone Fluent window on startup without CMD
-    let local_url = format!("http://localhost:{}", selected_port);
-    GuiLauncher::launch(&local_url, "ApexConnect", 1260, 820, "Admin");
+    // 1. Run HTTP and Remote Desktop WebSocket engine in background Tokio task (Web & Mobile portal)
+    let app = create_router(state.clone());
+    tokio::spawn(async move {
+        let _ = axum::serve(listener, app).await;
+    });
 
-    let app = create_router(state);
-    axum::serve(listener, app).await?;
+    // 2. Run Pure Native Win32 Desktop Window on main thread (Zero Edge, Zero Chromium, Zero HTML)
+    NativeAdminGui::run(state);
 
     Ok(())
 }

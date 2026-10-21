@@ -37,6 +37,8 @@ futures-util = "0.3"
 aes-gcm = "0.10"
 sha2 = "0.10"
 base64 = "0.22"
+tokio-tungstenite = { version = "0.23", features = ["handshake"] }
+jpeg-decoder = "0.3"
 windows = { version = "0.58", features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",
