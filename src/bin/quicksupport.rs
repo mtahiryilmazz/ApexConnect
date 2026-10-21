@@ -6,7 +6,6 @@ use rand::Rng;
 use tokio::net::TcpListener;
 
 use apex_connect::discovery::DiscoveryEngine;
-use apex_connect::gui::GuiLauncher;
 use apex_connect::server::create_router;
 use apex_connect::state::AppState;
 
@@ -104,12 +103,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("  [Bilgi] Bilgi İşlem personeli aynı ağdaysa bu cihazı doğrudan görebilir.");
     println!("  [Bilgi] Destek penceresi açılıyor. Çıkmak için pencereyi kapatın.\n");
 
-    // Automatically open mini QuickSupport Fluent UI window without CMD
-    let local_url = format!("http://localhost:{}/qs", selected_port);
-    GuiLauncher::launch(&local_url, "ApexQS", 440, 680, "QuickSupport");
+    // 1. Run HTTP and Remote Desktop WebSocket engine in background Tokio task
+    let app = create_router(state.clone());
+    tokio::spawn(async move {
+        let _ = axum::serve(listener, app).await;
+    });
 
-    let app = create_router(state);
-    axum::serve(listener, app).await?;
+    // 2. Run Pure Native Win32 Desktop Window on main thread (Zero Edge, Zero Web Engine)
+    apex_connect::native_qs::NativeQuickSupportGui::run(state);
 
     Ok(())
 }
