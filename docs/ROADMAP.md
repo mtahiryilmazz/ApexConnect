@@ -78,4 +78,21 @@ Bu belge, OxiDesk projesinin kısa, orta ve uzun vadeli mimari, masaüstü x64 u
   - Sohbet, Görev Yöneticisi ve Dosya Aktarımı pencereleri bağımsız sürüklenebilir, üst üste gelmeyen pencere yöneticisine kavuşturuldu.
   - Sohbet paneli sağ altta açılır popup olarak konumlandırıldı, simge durumuna (`—`) küçültülebilir mini dock eklendi.
   - Yeni mesaj geldiğinde yanıp sönen neon sinyal ışığı (`beaconPulse`) ve zarif ses efekti entegre edildi.
+- [x] **Canlı Oturum Çekirdek İyileştirmeleri (v5.5.0 Sürüm Yaması):**
+  - **Sohbet Giriş Alanı Düzeltmesi:** Klavye dinleyicisinin metin kutularındaki (`#session-chat-input`) tuş vuruşlarını engellemesi (`preventDefault`) kaldırıldı, canlı mesajlaşma akıcı hale getirildi.
+  - **Gelişmiş Dosya Transferi & Sürükle-Bırak:** 64 KB bloklu WebSocket akışı, Base64 dönüştürücü optimizasyonu ve tüm uzak masaüstü ekranına doğrudan sürükle-bırak desteği eklendi.
+  - **Uzak Görev Yöneticisi:** Yöneticinin yerel makinesi yerine, doğrudan bağlandığı uzak hedef bilgisayarın süreçlerini WebSocket (`GetTasks` / `KillTask`) ile sorgulama ve uzaktan sonlandırma özelliği devreye alındı.
+  - **Belirgin Bağlantı Kesme Butonları:** Oturum izleme çubuğuna ve QuickSupport arayüzüne anında oturum sonlandırma ve thread iptali sağlayan `🛑 Bağlantıyı Kes` butonları entegre edildi.
+  - **Ekran Katmanı Çözümü:** İlk JPEG karesi ulaştığında bağlantı overlay'inin tamamen gizlenmesi ve `createImageBitmap` + `new Image()` fallback motoru sağlandı.
+
+---
+
+## 📍 Faz 6: Güvenlik, Gizlilik Modu & Ses İyileştirmeleri (Planlanan)
+- [ ] **Donanımsal Gizlilik Modu (Black Screen / Privacy Mode):**
+  - IT Yöneticisi bağlandığında hedef bilgisayarın fiziksel monitörünü karartan / kilitleyen Win32 DWM sürücüsü.
+- [ ] **Düşük Gecikmeli Ses Aktarımı (WASAPI Audio Loopback):**
+  - 48 kHz stereo Opus/PCM formatında ses akışının kesintisiz iletimi.
+- [ ] **WAN / İnternet Relay Yük Dengeleme:**
+  - `oxidesk_rendezvous` sunucuları arasında otomatik yük dengeleme ve coğrafi yönlendirme.
+
 
