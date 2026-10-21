@@ -293,14 +293,21 @@
 
     <!-- PIN Box -->
     <div class="pin-box">
-      <span class="pin-label">Tek Kullanımlık PIN</span>
-      <span class="pin-val" id="pin-val">----</span>
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div>
+          <span class="pin-label">Tek Kullanımlık Geçici PIN</span>
+          <div class="pin-val" id="pin-val">----</div>
+        </div>
+        <button class="btn btn-secondary" onclick="refreshPin()" title="Yeni Tek Kullanımlık PIN Üret" style="padding: 6px 12px; font-size: 0.8rem; background: rgba(255,255,255,0.08); border-radius: 6px;">
+          🔄 Yenile
+        </button>
+      </div>
     </div>
 
     <!-- Device Details -->
     <div class="footer-info">
       <span id="hostname-display">Cihaz: ...</span>
-      <span id="ip-display">IP: ...</span>
+      <span id="ip-display">Port: ...</span>
     </div>
   </div>
 
@@ -315,9 +322,21 @@
         const formatted = id.length === 9 ? `${id.slice(0,3)} ${id.slice(3,6)} ${id.slice(6,9)}` : id;
         
         document.getElementById('device-id').innerText = formatted;
-        document.getElementById('pin-val').innerText = data.pin || '1234';
+        document.getElementById('pin-val').innerText = data.pin || '----';
         document.getElementById('hostname-display').innerText = 'Cihaz: ' + (data.hostname || 'PC');
         document.getElementById('ip-display').innerText = 'Port: ' + (data.port || 8080);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function refreshPin() {
+      try {
+        const res = await fetch('/api/pin/refresh');
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('pin-val').innerText = data.new_pin;
+        }
       } catch (e) {
         console.error(e);
       }
@@ -332,7 +351,7 @@
     }
 
     loadInfo();
-    setInterval(loadInfo, 5000);
+    setInterval(loadInfo, 3000);
   </script>
 </body>
 </html>

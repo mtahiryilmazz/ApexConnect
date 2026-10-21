@@ -57,6 +57,23 @@ async function loadHostInfo() {
 
     document.getElementById('my-device-id').innerText = formatApexId(hostInfo.device_id);
     document.getElementById('my-device-pin').innerText = hostInfo.pin;
+  } catch (e) {
+    console.error('Host info error:', e);
+  }
+}
+
+async function regeneratePinPrompt() {
+  try {
+    const res = await fetch('/api/pin/refresh');
+    if (res.ok) {
+      const data = await res.json();
+      const el = document.getElementById('my-device-pin');
+      if (el) el.innerText = data.new_pin;
+    }
+  } catch (e) {
+    console.error('PIN refresh error:', e);
+  }
+}
     
     const ipDisplay = `${hostInfo.local_ip}:${hostInfo.port}`;
     const titlebarIp = document.getElementById('titlebar-ip-status');
@@ -267,7 +284,7 @@ function connectToAddressBook(target, pin) {
 }
 
 function connectToTarget(ip, deviceId, port) {
-  const targetStr = (port && port !== 8080) ? `${ip}:${port}` : (deviceId || `${ip}:${port || 8080}`);
+  const targetStr = (deviceId && deviceId !== '-') ? formatApexId(deviceId) : ((port && port !== 8080) ? `${ip}:${port}` : `${ip}:${port || 8080}`);
   document.getElementById('target-input').value = targetStr;
   switchTab('quick-connect');
 }

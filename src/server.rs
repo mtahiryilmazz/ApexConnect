@@ -50,6 +50,7 @@ pub fn create_router(state: SharedState) -> Router {
         .route("/api/files/open-folder", get(open_folder_handler))
         .route("/api/rendezvous/status", get(get_rendezvous_status_handler))
         .route("/api/resolve", get(resolve_target_handler))
+        .route("/api/pin/refresh", get(refresh_pin_handler))
         .route("/api/audit", get(get_audit_handler))
         .route("/api/policy", get(get_policy_handler).post(update_policy_handler))
         .route("/api/service/status", get(get_service_status_handler))
@@ -174,6 +175,33 @@ async fn resolve_target_handler(
         port: 0,
         hostname: None,
     })
+}
+
+#[derive(Serialize)]
+struct RefreshPinResponse {
+    new_pin: String,
+}
+
+async fn refresh_pin_handler(State(state): State<SharedState>) -> Json<RefreshPinResponse> {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    let num: u16 = rng.gen_range(1000..9999);
+    let new_pin = num.to_string();
+
+    {
+        let mut info = state.info.lock().unwrap();
+        info.pin = new_pin.clone();
+    }
+
+    state.audit_logger.record(
+        "PIN_MANUAL_REFRESH",
+        "USER",
+        "127.0.0.1",
+        "Tek kullanimlik gecici PIN kodu yenilendi.",
+        true,
+    );
+
+    Json(RefreshPinResponse { new_pin })
 }
 
 #[derive(Serialize)]
@@ -613,4 +641,20 @@ async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
         _ = input_task => {},
         _ = send_task => {},
     };
+
+    // Auto-regenerate random one-time PIN upon session disconnect for zero-trust security
+    {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        let new_pin: u16 = rng.gen_range(1000..9999);
+        let mut info = state.info.lock().unwrap();
+        info.pin = new_pin.to_string();
+    }
+    state.audit_logger.record(
+        "SESSION_DISCONNECTED_PIN_RENEW",
+        "SECURITY",
+        "127.0.0.1",
+        "Uzak oturum sonlandi; guvenlik icin tek kullanimlik PIN otomatik olarak sifirlandi ve yeni PIN uretildi.",
+        true,
+    );
 }
