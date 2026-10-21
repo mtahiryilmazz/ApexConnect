@@ -44,6 +44,8 @@ pub struct DiscoveredDevice {
     pub user_name: Option<String>,
     #[serde(default)]
     pub status_note: Option<String>,
+    #[serde(default)]
+    pub last_seen: u64,
 }
 
 fn default_port() -> u16 {

@@ -53,7 +53,7 @@ impl GuiLauncher {
             candidates.push(PathBuf::from("msedge.exe"));
             candidates.push(PathBuf::from("chrome.exe"));
 
-            // Launch in standalone App Window Mode (no tabs, no address bar, native desktop feel)
+            // Launch in standalone Frameless App Window Mode (no browser tabs, no address bar, single Fluent titlebar)
             for exe in &candidates {
                 if exe.exists() || exe.to_str() == Some("msedge.exe") || exe.to_str() == Some("chrome.exe") {
                     let res = Command::new(exe)
@@ -66,7 +66,15 @@ impl GuiLauncher {
                         ])
                         .spawn();
 
-                    if res.is_ok() {
+                    if let Ok(child) = res {
+                        let pid = child.id();
+                        tokio::spawn(async move {
+                            for _ in 0..25 {
+                                tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+                                #[cfg(target_os = "windows")]
+                                make_process_windows_frameless(pid);
+                            }
+                        });
                         return;
                     }
                 }
@@ -79,3 +87,34 @@ impl GuiLauncher {
         });
     }
 }
+
+#[cfg(target_os = "windows")]
+fn make_process_windows_frameless(target_pid: u32) {
+    use windows::Win32::Foundation::{BOOL, HWND, LPARAM};
+    use windows::Win32::UI::WindowsAndMessaging::*;
+
+    unsafe extern "system" fn enum_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
+        let target_pid = lparam.0 as u32;
+        let mut proc_id = 0u32;
+        GetWindowThreadProcessId(hwnd, Some(&mut proc_id));
+
+        if proc_id == target_pid && IsWindowVisible(hwnd).as_bool() {
+            let style = GetWindowLongW(hwnd, GWL_STYLE);
+            if style & (WS_CAPTION.0 as i32) != 0 {
+                SetWindowLongW(hwnd, GWL_STYLE, style & !(WS_CAPTION.0 as i32));
+                let _ = SetWindowPos(
+                    hwnd,
+                    HWND(0 as _),
+                    0, 0, 0, 0,
+                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED,
+                );
+            }
+        }
+        BOOL(1)
+    }
+
+    unsafe {
+        let _ = EnumWindows(Some(enum_proc), LPARAM(target_pid as isize));
+    }
+}
+

@@ -219,76 +219,183 @@ html.light .moon-icon { display: block; }
 
 /* Light Mode Overrides */
 html.light body {
-  background-color: var(--fluent-bg-mica);
-  background-image: radial-gradient(at 100% 0%, rgba(0, 120, 212, 0.08) 0px, transparent 50%),
-                    radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.05) 0px, transparent 50%);
-  color: var(--text-primary);
+  background-color: #f1f5f9;
+  background-image: radial-gradient(at 100% 0%, rgba(0, 103, 184, 0.08) 0px, transparent 50%),
+                    radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.04) 0px, transparent 50%);
+  color: #0f172a;
 }
 
 html.light .fluent-titlebar {
   background: rgba(248, 250, 252, 0.98);
-  border-bottom: 1px solid var(--fluent-border);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+html.light .app-name,
+html.light .view-title,
+html.light .card-heading {
+  color: #0f172a;
+}
+
+html.light .view-subtitle,
+html.light .card-desc,
+html.light .fluent-label {
+  color: #475569;
 }
 
 html.light .fluent-sidebar {
-  background: var(--fluent-sidebar-bg);
-  border-right: 1px solid var(--fluent-border);
+  background: rgba(241, 245, 249, 0.96);
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 html.light .nav-item {
-  color: var(--text-secondary);
+  color: #475569;
 }
 
 html.light .nav-item:hover {
-  background: rgba(0, 0, 0, 0.04);
-  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
+  color: #0f172a;
 }
 
 html.light .nav-item.active {
   background: rgba(0, 103, 184, 0.12);
-  color: var(--fluent-accent);
+  color: #0067b8;
 }
 
-html.light .fluent-card,
-html.light .status-banner-card,
-html.light .metric-card,
-html.light .id-display-card,
-html.light .device-card,
-html.light .history-item {
-  background: var(--fluent-bg-card);
-  border: 1px solid var(--fluent-border);
+html.light .fluent-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+html.light .fluent-card.highlight-card {
+  background: linear-gradient(135deg, rgba(0, 103, 184, 0.06) 0%, rgba(248, 250, 252, 0.98) 100%);
+  border-color: rgba(0, 103, 184, 0.25);
+}
+
+html.light .fluent-id-card {
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+html.light .id-display-box {
+  color: #0067b8;
+  text-shadow: none;
+}
+
+html.light .info-card-subtle {
+  background: rgba(0, 103, 184, 0.06);
+  border: 1px solid rgba(0, 103, 184, 0.2);
+  color: #0f172a;
+}
+
+html.light .info-text strong {
+  color: #0067b8;
 }
 
 html.light .fluent-input {
   background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.18);
-  color: var(--text-primary);
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  color: #0f172a;
 }
 
 html.light .fluent-input:focus {
-  border-color: var(--fluent-accent);
-  box-shadow: 0 0 0 2px var(--fluent-accent-glow);
+  border-color: #0067b8;
+  box-shadow: 0 0 0 2px rgba(0, 103, 184, 0.2);
+}
+
+html.light .fluent-table th {
+  background: #e2e8f0;
+  color: #475569;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+html.light .fluent-table td {
+  color: #0f172a;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+html.light .fluent-table tbody tr:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+html.light .table-empty {
+  color: #64748b;
+}
+
+html.light .drop-zone {
+  background: #f8fafc;
+  border-color: rgba(0, 103, 184, 0.35);
+  color: #0f172a;
+}
+
+html.light .drop-title {
+  color: #0f172a;
+}
+
+html.light .fluent-setting-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+html.light .setting-name {
+  color: #0f172a;
+}
+
+html.light .setting-desc {
+  color: #64748b;
+}
+
+html.light .settings-group-title {
+  color: #0f172a;
+}
+
+html.light .about-card {
+  background: #ffffff;
+}
+
+html.light .quick-history-box {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+html.light .fluent-select {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  color: #0f172a;
+}
+
+html.light .btn-subtle {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #0f172a;
+}
+
+html.light .btn-subtle:hover {
+  background: rgba(0, 0, 0, 0.08);
 }
 
 html.light .titlebar-status-pill {
   background: rgba(0, 0, 0, 0.05);
-  color: var(--text-secondary);
+  color: #475569;
 }
 
 html.light .theme-toggle-btn {
   background: rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  color: var(--text-primary);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #0f172a;
 }
 
 html.light .theme-toggle-btn:hover {
   background: rgba(0, 0, 0, 0.1);
 }
 
+html.light .win-btn {
+  color: #475569;
+}
+
 html.light .win-btn:hover {
   background: rgba(0, 0, 0, 0.06);
-  color: var(--text-primary);
+  color: #0f172a;
 }
 
 html.light .win-btn.win-close:hover {

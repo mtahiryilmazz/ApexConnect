@@ -24,6 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAddressBook();
   loadFileList();
   initDropZone();
+  startNetworkScan(true);
+
+  // Auto-scan periodically for active QuickSupport nodes and SOS alerts
+  setInterval(() => {
+    if (currentTab === 'network-discovery' || currentTab === 'quick-connect') {
+      startNetworkScan(true);
+    }
+  }, 3000);
 });
 
 // WinUI 3 Navigation Tab Switcher
@@ -40,6 +48,8 @@ function switchNavTab(tabId) {
 
   if (tabId === 'files-tab') {
     loadFileList();
+  } else if (tabId === 'network-discovery') {
+    startNetworkScan();
   }
 }
 
@@ -933,4 +943,82 @@ function saveRecordedSession() {
 
   alert(`Oturum videosu (${(blob.size / (1024 * 1024)).toFixed(2)} MB) başarıyla kaydedildi:\n${fileName}`);
 }
+
+// ==================== NETWORK DISCOVERY & SOS RADAR ====================
+async function startNetworkScan(silent = false) {
+  const btn = document.getElementById('btn-scan');
+  const tbody = document.getElementById('scan-results-body');
+  if (!silent && btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Taranıyor...';
+  }
+
+  try {
+    const res = await fetch('/api/scan');
+    if (!res.ok) throw new Error('Ağ tarama hatası');
+    const data = await res.json();
+    const devices = data.devices || [];
+
+    if (!tbody) return;
+
+    if (devices.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="table-empty">
+            Ağda aktif başka bir ApexConnect veya QuickSupport cihazı bulunamadı.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = devices.map(dev => {
+      const isSos = dev.is_sos || (dev.service_type && dev.service_type.includes('SOS'));
+      const badgeClass = isSos ? 'badge-offline' : 'badge-success';
+      const badgeText = isSos ? '🚨 SOS / YARDIM BEKLİYOR' : '🟢 Aktif';
+      const formattedId = dev.device_id ? formatApexId(dev.device_id) : '—';
+      const userDisplay = dev.user_name ? ` (${escapeHtml(dev.user_name)})` : '';
+      const connectTarget = dev.device_id || `${dev.ip}:${dev.port}`;
+
+      return `
+        <tr style="${isSos ? 'background: rgba(239, 68, 68, 0.08);' : ''}">
+          <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+          <td><strong>${escapeHtml(dev.hostname)}</strong>${userDisplay}</td>
+          <td><code>${dev.ip}:${dev.port}</code></td>
+          <td><span class="badge badge-tag" style="font-family:monospace;font-size:0.85rem;">${formattedId}</span></td>
+          <td>${escapeHtml(dev.service_type)}</td>
+          <td>
+            <button class="btn btn-fluent-primary btn-xs" onclick="quickConnectTo('${connectTarget}')">
+              ⚡ Bağlan
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Network scan failed:', err);
+    if (!silent && tbody) {
+      tbody.innerHTML = `<tr><td colspan="6" class="table-empty" style="color:#ef4444;">Tarama sırasında hata oluştu.</td></tr>`;
+    }
+  } finally {
+    if (!silent && btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Ağı Tara`;
+    }
+  }
+}
+
+function quickConnectTo(target) {
+  switchNavTab('quick-connect');
+  const input = document.getElementById('target-input');
+  if (input) {
+    input.value = target;
+    input.focus();
+  }
+  const pinInput = document.getElementById('pin-input');
+  if (pinInput) {
+    pinInput.focus();
+  }
+}
+
 

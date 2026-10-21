@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     ApexConnect Kurumsal Dağıtım Paketi Oluşturucu
 .DESCRIPTION
@@ -79,8 +79,8 @@ GitHub: https://github.com/mtahiryilmazz/ApexConnect
 "@
 
 $kullanimPath = Join-Path $DistDir "KULLANIM_KILAVUZU.txt"
-$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-[System.IO.File]::WriteAllText($kullanimPath, $ReadmeContent, $utf8NoBom)
+$utf8WithBom = New-Object System.Text.UTF8Encoding($true)
+[System.IO.File]::WriteAllText($kullanimPath, $ReadmeContent, $utf8WithBom)
 
 # 4. Tek Arşiv ZIP Paketi Oluşturma
 $ZipPath = Join-Path $DistDir "ApexConnect-v2.0.0-Windows-x64.zip"

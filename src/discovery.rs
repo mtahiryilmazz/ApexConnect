@@ -72,12 +72,14 @@ impl DiscoveryEngine {
             };
 
             let json = serde_json::to_string(&packet).unwrap_or_default();
-            let target: SocketAddr = "255.255.255.255:52899".parse().unwrap();
+            let target_broadcast: SocketAddr = "255.255.255.255:52899".parse().unwrap();
+            let target_local: SocketAddr = "127.0.0.1:52899".parse().unwrap();
 
             loop {
-                let _ = socket.send_to(json.as_bytes(), target).await;
-                // SOS beacons send more frequently (every 3 seconds) for instant discovery
-                let interval = if is_sos { 3 } else { 5 };
+                let _ = socket.send_to(json.as_bytes(), target_broadcast).await;
+                let _ = socket.send_to(json.as_bytes(), target_local).await;
+                // SOS beacons send more frequently (every 2 seconds) for instant discovery
+                let interval = if is_sos { 2 } else { 4 };
                 tokio::time::sleep(Duration::from_secs(interval)).await;
             }
         });
@@ -106,6 +108,11 @@ impl DiscoveryEngine {
                                 "ApexConnect IT Düğümü".to_string()
                             };
 
+                            let now = std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .unwrap_or_default()
+                                .as_secs();
+
                             let mut disc = state.discovered.lock().unwrap();
                             disc.insert(
                                 format!("{}:{}", ip, pkt.port),
@@ -119,6 +126,7 @@ impl DiscoveryEngine {
                                     is_sos: pkt.is_sos || pkt.magic == "APEX_SOS_V1",
                                     user_name: pkt.user_name,
                                     status_note: pkt.status_note,
+                                    last_seen: now,
                                 },
                             );
                         }
@@ -132,9 +140,17 @@ impl DiscoveryEngine {
     pub async fn scan_subnet(local_ip_str: &str, state: SharedState) -> Vec<DiscoveredDevice> {
         let mut results = Vec::new();
 
-        // Include any UDP-discovered nodes first (especially active SOS beacons)
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+
+        // Include any recently discovered active nodes (clean up stale nodes older than 12s)
         {
-            let disc = state.discovered.lock().unwrap();
+            let mut disc = state.discovered.lock().unwrap();
+            disc.retain(|_, dev| {
+                dev.last_seen == 0 || (now.saturating_sub(dev.last_seen) < 12)
+            });
             for (_, dev) in disc.iter() {
                 results.push(dev.clone());
             }
@@ -174,6 +190,7 @@ impl DiscoveryEngine {
                         is_sos: false,
                         user_name: None,
                         status_note: None,
+                        last_seen: 0,
                     });
                 }
 
