@@ -5,7 +5,7 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
     MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_WHEEL, MOUSEINPUT, VIRTUAL_KEY, VK_CONTROL, VK_DELETE,
     VK_MENU,
 };
-use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
+use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SetCursorPos, SM_CXSCREEN, SM_CYSCREEN};
 
 #[allow(dead_code)]
 pub struct InputSimulator {
@@ -25,26 +25,34 @@ impl InputSimulator {
         }
     }
 
-    pub fn mouse_move(&self, norm_x: f64, norm_y: f64) {
-        let abs_x = (norm_x.clamp(0.0, 1.0) * 65535.0) as i32;
-        let abs_y = (norm_y.clamp(0.0, 1.0) * 65535.0) as i32;
-
+    /// Direct hardware cursor positioning for ultra-low-latency mouse moves (unbuffered fast-path)
+    pub fn mouse_move_fast(&self, norm_x: f64, norm_y: f64) {
+        let px = (norm_x.clamp(0.0, 1.0) * self.screen_width as f64) as i32;
+        let py = (norm_y.clamp(0.0, 1.0) * self.screen_height as f64) as i32;
         unsafe {
-            let input = INPUT {
-                r#type: INPUT_MOUSE,
-                Anonymous: INPUT_0 {
-                    mi: MOUSEINPUT {
-                        dx: abs_x,
-                        dy: abs_y,
-                        mouseData: 0,
-                        dwFlags: MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
-                        time: 0,
-                        dwExtraInfo: 0,
-                    },
-                },
-            };
-            SendInput(&[input], std::mem::size_of::<INPUT>() as i32);
+            let _ = SetCursorPos(px, py);
         }
+    }
+
+    /// Native Windows CF_HDROP clipboard file integration for instant Explorer paste
+    pub fn set_clipboard_files(paths: &[std::path::PathBuf]) {
+        if paths.is_empty() {
+            return;
+        }
+        let formatted_paths = paths
+            .iter()
+            .map(|p| format!("'{}'", p.to_string_lossy().replace('\'', "''")))
+            .collect::<Vec<_>>()
+            .join(",");
+
+        let ps_cmd = format!("Set-Clipboard -Path @({})", formatted_paths);
+        let _ = std::process::Command::new("powershell")
+            .args(["-NoProfile", "-WindowStyle", "Hidden", "-Command", &ps_cmd])
+            .spawn();
+    }
+
+    pub fn mouse_move(&self, norm_x: f64, norm_y: f64) {
+        self.mouse_move_fast(norm_x, norm_y);
     }
 
     pub fn mouse_down(&self, button: u8) {

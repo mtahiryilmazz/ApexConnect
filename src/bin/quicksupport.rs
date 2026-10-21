@@ -1,9 +1,12 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::Arc;
 use rand::Rng;
 use tokio::net::TcpListener;
 
 use apex_connect::discovery::DiscoveryEngine;
+use apex_connect::gui::GuiLauncher;
 use apex_connect::server::create_router;
 use apex_connect::state::AppState;
 
@@ -101,14 +104,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("  [Bilgi] Bilgi İşlem personeli aynı ağdaysa bu cihazı doğrudan görebilir.");
     println!("  [Bilgi] Destek penceresi açılıyor. Çıkmak için pencereyi kapatın.\n");
 
-    // Automatically open mini QuickSupport UI
-    let local_url = format!("http://localhost:{}", selected_port);
-    tokio::spawn(async move {
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
-        let _ = std::process::Command::new("cmd")
-            .args(["/C", "start", &local_url])
-            .spawn();
-    });
+    // Automatically open mini QuickSupport Fluent UI window without CMD
+    let local_url = format!("http://localhost:{}/qs", selected_port);
+    GuiLauncher::launch(&local_url, "ApexQS", 440, 680, "QuickSupport");
 
     let app = create_router(state);
     axum::serve(listener, app).await?;

@@ -39,6 +39,7 @@ pub struct WsAuthQuery {
 pub fn create_router(state: SharedState) -> Router {
     Router::new()
         .route("/", get(index_handler))
+        .route("/qs", get(qs_handler))
         .route("/static/*file", get(static_handler))
         .route("/api/info", get(get_info_handler))
         .route("/api/scan", get(get_scan_handler))
@@ -120,6 +121,13 @@ async fn index_handler() -> impl IntoResponse {
     match StaticAssets::get("index.html") {
         Some(content) => Html(content.data).into_response(),
         None => (StatusCode::NOT_FOUND, "index.html not found").into_response(),
+    }
+}
+
+async fn qs_handler() -> impl IntoResponse {
+    match StaticAssets::get("qs.html") {
+        Some(content) => Html(content.data).into_response(),
+        None => (StatusCode::NOT_FOUND, "qs.html not found").into_response(),
     }
 }
 

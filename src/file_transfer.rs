@@ -102,12 +102,17 @@ impl FileTransferManager {
             .remove(file_id)
             .ok_or_else(|| "Upload session not found".to_string())?;
 
+        let path = upload.file_path.clone();
         let file_name = upload
             .file_path
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("file")
             .to_string();
+
+        // Native Windows CF_HDROP clipboard integration:
+        // Allows user to immediately Ctrl+V the transferred file anywhere in File Explorer!
+        crate::input::InputSimulator::set_clipboard_files(&[path]);
 
         Ok(file_name)
     }

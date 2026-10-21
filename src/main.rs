@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::Arc;
 use rand::Rng;
@@ -5,6 +7,7 @@ use tokio::net::TcpListener;
 
 use apex_connect::address_book::AddressBookManager;
 use apex_connect::discovery::DiscoveryEngine;
+use apex_connect::gui::GuiLauncher;
 use apex_connect::server::create_router;
 use apex_connect::state::AppState;
 
@@ -105,14 +108,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("  [Bilgi] Web yönetim paneli tarayıcınızda otomatik başlatılıyor...");
     println!("  [Bilgi] Çıkış yapmak için pencereyi kapatın veya Ctrl+C tuşlayın.\n");
 
-    // Automatically open browser on startup
+    // Automatically open standalone Fluent window on startup without CMD
     let local_url = format!("http://localhost:{}", selected_port);
-    tokio::spawn(async move {
-        tokio::time::sleep(std::time::Duration::from_millis(600)).await;
-        let _ = std::process::Command::new("cmd")
-            .args(["/C", "start", &local_url])
-            .spawn();
-    });
+    GuiLauncher::launch(&local_url, "ApexConnect", 1260, 820, "Admin");
 
     let app = create_router(state);
     axum::serve(listener, app).await?;

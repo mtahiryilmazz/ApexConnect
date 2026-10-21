@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ApexConnect Hızlı Destek</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-acrylic: rgba(26, 31, 44, 0.92);
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-blue: #0078d4;
+      --accent-hover: #1084d8;
+      --accent-green: #107c41;
+      --text-main: #f3f3f3;
+      --text-muted: #9aa0a6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, sans-serif;
+      background: #0f121a;
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Windows 11 Custom Titlebar */
+    .titlebar {
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      background: rgba(18, 22, 33, 0.95);
+      border-bottom: 1px solid var(--card-border);
+      -webkit-app-region: drag;
+    }
+
+    .titlebar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .titlebar-logo {
+      width: 18px;
+      height: 18px;
+      color: #60cdff;
+    }
+
+    .titlebar-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      color: #e0e6ed;
+    }
+
+    .titlebar-controls {
+      display: flex;
+      -webkit-app-region: no-drag;
+    }
+
+    .win-btn {
+      width: 38px;
+      height: 38px;
+      border: none;
+      background: transparent;
+      color: #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .win-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .win-btn.close:hover {
+      background: #e81123;
+      color: #fff;
+    }
+
+    /* Content Area */
+    .container {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      background: radial-gradient(circle at top right, rgba(0, 120, 212, 0.12), transparent 70%),
+                  radial-gradient(circle at bottom left, rgba(16, 124, 65, 0.08), transparent 70%);
+    }
+
+    /* Status Banner */
+    .status-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      backdrop-filter: blur(20px);
+    }
+
+    .pulse-ring {
+      width: 12px;
+      height: 12px;
+      background: #4cc2ff;
+      border-radius: 50%;
+      position: relative;
+    }
+
+    .pulse-ring::after {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      right: -4px;
+      bottom: -4px;
+      border: 2px solid #4cc2ff;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.6); opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    .status-info h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .status-info p {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Main ID Card */
+    .id-card {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    .id-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .id-display {
+      font-family: 'Segoe UI', monospace;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #60cdff;
+      text-shadow: 0 0 16px rgba(96, 205, 255, 0.35);
+      margin-bottom: 12px;
+    }
+
+    .id-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent-blue);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 0 12px rgba(0, 120, 212, 0.5);
+    }
+
+    /* PIN Box */
+    .pin-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .pin-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .pin-val {
+      font-family: monospace;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #ffd43b;
+      letter-spacing: 2px;
+    }
+
+    /* Footer Info */
+    .footer-info {
+      margin-top: auto;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid var(--card-border);
+      padding-top: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Windows Titlebar -->
+  <header class="titlebar">
+    <div class="titlebar-left">
+      <svg class="titlebar-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+      </svg>
+      <span class="titlebar-title">ApexConnect Hızlı Destek</span>
+    </div>
+    <div class="titlebar-controls">
+      <button class="win-btn" onclick="window.close()">
+        <svg width="10" height="1" viewBox="0 0 10 1"><path fill="currentColor" d="M0 0h10v1H0z"/></svg>
+      </button>
+      <button class="win-btn close" onclick="window.close()">
+        <svg width="10" height="10" viewBox="0 0 10 10"><path fill="currentColor" d="M0 0l5 5-5 5 1 1 5-5 5 5 1-1-5-5 5-5-1-1-5 5-5-5-1 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Container -->
+  <div class="container">
+    <div class="status-card">
+      <div class="pulse-ring"></div>
+      <div class="status-info">
+        <h4>Destek Ağına Bağlı</h4>
+        <p>Bilgi İşlem bu bilgisayarı otomatik görebilir</p>
+      </div>
+    </div>
+
+    <!-- ID Card -->
+    <div class="id-card">
+      <div class="id-label">Bu Cihazın Bağlantı Kimliği</div>
+      <div class="id-display" id="device-id">Yükleniyor...</div>
+      <div class="id-actions">
+        <button class="btn btn-primary" onclick="copyId()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          <span id="copy-text">Kimliği Kopyala</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- PIN Box -->
+    <div class="pin-box">
+      <span class="pin-label">Tek Kullanımlık PIN</span>
+      <span class="pin-val" id="pin-val">----</span>
+    </div>
+
+    <!-- Device Details -->
+    <div class="footer-info">
+      <span id="hostname-display">Cihaz: ...</span>
+      <span id="ip-display">IP: ...</span>
+    </div>
+  </div>
+
+  <script>
+    async function loadInfo() {
+      try {
+        const res = await fetch('/api/info');
+        const data = await res.json();
+        
+        // Format ID with spaces (e.g. 123 456 789)
+        const id = data.device_id || '---';
+        const formatted = id.length === 9 ? `${id.slice(0,3)} ${id.slice(3,6)} ${id.slice(6,9)}` : id;
+        
+        document.getElementById('device-id').innerText = formatted;
+        document.getElementById('pin-val').innerText = data.pin || '1234';
+        document.getElementById('hostname-display').innerText = 'Cihaz: ' + (data.hostname || 'PC');
+        document.getElementById('ip-display').innerText = 'Port: ' + (data.port || 8080);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function copyId() {
+      const rawText = document.getElementById('device-id').innerText.replace(/\s+/g, '');
+      navigator.clipboard.writeText(rawText);
+      const span = document.getElementById('copy-text');
+      span.innerText = 'Kopyalandı!';
+      setTimeout(() => span.innerText = 'Kimliği Kopyala', 2000);
+    }
+
+    loadInfo();
+    setInterval(loadInfo, 5000);
+  </script>
+</body>
+</html>

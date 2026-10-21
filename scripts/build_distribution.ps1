@@ -68,7 +68,23 @@ ApexConnect Kurumsal Uzak Masaüstü Dağıtım Paketi (v2.0.0)
 GitHub: https://github.com/mtahiryilmazz/ApexConnect
 "@
 
-Set-Content -Path (Join-Path $DistDir "KULLANIM_KILAVUZU.txt") -Value $ReadmeContent -Encoding UTF8
+$kullanimPath = Join-Path $DistDir "KULLANIM_KILAVUZU.txt"
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($kullanimPath, $ReadmeContent, $utf8NoBom)
 
-Write-Host "`n✅ Dagitim paketleri hazirlandi: $DistDir" -ForegroundColor Green
+# 4. Tek Arşiv ZIP Paketi Oluşturma
+$ZipPath = Join-Path $DistDir "ApexConnect-v2.0.0-Windows-x64.zip"
+if (Test-Path $ZipPath) {
+    Remove-Item -Path $ZipPath -Force
+}
+$ItemsToZip = @(
+    (Join-Path $DistDir "apex_connect.exe"),
+    (Join-Path $DistDir "apex_qs.exe"),
+    (Join-Path $DistDir "apex_rendezvous.exe"),
+    (Join-Path $DistDir "apex_service.exe"),
+    (Join-Path $DistDir "KULLANIM_KILAVUZU.txt")
+)
+Compress-Archive -Path $ItemsToZip -DestinationPath $ZipPath -Force
+
+Write-Host "`n✅ Dagitim paketleri ve tek ZIP arsivi hazirlandi: $DistDir" -ForegroundColor Green
 Get-ChildItem -Path $DistDir | Select-Object Name, Length, LastWriteTime | Format-Table -AutoSize

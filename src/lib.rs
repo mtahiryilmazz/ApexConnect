@@ -11,3 +11,4 @@ pub mod audio;
 pub mod policy;
 pub mod audit;
 pub mod service;
+pub mod gui;

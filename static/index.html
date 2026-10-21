@@ -46,6 +46,14 @@
       </div>
     </header>
 
+    <!-- Kapatılamaz Yüzen Gösterge (Floating Overlay Bar) -->
+    <div id="apex-floating-overlay" class="floating-overlay-bar hidden">
+      <div class="overlay-pulse"></div>
+      <span class="overlay-text">🔒 Uzaktan Yönetim Aktif: <strong id="overlay-operator">Bilgi İşlem Masası</strong></span>
+      <span class="overlay-badge" id="overlay-ping">16 ms</span>
+      <button class="overlay-btn-stop" onclick="closeLiveSession()" title="Bağlantıyı Kes">Oturumu Sonlandır</button>
+    </div>
+
     <!-- Main Navigation & Workspace Layout -->
     <div class="fluent-workspace">
       

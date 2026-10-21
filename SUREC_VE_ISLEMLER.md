@@ -61,3 +61,14 @@ Bu belge, endüstri standardı modern uzak masaüstü ve P2P ağ protokollerinin
 ### [İşlem 08 - EKIP-SEC & EKIP-OPS] Kurumsal Politika (RBAC), Denetim Logları (Audit) ve v2.0.0 Paketi
 * **Tarih:** 21 Ekim 2026
 * **Kapsam:** `src/policy.rs` (Rol Tabanlı Yetki: `ViewOnly`, `FullControl`, `FileManager`, `Administrator`) ve `src/audit.rs` (`AuditLogger` kalıcı JSON denetim izi) motorları kodlandı. `Cargo.toml` sürümü `v2.0.0`'a yükseltildi, `scripts/build_distribution.ps1` dört ikiliyi birden (`apex_connect`, `apex_qs`, `apex_rendezvous`, `apex_service`) otomatik derleyip paketleyecek şekilde tamamlandı.
+
+### [İşlem 09 - TÜM EKİPLER] Fluent GUI Bağımsız Pencere, Yüzen Gösterge, Hızlı Fare & CF_HDROP Pano
+* **Tarih:** 21 Ekim 2026
+* **Kapsam:**
+  1. **CMD Konsolunun Kaldırılması:** `main.rs` ve `quicksupport.rs` dosyalarına `#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]` eklenerek siyah konsol penceresi tamamen kapatıldı.
+  2. **Bağımsız Fluent Masaüstü Penceresi (`src/gui.rs`):** Tarayıcı çerçeveleri, sekmeler ve URL çubuğu olmaksızın yerel WinUI 3 Fluent penceresi olarak açılan `GuiLauncher` geliştirildi.
+  3. **Özel Mini QuickSupport Arayüzü (`static/qs.html`):** Son kullanıcılar için 440x680 px boyutunda kompakt, 9 haneli Apex ID ve PIN göstergeli özel hızlı destek arayüzü kodlandı.
+  4. **Kapatılamaz Yüzen Gösterge (`floating-overlay-bar`):** Uzak oturum başladığında izlenen bilgisayarda her zaman en üstte kalan şeffaf acrylic durum göstergesi eklendi.
+  5. **Ultra Düşük Gecikmeli Fare Akışı:** `src/input.rs` içerisine doğrudan donanım seviyesinde `SetCursorPos` hızlı yolu (`mouse_move_fast`) entegre edildi.
+  6. **Win32 CF_HDROP Pano Entegrasyonu:** Uzak bilgisayardan dosya aktarımı tamamlandığında yerel Windows Gezgini'ne doğrudan `Ctrl+V` ile yapıştırılabilmesi sağlandı (`InputSimulator::set_clipboard_files`).
+  7. **Tek Arşiv ZIP Dağıtımı:** `dist/ApexConnect-v2.0.0-Windows-x64.zip` tek tıkla indirilebilir 3.5 MB kurumsal paket haline getirildi.
