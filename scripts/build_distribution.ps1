@@ -17,7 +17,7 @@ Write-Host "==========================================================" -Foregro
 
 # 1. Release derlemeleri
 Write-Host "`nPaketler optimize ediliyor ve derleniyor..." -ForegroundColor Cyan
-& cargo build --release --bin apex_connect --bin apex_qs
+& cargo build --release --bin apex_connect --bin apex_qs --bin apex_rendezvous
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Release derlemesi basarisiz oldu!"
 }
@@ -36,9 +36,13 @@ $QsSrc = Join-Path $RepoRoot "target\release\apex_qs.exe"
 $QsDst = Join-Path $DistDir "apex_qs.exe"
 Copy-Item -Path $QsSrc -Destination $QsDst -Force
 
+$RendezvousSrc = Join-Path $RepoRoot "target\release\apex_rendezvous.exe"
+$RendezvousDst = Join-Path $DistDir "apex_rendezvous.exe"
+Copy-Item -Path $RendezvousSrc -Destination $RendezvousDst -Force
+
 # 3. Bilgilendirme Notu
 $ReadmeContent = @"
-ApexConnect Kurumsal Uzak Masaüstü Dağıtım Paketi (v1.0.0)
+ApexConnect Kurumsal Uzak Masaüstü Dağıtım Paketi (v1.2.0)
 ==========================================================
 
 1. apex_connect.exe:
@@ -48,6 +52,10 @@ ApexConnect Kurumsal Uzak Masaüstü Dağıtım Paketi (v1.0.0)
 2. apex_qs.exe:
    - Şirket çalışanlarına dağıtılacak taşınabilir (portable) Mini Hızlı Destek aracı.
    - Kurulum gerektirmez, açıldığı anda 9 haneli Apex ID üretir ve IT masasına otomatik SOS anonsu gönderir.
+
+3. apex_rendezvous.exe:
+   - Şirket sunucusunda veya bulutta çalıştırılabilen bağımsız WAN Sinyalleşme ve Relay Köprüsü.
+   - İnternet üzerindeki NAT ve CGNAT arkasındaki istemcileri birbirine bağlar ve P2P eşleştirme sağlar.
 
 GitHub: https://github.com/mtahiryilmazz/ApexConnect
 "@

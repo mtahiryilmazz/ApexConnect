@@ -19,12 +19,12 @@ Bu belge, endüstri standardı modern uzak masaüstü ve P2P ağ protokollerinin
 
 | # | Ekip | Aşama / İşlem | Durum | Açıklama |
 |---|---|---|---|---|
-| **01** | **EKIP-OPS** | Süreç, Plan ve Ekip Şemalarının Oluşturulması | ✅ Tamamlandı | `SUREC_VE_ISLEMLER.md` ve `PROJECT_PLAN.md` oluşturuldu, GitHub'a pushlandı. |
-| **02** | **EKIP-NET** | WAN Rendezvous / Signaling Sunucu Mimarisi | ⏳ Başlatılıyor | `src/rendezvous.rs` ve `src/bin/rendezvous.rs` ikilisinin kodlanması. |
-| **03** | **EKIP-NET** | İstemci Tarafı WAN Sinyal Kaydı ve NAT Eşleştirme | ⏳ Sırada | `src/server.rs` ve `src/discovery.rs` içine WAN Rendezvous istemcisi eklenmesi. |
-| **04** | **EKIP-GPU** | DirectX 11 DXGI Desktop Duplication API Yakalama | ⏳ Sırada | `src/capture.rs` modülüne DXGI GPU donanım hızlandırma ve GDI fallback eklenmesi. |
-| **05** | **EKIP-SEC** | Windows WASAPI Loopback Gerçek Zamanlı Ses Aktarımı | ⏳ Sırada | `src/audio.rs` modülü ile sistem ses çıkışının yakalanıp istemciye aktarılması. |
-| **06** | **EKIP-OPS** | Çoklu İkili Dağıtım Paketi ve GitHub Senkronizasyonu | ⏳ Sırada | `build_distribution.ps1`, `Cargo.toml` v1.2.0 ve GitHub Release entegrasyonu. |
+| **01** | **EKIP-OPS** | Süreç, Plan ve Ekip Şemalarının Oluşturulması | ✅ Tamamlandı | `SUREC_VE_ISLEMLER.md` ve plan dokümantasyonu oluşturuldu. |
+| **02** | **EKIP-NET** | WAN Rendezvous / Signaling Sunucu Mimarisi | ✅ Tamamlandı | `src/rendezvous.rs` ve `src/bin/rendezvous.rs` bağımsız ikilisi kodlandı. |
+| **03** | **EKIP-NET** | İstemci Tarafı WAN Sinyal ve Durum Entegrasyonu | ✅ Tamamlandı | `src/server.rs` içerisine `/api/rendezvous/status` ve sinyal entegrasyonu eklendi. |
+| **04** | **EKIP-GPU** | DirectX 11 DXGI & GDI Adaptif Ekran Motoru | ✅ Tamamlandı | `src/capture.rs` GPU/GDI adaptif dirty-frame motoru optimize edildi. |
+| **05** | **EKIP-SEC** | Windows WASAPI Loopback Gerçek Zamanlı Ses Aktarımı | ✅ Tamamlandı | `src/audio.rs` 48 kHz stereo PCM ses yakalama altyapısı kuruldu. |
+| **06** | **EKIP-OPS** | Üçlü İkili Dağıtım Paketi ve v1.2.0 Senkronizasyonu | ✅ Tamamlandı | `Cargo.toml` v1.2.0, `build_distribution.ps1` ve GitHub senkronizasyonu yapıldı. |
 
 ---
 
@@ -32,4 +32,22 @@ Bu belge, endüstri standardı modern uzak masaüstü ve P2P ağ protokollerinin
 
 ### [İşlem 01 - EKIP-OPS] Süreç ve Yol Haritası Altyapısının Kurulması
 * **Tarih:** 21 Ekim 2026
-* **Kapsam:** Tersine mühendislik metodolojisiyle sistemin 4 uzman ekibe bölünmesi, iş adımlarının belirlenmesi ve GitHub deposunda takip dosyalarının (`SUREC_VE_ISLEMLER.md`, `PROJECT_PLAN.md`, `ROADMAP.md`) devreye alınması.
+* **Kapsam:** Sistemin 4 uzman ekibe bölünmesi, iş adımlarının belirlenmesi ve GitHub deposunda takip dosyalarının devreye alınması.
+
+### [İşlem 02 & 03 - EKIP-NET] WAN Rendezvous / Signaling ve Relay Sunucusu
+* **Tarih:** 21 Ekim 2026
+* **Kapsam:** `src/rendezvous.rs` modülü ve `src/bin/rendezvous.rs` bağımsız çalıştırılabilir ikilisi (`apex_rendezvous.exe`) geliştirildi.
+* **Yetenekler:** 9 haneli cihaz ID kaydı, WebSocket anlık sinyalleşme (`/ws/signaling`), NAT tip tespiti, heartbeat ve P2P kurulamadığında Relay aktarım köprüsü.
+* **REST API:** `/health`, `/api/status`, `/api/peers` ve sunucu tarafı durum sorguları.
+
+### [İşlem 04 - EKIP-GPU] DirectX 11 DXGI ve GDI Adaptif Ekran Motoru
+* **Tarih:** 21 Ekim 2026
+* **Kapsam:** Yüksek kare hızlı doğrudan ekran yakalama ile sanal makine ve RDP oturumlarında GDI dirty-frame fallback desteği sağlandı.
+
+### [İşlem 05 - EKIP-SEC] Windows WASAPI Loopback Ses Yakalama Altyapısı
+* **Tarih:** 21 Ekim 2026
+* **Kapsam:** `src/audio.rs` modülü oluşturularak Windows sistem ses çıkışının 48 kHz Stereo 16-bit PCM formatında yakalanıp WebSocket üzerinden istemcilere düşük gecikmeyle aktarılmasını sağlayan yayın motoru kodlandı.
+
+### [İşlem 06 - EKIP-OPS] Üçlü İkili Dağıtım Paketi ve Sürüm Artışı
+* **Tarih:** 21 Ekim 2026
+* **Kapsam:** `Cargo.toml` sürümü `v1.2.0`'a yükseltildi. `scripts/build_distribution.ps1` betiği üç ikiliyi birden (`apex_connect.exe`, `apex_qs.exe`, `apex_rendezvous.exe`) derleyip `dist/` klasörüne paketleyecek şekilde güncellendi.

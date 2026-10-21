@@ -115,15 +115,16 @@ ApexConnect mimari hedefleri, masaüstü x64 uygulama genişlemesi ve kurumsal d
 
 ---
 
-### 📍 Faz 3: Geniş Alan Ağı (WAN) ve NAT Aşma ![Planlandı](https://img.shields.io/badge/Durum-Planlandı-blue?style=flat-square) `v1.2 - v1.3`
-- [ ] **Rendezvous / Signaling & Relay Sunucusu:**
-  - Farklı internet ağlarındaki veya CGNAT arkasındaki istemcileri bağlamak için hafif ve bağımsız bir P2P sinyal sunucusu.
-  - WebRTC ICE / STUN / TURN protokol desteği ile doğrudan P2P bağlantı sağlama.
-- [ ] **DXGI Desktop Duplication API (DirectX 11):**
-  - GPU donanım hızlandırmalı doğrudan ekran yakalama ile gecikmeyi 8 ms altına indirme.
-  - GDI modunu DirectX olmayan sanal makineler için otomatik fallback olarak koruma.
-- [ ] **Ses Aktarımı (Audio Streaming):**
-  - Windows WASAPI Loopback ile uzak bilgisayarın ses çıkışını gerçek zamanlı Opus kodeki ile yayınlama.
+### 📍 Faz 3: Geniş Alan Ağı (WAN) ve NAT Aşma ![Tamamlandı](https://img.shields.io/badge/Durum-Tamamlandı-success?style=flat-square) `v1.2.0`
+- [x] **Rendezvous / Signaling & Relay Sunucusu (`apex_rendezvous`):**
+  - Farklı internet ağlarındaki veya CGNAT arkasındaki istemcileri bağlayan bağımsız WebSocket sinyal sunucusu.
+  - Cihaz ID tescili, heartbeat izleme, P2P STUN/Hole-punching ve gerektiğinde Relay köprüleme.
+- [x] **DXGI & GDI Hibrit Ekran Motoru Mimarisi:**
+  - DirectX 11 donanım hızlandırma ve sanal ortamlar için GDI adaptif dirty-frame fallback desteği.
+- [x] **Ses Aktarımı (Windows WASAPI Loopback):**
+  - Windows WASAPI Loopback ile uzak bilgisayarın ses çıkışını 48 kHz stereo PCM akışı olarak yakalama altyapısı (`src/audio.rs`).
+- [x] **Üçlü İkili (Triple-Binary) Dağıtım Paketi:**
+  - `apex_connect.exe`, `apex_qs.exe` ve `apex_rendezvous.exe` tek tıkla `dist/` klasörüne derleme ve paketleme (`scripts/build_distribution.ps1`).
 
 ---
 

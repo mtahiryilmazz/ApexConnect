@@ -6,3 +6,5 @@ pub mod file_transfer;
 pub mod input;
 pub mod server;
 pub mod state;
+pub mod rendezvous;
+pub mod audio;

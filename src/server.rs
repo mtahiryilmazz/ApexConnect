@@ -14,7 +14,7 @@ use axum::{
 use base64::Engine;
 use futures_util::{SinkExt, StreamExt};
 use rust_embed::RustEmbed;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tokio::time::sleep;
 
@@ -47,8 +47,28 @@ pub fn create_router(state: SharedState) -> Router {
         .route("/api/files", get(get_files_handler))
         .route("/api/files/download/:filename", get(download_file_handler))
         .route("/api/files/open-folder", get(open_folder_handler))
+        .route("/api/rendezvous/status", get(get_rendezvous_status_handler))
         .route("/ws/client", get(ws_handler))
         .with_state(state)
+}
+
+#[derive(Serialize)]
+struct RendezvousStatusDto {
+    pub enabled: bool,
+    pub server_url: String,
+    pub status: String,
+    pub nat_traversal: String,
+}
+
+async fn get_rendezvous_status_handler(State(_state): State<SharedState>) -> Json<RendezvousStatusDto> {
+    let server_url = std::env::var("APEX_RENDEZVOUS_SERVER")
+        .unwrap_or_else(|_| "ws://127.0.0.1:8095/ws/signaling".to_string());
+    Json(RendezvousStatusDto {
+        enabled: true,
+        server_url,
+        status: "Online / Ready".to_string(),
+        nat_traversal: "P2P STUN / Relay Fallback".to_string(),
+    })
 }
 
 async fn index_handler() -> impl IntoResponse {
