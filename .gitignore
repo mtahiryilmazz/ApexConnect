@@ -1,4 +1,7 @@
 /target
+/dist
+KOZDESK_MIMARI_ANALIZ.md
+
 
 # --- Secrets & Sensitive Data ---
 .env
