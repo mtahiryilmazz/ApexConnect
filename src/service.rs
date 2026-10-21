@@ -3,8 +3,8 @@ use std::process::Command;
 pub struct ServiceManager;
 
 impl ServiceManager {
-    pub const SERVICE_NAME: &'static str = "ApexConnectService";
-    pub const DISPLAY_NAME: &'static str = "ApexConnect Unattended Remote Access Service";
+    pub const SERVICE_NAME: &'static str = "OxiDeskService";
+    pub const DISPLAY_NAME: &'static str = "OxiDesk Unattended Remote Access Service";
 
     /// Install Windows background service via sc.exe
     pub fn install(exe_path: &str) -> Result<String, String> {
@@ -21,7 +21,7 @@ impl ServiceManager {
             .map_err(|e| format!("sc.exe calistirilamadi: {}", e))?;
 
         if output.status.success() {
-            Ok("ApexConnect Windows Hizmeti basariyla kuruldu (Otomatik baslangic modunda).".into())
+            Ok("OxiDesk Windows Hizmeti basariyla kuruldu (Otomatik baslangic modunda).".into())
         } else {
             let stderr = String::from_utf8_lossy(&output.stderr);
             let stdout = String::from_utf8_lossy(&output.stdout);
@@ -39,7 +39,7 @@ impl ServiceManager {
             .map_err(|e| format!("sc.exe calistirilamadi: {}", e))?;
 
         if output.status.success() {
-            Ok("ApexConnect Windows Hizmeti basariyla kaldirildi.".into())
+            Ok("OxiDesk Windows Hizmeti basariyla kaldirildi.".into())
         } else {
             let stdout = String::from_utf8_lossy(&output.stdout);
             Err(format!("Hizmet kaldirilamadi: {}", stdout))
@@ -54,7 +54,7 @@ impl ServiceManager {
             .map_err(|e| format!("sc.exe calistirilamadi: {}", e))?;
 
         if output.status.success() {
-            Ok("ApexConnect Windows Hizmeti baslatildi.".into())
+            Ok("OxiDesk Windows Hizmeti baslatildi.".into())
         } else {
             let stdout = String::from_utf8_lossy(&output.stdout);
             Err(format!("Hizmet baslatilamadi: {}", stdout))
@@ -69,7 +69,7 @@ impl ServiceManager {
             .map_err(|e| format!("sc.exe calistirilamadi: {}", e))?;
 
         if output.status.success() {
-            Ok("ApexConnect Windows Hizmeti durduruldu.".into())
+            Ok("OxiDesk Windows Hizmeti durduruldu.".into())
         } else {
             let stdout = String::from_utf8_lossy(&output.stdout);
             Err(format!("Hizmet durdurulamadi: {}", stdout))

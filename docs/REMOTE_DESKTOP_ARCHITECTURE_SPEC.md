@@ -1,9 +1,9 @@
-# 🌐 Kurumsal Uzak Masaüstü Mimarisi Kapsamlı Analiz ve ApexConnect Entegrasyon Planı
+# 🌐 Kurumsal Uzak Masaüstü Mimarisi Kapsamlı Analiz ve OxiDesk Entegrasyon Planı
 
 **Tarih:** 2026-10-21  
 **Hedef Kapsam:** Windows, macOS, Linux ve Web Platformları  
 **Referans Yaklaşım:** Endüstriyel Standartlar, Sıfır Güven (Zero-Trust) Güvenlik Modeli, Düşük Gecikmeli Medya Boru Hatları  
-**Uygulama:** ApexConnect (Rust Tabanlı Çapraz Platform Uzak Masaüstü Ekosistemi)
+**Uygulama:** OxiDesk (Rust Tabanlı Çapraz Platform Uzak Masaüstü Ekosistemi)
 
 ---
 
@@ -14,7 +14,7 @@
 4. [Girdi Enjeksiyonu ve Çevre Birimi Kontrolü](#4-girdi-enjeksiyonu-ve-çevre-birimi-kontrolü)
 5. [Veri Transferi ve Gelişmiş Özellikler](#5-veri-transferi-ve-gelişmiş-özellikler)
 6. [Ağ Geçişi ve WAN Sinyalleşme Mimarisi](#6-ağ-geçişi-ve-wan-sinyalleşme-mimarisi)
-7. [ApexConnect İçin Adım Adım Uygulama Planı (Implementation Plan)](#7-apexconnect-için-adım-adım-uygulama-planı)
+7. [OxiDesk İçin Adım Adım Uygulama Planı (Implementation Plan)](#7-oxidesk-için-adım-adım-uygulama-planı)
 8. [Doğrulama ve Test Stratejisi](#8-doğrulama-ve-test-stratejisi)
 
 ---
@@ -72,7 +72,7 @@ Uzaktan yönetim yazılımlarında en kritik zafiyet noktası yetkisiz erişim, 
 ### 2.2. Güvenli Masaüstü (Secure Desktop) ve UAC Yönetimi
 | İşletim Sistemi | Güvenlik Duvarı / Kilit Mekanizması | Aşma / Entegrasyon Yöntemi |
 | :--- | :--- | :--- |
-| **Windows** | `Consent.exe` (UAC), `Winlogon` (Ctrl+Alt+Del), ScreenSaver | `NT AUTHORITY\SYSTEM` olarak çalışan Windows Hizmeti (`apex_service`), `WTSQueryUserToken` ve `CreateProcessAsUserW` ile girdi enjeksiyonunu masaüstü değiştirerek (`OpenInputDesktop`) güvenli masaüstüne aktarır. |
+| **Windows** | `Consent.exe` (UAC), `Winlogon` (Ctrl+Alt+Del), ScreenSaver | `NT AUTHORITY\SYSTEM` olarak çalışan Windows Hizmeti (`oxidesk_service`), `WTSQueryUserToken` ve `CreateProcessAsUserW` ile girdi enjeksiyonunu masaüstü değiştirerek (`OpenInputDesktop`) güvenli masaüstüne aktarır. |
 | **macOS** | TCC (Transparency, Consent, and Control), FileVault | `launchd` root daemon'ı, kullanıcı oturumundaki helper sürece IPC ile bağlanır; TCC ekran kaydı ve Accessibility izinleri kullanıcı onayına sunulur. |
 | **Linux** | Polkit (PolicyKit), Wayland Kilit Ekranı (`ext-session-lock-v1`) | `systemd --system` servisi, D-Bus üzerinden yetkilendirme isteklerini arayüze iletir; root yetkisiyle sanal girdiyi `uinput` kernel modülüne basar. |
 
@@ -170,12 +170,12 @@ Bağlantı aniden kesildiğinde veya pencere odağı kaybolduğunda, basılı ka
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Admin as IT Yöneticisi (ApexConnect)
+    actor Admin as IT Yöneticisi (OxiDesk)
     participant Relay as Rendezvous WAN Sunucusu
-    actor Client as Uzak Personel (ApexQuickSupport)
+    actor Client as Uzak Personel (OxiQuickSupport)
 
     Admin->>Relay: WS Register: Admin ID (Ed25519 İmza)
-    Client->>Relay: WS Register: Client ID (9 Haneli Apex ID) + SOS Beacon
+    Client->>Relay: WS Register: Client ID (9 Haneli OxiDesk ID) + SOS Beacon
     Admin->>Relay: Connect Request (Hedef: Client ID)
     Relay->>Client: Gelen Bağlantı Talebi (Admin ID)
     Client->>Relay: Kabul Edildi + Ephemeral X25519 Public Key
@@ -196,14 +196,14 @@ sequenceDiagram
 
 ---
 
-## 7. ApexConnect İçin Adım Adım Uygulama Planı
+## 7. OxiDesk İçin Adım Adım Uygulama Planı
 
-ApexConnect'in mevcut Rust çekirdeğine bu mimariyi entegre etmek için oluşturulan yol haritası:
+OxiDesk'in mevcut Rust çekirdeğine bu mimariyi entegre etmek için oluşturulan yol haritası:
 
 ### Faz 1: Güvenlik ve Sıfır Güven (Zero-Trust) Güçlendirmesi
 - [ ] **Kriptografik El Sıkışma:** `x25519-dalek` ve `chacha20poly1305` kütüphanelerini ekleyerek oturum başında dinamik anahtar türetimini devreye alma.
 - [ ] **Girdi Güvenliği:** `releaseAllKeys` mekanizmasını bağlantı kopma anına ve pencere `WM_KILLFOCUS` olayına bağlama.
-- [ ] **Oturum İzolasyonu:** Windows Hizmeti (`apex_service`) ile `OpenInputDesktop` üzerinden UAC ve Kilit Ekranı geçişini sorunsuz hale getirme.
+- [ ] **Oturum İzolasyonu:** Windows Hizmeti (`oxidesk_service`) ile `OpenInputDesktop` üzerinden UAC ve Kilit Ekranı geçişini sorunsuz hale getirme.
 
 ### Faz 2: Ekran Yakalama ve Performans Optimizasyonu
 - [ ] **DXGI Desktop Duplication Entegrasyonu:** Windows için DirectX 11 GPU yakalama motorunu `src/capture.rs` içine ekleme; sanal makineler için GDI fallback'i koruma.
@@ -216,7 +216,7 @@ ApexConnect'in mevcut Rust çekirdeğine bu mimariyi entegre etmek için oluştu
 - [ ] **Uzaktan Komut Satırı (Remote PowerShell PTY):** Grafik ekrandan bağımsız arka plan sistem onarım terminali açma.
 
 ### Faz 4: Çapraz Platform Genişleme (macOS & Linux)
-- [ ] **Linux Desteği:** `PipeWire` ve `uinput` kullanarak Linux için `apex_connect` ve `apex_qs` derleme hedefleri oluşturma.
+- [ ] **Linux Desteği:** `PipeWire` ve `uinput` kullanarak Linux için `oxidesk` ve `oxidesk_qs` derleme hedefleri oluşturma.
 - [ ] **macOS Desteği:** `ScreenCaptureKit` ve `CoreGraphics` ile macOS taşınabilir hızlı destek istemcisi hazırlama.
 
 ---

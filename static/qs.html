@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ApexConnect Hızlı Destek</title>
+  <title>OxiDesk Hızlı Destek</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -307,7 +307,7 @@
       <svg class="titlebar-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
       </svg>
-      <span class="titlebar-title">ApexConnect Hızlı Destek</span>
+      <span class="titlebar-title">OxiDesk Hızlı Destek</span>
     </div>
     <div class="titlebar-controls" style="display:flex; align-items:center; -webkit-app-region: no-drag;">
       <!-- Tema Değiştirici -->
@@ -493,7 +493,7 @@
 
     // Theme Handling
     function initTheme() {
-      const savedTheme = localStorage.getItem('apex_theme') || 'dark';
+      const savedTheme = localStorage.getItem('oxidesk_theme') || localStorage.getItem('apex_theme') || 'dark';
       applyTheme(savedTheme);
     }
 
@@ -504,13 +504,13 @@
       if (theme === 'light') {
         html.classList.remove('dark');
         html.classList.add('light');
-        localStorage.setItem('apex_theme', 'light');
+        localStorage.setItem('oxidesk_theme', 'light');
         if (sun) sun.style.display = 'none';
         if (moon) moon.style.display = 'block';
       } else {
         html.classList.remove('light');
         html.classList.add('dark');
-        localStorage.setItem('apex_theme', 'dark');
+        localStorage.setItem('oxidesk_theme', 'dark');
         if (sun) sun.style.display = 'block';
         if (moon) moon.style.display = 'none';
       }

@@ -60,7 +60,7 @@ impl DiscoveryEngine {
             };
             let _ = socket.set_broadcast(true);
 
-            let magic = if is_sos { "APEX_SOS_V1" } else { "APEX_DISCOVER_V1" };
+            let magic = if is_sos { "OXIDESK_SOS_V1" } else { "OXIDESK_DISCOVER_V1" };
             let packet = DiscoveryPacket {
                 magic: magic.to_string(),
                 hostname,
@@ -85,7 +85,7 @@ impl DiscoveryEngine {
         });
     }
 
-    /// Listen for UDP broadcasts from other ApexConnect and QuickSupport nodes on LAN
+    /// Listen for UDP broadcasts from other OxiDesk and QuickSupport nodes on LAN
     pub fn start_listener(state: SharedState) {
         tokio::spawn(async move {
             let socket = match UdpSocket::bind(format!("0.0.0.0:{}", DISCOVERY_PORT)).await {
@@ -100,12 +100,18 @@ impl DiscoveryEngine {
             loop {
                 if let Ok((len, src)) = socket.recv_from(&mut buf).await {
                     if let Ok(pkt) = serde_json::from_slice::<DiscoveryPacket>(&buf[..len]) {
-                        if pkt.magic == "APEX_DISCOVER_V1" || pkt.magic == "APEX_SOS_V1" {
+                        let is_magic_valid = pkt.magic == "OXIDESK_DISCOVER_V1" 
+                            || pkt.magic == "OXIDESK_SOS_V1"
+                            || pkt.magic == "APEX_DISCOVER_V1" 
+                            || pkt.magic == "APEX_SOS_V1";
+
+                        if is_magic_valid {
                             let ip = src.ip().to_string();
-                            let service_type = if pkt.is_sos || pkt.magic == "APEX_SOS_V1" {
+                            let is_sos_node = pkt.is_sos || pkt.magic == "OXIDESK_SOS_V1" || pkt.magic == "APEX_SOS_V1";
+                            let service_type = if is_sos_node {
                                 "🚨 SOS / Yardım Bekliyor".to_string()
                             } else {
-                                "ApexConnect IT Düğümü".to_string()
+                                "OxiDesk IT Düğümü".to_string()
                             };
 
                             let now = std::time::SystemTime::now()
@@ -191,7 +197,7 @@ impl DiscoveryEngine {
                         ip: target_ip.clone(),
                         hostname: format!("Host-{}", target_ip),
                         device_id: None,
-                        service_type: "ApexConnect Ajanı (HTTP/WS)".to_string(),
+                        service_type: "OxiDesk Ajanı (HTTP/WS)".to_string(),
                         is_online: true,
                         port: 8080,
                         is_sos: false,

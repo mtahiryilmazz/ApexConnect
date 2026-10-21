@@ -5,9 +5,9 @@ use std::sync::Arc;
 use rand::Rng;
 use tokio::net::TcpListener;
 
-use apex_connect::discovery::DiscoveryEngine;
-use apex_connect::server::create_router;
-use apex_connect::state::AppState;
+use oxidesk::discovery::DiscoveryEngine;
+use oxidesk::server::create_router;
+use oxidesk::state::AppState;
 
 fn get_local_ip() -> String {
     if let Ok(socket) = UdpSocket::bind("0.0.0.0:0") {
@@ -20,7 +20,7 @@ fn get_local_ip() -> String {
     "127.0.0.1".to_string()
 }
 
-fn generate_apex_id() -> String {
+fn generate_oxidesk_id() -> String {
     let mut rng = rand::thread_rng();
     let num: u32 = rng.gen_range(100_000_000..999_999_999);
     num.to_string()
@@ -41,7 +41,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let local_ip = get_local_ip();
         let hostname = std::env::var("COMPUTERNAME").unwrap_or_else(|_| "Windows-PC".to_string());
         let username = std::env::var("USERNAME").unwrap_or_else(|_| "Kullanıcı".to_string());
-        let device_id = generate_apex_id();
+        let device_id = generate_oxidesk_id();
         let pin = generate_pin();
 
         // Auto-detect available port (try 8080 to 8095)
@@ -93,10 +93,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         println!();
         println!("  ===============================================================");
-        println!("  🚨  ApexConnect Hızlı Destek (QuickSupport Portable v1.0)");
+        println!("  🚨  OxiDesk Hızlı Destek (QuickSupport Portable v2.0)");
         println!("  ===============================================================");
         println!("  👤  Kullanıcı / Cihaz  : {} ({})", hostname, username);
-        println!("  🆔  Apex Kimliğiniz    : \x1b[1;36m{}\x1b[0m", formatted_id);
+        println!("  🆔  Oxi Kimliğiniz     : \x1b[1;36m{}\x1b[0m", formatted_id);
         println!("  🔑  Geçici Bağlantı PIN: \x1b[1;33m{}\x1b[0m", pin);
         println!("  🌐  Yerel Ağ Adresi    : {}:{}", local_ip, selected_port);
         println!("  ---------------------------------------------------------------");
@@ -116,7 +116,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     })?;
 
     // Run native embedded frameless WebView2 QuickSupport window on main UI thread
-    apex_connect::gui::GuiLauncher::run_native_window(&local_url, "ApexQuickSupport", 440, 640);
+    oxidesk::gui::GuiLauncher::run_native_window(&local_url, "OxiQuickSupport", 440, 640);
 
     Ok(())
 }

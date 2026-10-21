@@ -1,4 +1,4 @@
-/* Windows 11 WinUI 3 Fluent Design System for ApexConnect */
+/* Windows 11 WinUI 3 Fluent Design System for OxiDesk */
 
 :root {
   --fluent-bg-mica: #0f172a;
@@ -617,7 +617,7 @@ html.light .win-btn.win-close:hover {
   line-height: 1.45;
 }
 
-/* Apex ID & PIN Box */
+/* OxiDesk ID & PIN Box */
 .fluent-id-card {
   background: rgba(15, 23, 42, 0.7);
   border: 1px solid var(--fluent-border);

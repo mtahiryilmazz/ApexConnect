@@ -13,7 +13,7 @@ impl SessionCrypto {
     /// Derive a 256-bit encryption key from device ID and PIN or passphrase
     pub fn new_from_credentials(device_id: &str, pin: &str) -> Self {
         let mut hasher = Sha256::new();
-        hasher.update(b"ApexConnect-v1-Salt-KeyDerivation:");
+        hasher.update(b"OxiDesk-v2-Salt-KeyDerivation:");
         hasher.update(device_id.trim().as_bytes());
         hasher.update(b":");
         hasher.update(pin.trim().as_bytes());
@@ -76,7 +76,7 @@ mod tests {
     #[test]
     fn test_crypto_roundtrip() {
         let crypto = SessionCrypto::new_from_credentials("123456789", "8821");
-        let secret_data = b"ApexConnect Remote Desktop Frame / Command Data";
+        let secret_data = b"OxiDesk Remote Desktop Frame / Command Data";
 
         let encrypted = crypto.encrypt(secret_data).expect("Encryption should succeed");
         assert_ne!(encrypted, secret_data);

@@ -1,26 +1,26 @@
 [package]
-name = "apex_connect"
+name = "oxidesk"
 version = "2.0.0"
 edition = "2021"
 
 [lib]
-name = "apex_connect"
+name = "oxidesk"
 path = "src/lib.rs"
 
 [[bin]]
-name = "apex_connect"
+name = "oxidesk"
 path = "src/main.rs"
 
 [[bin]]
-name = "apex_qs"
+name = "oxidesk_qs"
 path = "src/bin/quicksupport.rs"
 
 [[bin]]
-name = "apex_rendezvous"
+name = "oxidesk_rendezvous"
 path = "src/bin/rendezvous.rs"
 
 [[bin]]
-name = "apex_service"
+name = "oxidesk_service"
 path = "src/bin/service.rs"
 
 [dependencies]

@@ -9,13 +9,13 @@ $RepoRoot = Split-Path -Parent $ScriptDir
 Set-Location $RepoRoot
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "ApexConnect - Otomatik Surum ve GitHub Dagitim Araci" -ForegroundColor Cyan
+Write-Host "OxiDesk - Otomatik Surum ve GitHub Dagitim Araci" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 # 1. Cargo.toml surum kontrolu
 $CargoTomlPath = Join-Path $RepoRoot "Cargo.toml"
 $CargoLines = Get-Content $CargoTomlPath
-$CurrentVersion = "1.0.0"
+$CurrentVersion = "2.0.0"
 
 for ($i = 0; $i -lt $CargoLines.Count; $i++) {
     if ($CargoLines[$i] -match '^version\s*=\s*"(\d+)\.(\d+)\.(\d+)"') {
@@ -62,8 +62,8 @@ if ($LASTEXITCODE -ne 0) {
     Write-Error "Birim testleri basarisiz oldu!"
 }
 
-Write-Host "`nRelease derlemesi olusturuluyor (apex_connect & apex_qs)..." -ForegroundColor Cyan
-& cargo build --release --bin apex_connect --bin apex_qs
+Write-Host "`nRelease derlemesi olusturuluyor (oxidesk & oxidesk_qs)..." -ForegroundColor Cyan
+& cargo build --release --bin oxidesk --bin oxidesk_qs
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Release derlemesi basarisiz oldu!"
 }
@@ -78,7 +78,7 @@ if (-not $status) {
 } else {
     $commitMsg = $Message
     if ([string]::IsNullOrWhiteSpace($commitMsg)) {
-        $commitMsg = "chore(release): v$CurrentVersion - ApexConnect otomatik guncelleme"
+        $commitMsg = "chore(release): v$CurrentVersion - OxiDesk otomatik guncelleme"
     }
 
     Write-Host "Commit olusturuluyor: '$commitMsg'..." -ForegroundColor Cyan
@@ -94,5 +94,5 @@ if (-not $status) {
 }
 
 Write-Host "`n==========================================================" -ForegroundColor Cyan
-Write-Host "Islem tamamlandi! ApexConnect v$CurrentVersion hazir." -ForegroundColor Green
+Write-Host "Islem tamamlandi! OxiDesk v$CurrentVersion hazir." -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Cyan

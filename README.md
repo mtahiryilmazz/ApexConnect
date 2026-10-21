@@ -1,51 +1,53 @@
-# 🚀 ApexConnect (v2.0.0)
+# 🚀 OxiDesk (v2.0.0)
 
-**Windows 11 WinUI 3 Fluent Tasarımlı, Sıfır Kurulumlu (Portable), Yüksek Performanslı IT Uzak Masaüstü ve Cihaz Yönetim Ekosistemi**
+**Windows 11 Fluent Tasarımlı, Rust Tabanlı (Oxid + Desktop), Tek Parça Çerçevesiz (Frameless Native), Sıfır Kurulumlu IT Uzak Masaüstü Ekosistemi**
 
-ApexConnect; modern kurumsal uzak masaüstü ve ağ mimarilerinin en iyi pratiklerinden ilham alarak **Rust** ile geliştirilmiş; CMD / konsol zorunluluğunu ortadan kaldıran, **Windows 11 Fluent Design / WinUI 3** estetiğine sahip bağımsız bir uzak masaüstü ve ağ kontrol ekosistemidir.
+**OxiDesk**; modern kurumsal uzak masaüstü ve ağ mimarilerinin en iyi pratiklerinden ilham alarak **Rust** ile geliştirilmiş (adını Rust'ın "Oxide" doğası ile "Desktop" kelimesinin ortak "D" harfinde birleşmesinden almıştır); dış tarayıcı bağımlılığını ve konsol zorunluluğunu ortadan kaldıran, **Windows 11 Fluent Design / WinUI 3** estetiğine sahip bağımsız bir uzak masaüstü ve ağ kontrol ekosistemidir.
 
 [![Rust 1.80+](https://img.shields.io/badge/Rust-1.80%2B-orange.svg?style=flat-square&logo=rust)](https://www.rust-lang.org)
-[![Version 2.0.0](https://img.shields.io/badge/Release-v2.0.0-blue.svg?style=flat-square)](https://github.com/mtahiryilmazz/ApexConnect/releases)
+[![Version 2.0.0](https://img.shields.io/badge/Release-v2.0.0-blue.svg?style=flat-square)](https://github.com/mtahiryilmazz/OxiDesk/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
 [![Platform Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20%7C%20Server-0078d4.svg?style=flat-square&logo=windows)](https://microsoft.com)
 
 ---
 
-## 🌟 Öne Çıkan Özellikler ve WinUI 3 Deneyimi
+## 🌟 Öne Çıkan Özellikler ve OxiDesk Mimarisi
 
-### 🎨 Windows 11 Fluent / WinUI 3 Arayüzü
-- **Mica & Acrylic Efektleri:** Arka planla uyumlu, şık koyu mod ve cam efektli kart mimarisi.
-- **NavigationView Kenar Çubuğu:** Hızlı Bağlantı, Ağ Keşfi, Adres Defteri, Dosya Yöneticisi ve Ayarlar arasında akıcı geçiş.
-- **Yüzen Komut Adası (Floating Island Toolbar):** Canlı oturum sırasında ekranın üst kısmında gerçek zamanlı FPS, Ping/Gecikme (ms) ve Bant Genişliği (KB/s) göstergeleri.
+### 🎨 Tek Parça Çerçevesiz Doğal Pencere (Frameless Embedded Native Window)
+- **Wry & Tao Entegrasyonu:** Edge tarayıcısını dışarıdan açma zorunluluğunu ortadan kaldıran, programın doğrudan kendi penceresi içinde çalışan gömülü modern WebView2 motoru.
+- **Tek Üst Çubuk & IPC Kontrolü:** Çift başlık çubuğu hatasını tamamen gideren, Windows 11 Fluent tasarımına uygun simge durumuna küçültme, ekranı kaplama, kapatma ve sürükleme kontrolleri.
+- **Temiz Kapanma Garantisi (Zero Zombie Process):** Hem ana konsol hem de Hızlı Destek (QuickSupport) penceresi kapatıldığında arka planda gizli işlem bırakmadan anında sonlanır.
 
 ### ⚡ Performans ve Ekran Motoru (`src/capture.rs`)
 - **Adaptif Değişen Kare Tespiti (Dirty-Frame Detection):** 64-bit hızlı hash taramasıyla ekranda hareket olmadığında gereksiz JPEG sıkıştırmayı ve ağ paketlerini durdurur; boşta **%0 CPU** ve **~0 Kbps** bant genişliği tüketir.
 - **Çoklu Monitör & Sanal Masaüstü:** Tek birincil monitör veya tüm genişletilmiş ekranları (`SM_CXVIRTUALSCREEN`) tek tıkla izleme ve kontrol etme.
 - **Dinamik Kalite & FPS:** Ağ durumuna göre anında %40 - %85 kalite ve 30/60 FPS ayarı.
 
-### 📁 Güvenli İki Yönlü Dosya Transferi (`src/file_transfer.rs`)
-- **Parçalı (Chunked 64 KB) Aktarım:** Boyut kısıtlaması olmaksızın sürükle-bırak yöntemiyle dosya yükleme ve indirme.
-- **Güvenli Depolama Alanı:** İstemcilerin dosyaları doğrudan `%USERPROFILE%\Downloads\ApexConnect` klasöründe güvenle izole edilir; dizin atlatma (path traversal) saldırılarına karşı korumalıdır.
+### 📹 Oturum Video Kaydı ve Anlık Sohbet
+- **WebM VP9 Yüksek Kaliteli Video Kaydı:** Canlı oturumu tek tıkla kesintisiz video dosyası olarak kaydetme ve oturum sonunda otomatik bilgisayara indirme.
+- **Canlı İki Yönlü Sohbet:** IT uzmanı ile destek alan kullanıcı arasında canlı bağlantı penceresinden ayrılmadan mesajlaşma imkânı.
+
+### 📁 Canlı Oturum İçi Dosya Transferi (`src/file_transfer.rs`)
+- **Açılır Pencere (Modal) ile Dosya Aktarımı:** Canlı ekran görünümünden ayrılmadan sürükle-bırak yöntemiyle hedef bilgisayara dosya yükleme ve indirme.
+- **Güvenli Depolama Alanı:** İstemcilerin dosyaları doğrudan `%USERPROFILE%\Downloads\OxiDesk` klasöründe güvenle izole edilir; dizin atlatma (path traversal) saldırılarına karşı korumalıdır.
 
 ### 🔐 Kriptografi ve Güvenlik (`src/crypto.rs`)
 - **AES-256-GCM Uçtan Uca Şifreleme:** Cihaz ID ve PIN üzerinden SHA-256 türetimli 256-bit oturum anahtarı.
 - **Pano Senkronizasyonu:** Yerel ve uzak bilgisayar arasında metin panosu aktarımı (`clip.exe`).
 
-### 🛡️ Canlı Test Analizi ve Otomatik Port Koruması (`src/main.rs`)
-- **Çift Tıklandığında Çökmeyi Önleyen Otomatik Port Tarama:** 8080 portu meşgul olduğunda (`Os 10048 AddrInUse`) program kapanmaz; 8081-8090 arasındaki ilk boş porta otomatik bağlanır.
-- **Otomatik Tarayıcı Başlatma:** Program çalıştırıldığı anda varsayılan web tarayıcısında Fluent yönetim konsolunu otomatik açar.
+### 🛡️ Otomatik Port Koruması & Ağ Keşfi (`src/discovery.rs`)
+- **Otomatik Port Çakışma Koruması:** 8080 portu meşgul olduğunda çökmek yerine 8081-8095 arasındaki ilk boş porta bağlanır.
+- **Akıllı Ağ Radarı & SOS Keşfi:** Aynı ağdaki OxiDesk ve QuickSupport istemcilerini tekil `device_id` ile çift kayıtsız tespit eder; kapalı istemcileri otomatik temizler.
 
 ---
 
 ## 🏗️ Mimari ve Performans Karşılaştırma Analizi
 
-Aşağıdaki tablo, ApexConnect'in geleneksel uzak masaüstü mimarilerine kıyasla sunduğu avantajları özetler:
-
-| Karşılaştırma Kriteri | Geleneksel Kurumsal Yazılımlar | Ağır Paket Çözümleri | Temel Form Araçları | **ApexConnect (v1.0)** |
+| Karşılaştırma Kriteri | Geleneksel Kurumsal Yazılımlar | Ağır Paket Çözümleri | Temel Form Araçları | **OxiDesk (v2.0)** |
 |---|---|---|---|---|
-| **Çekirdek Dil** | C++, C#, Java | Ağır Framework / Script | C++ / Temel Win32 | **Rust (Sıfır Dış Bağımlılık)** |
-| **Arayüz Tasarımı** | Klasik Ağır Masaüstü | Hantal Webview / Çerçeveler | Eski Tip Form Arayüzü | **WinUI 3 Fluent Design** |
-| **Dağıtım Boyutu** | 30 MB - 100 MB+ Kurulum | 50 MB - 120 MB | ~5 MB Basit .exe | **Taşınabilir Tek .exe (~2.1 MB)** |
+| **Çekirdek Dil** | C++, C#, Java | Ağır Framework / Script | C++ / Temel Win32 | **Rust (Oxide Motoru)** |
+| **Arayüz Tasarımı** | Klasik Ağır Masaüstü | Hantal Dış Tarayıcılar | Eski Tip Form Arayüzü | **Gömülü Çerçevesiz Fluent WinUI 3** |
+| **Dağıtım Boyutu** | 30 MB - 100 MB+ Kurulum | 50 MB - 120 MB | ~5 MB Basit .exe | **Taşınabilir Tek .exe (~2.5 MB)** |
 | **Ekran Motoru** | Standart Video Akışı | Genel Codec / WebRTC | Standart GDI | **GDI + Adaptif Dirty-Rect + DXGI** |
 | **Boşta Ağ Tüketimi** | Orta Düzey Akış | Düşük / Dalgalı | Yüksek / Sabit | **~0 Kbps (Dirty Check)** |
 | **Şifreleme Standardı** | Uçtan Uca Değişken | Simetrik / Asimetrik Hibrit | Standart AES | **AES-256-GCM + SHA-256** |
@@ -59,86 +61,40 @@ Aşağıdaki tablo, ApexConnect'in geleneksel uzak masaüstü mimarilerine kıya
 - Rust & Cargo (Yalnızca kaynak koddan derlemek için)
 
 ### Doğrudan Çalıştırma
-`target/release/apex_connect.exe` dosyasını çift tıklayarak veya PowerShell ile çalıştırın:
+`target/release/oxidesk.exe` veya dağıtım paketindeki `OxiDesk.exe` dosyasını çalıştırın:
 ```powershell
-.\target\release\apex_connect.exe
+.\dist\OxiDesk.exe
 ```
-Tarayıcınız otomatik olarak `http://localhost:8080` adresinde WinUI 3 Fluent arayüzünü açacaktır.
+Program doğrudan kendi bağımsız çerçevesiz penceresinde açılacaktır.
+
+---
+
+## 📦 Dağıtım Paketleri (`dist/`)
+
+Proje `scripts/build_distribution.ps1` betiği ile tek komutta hazır dağıtım paketlerine dönüştürülür:
+
+1. **`OxiDesk.exe` (`oxidesk.exe`):** IT Yöneticisi yönetim konsolu.
+2. **`OxiQuickSupport.exe` (`oxidesk_qs.exe`):** Kurulumsuz, tek tıkla çalışan SOS destek aracı.
+3. **`tools\oxidesk_rendezvous.exe`:** İnternet üzerinden WAN/NAT aşma ve sinyalleşme sunucusu.
+4. **`tools\oxidesk_service.exe`:** Kilit ekranı ve UAC yetkili Windows Arka Plan Hizmeti yöneticisi.
+5. **`OxiDesk-v2.0.0-Windows-x64.zip`:** Tüm araçları içeren dağıtım arşivi.
+
+```powershell
+# Dağıtım paketlerini ve ZIP arşivini üretmek için:
+.\scripts\build_distribution.ps1
+```
 
 ---
 
 ## 🔄 Otomasyon ve Otomatik GitHub Dağıtımı
 
-Projeyi derlemek, test etmek, sürüm numarasını artırmak ve GitHub'a otomatik push etmek için hazırlanan PowerShell otomasyon aracını kullanabilirsiniz:
-
 ```powershell
-# Mevcut sürümü doğrula, test et, release derle ve GitHub'a push et:
+# Sürümü test et, derle ve GitHub'a otomatik push et:
 .\scripts\sync_release.ps1
 
-# Sürüm numarasını (patch: 1.0.1) artırarak güncelle ve GitHub'a yükle:
-.\scripts\sync_release.ps1 -Bump patch -Message "WinUI 3 arayüzü ve port çakışma düzeltmesi"
-
-# Minör sürüm artışı (minor: 1.1.0):
-.\scripts\sync_release.ps1 -Bump minor -Message "WAN Rendezvous sunucu desteği"
+# Sürüm artırarak yayınla:
+.\scripts\sync_release.ps1 -Bump patch -Message "OxiDesk çerçevesiz pencere ve canlı video kaydı"
 ```
-
----
-
-## 🗺️ Geliştirme Yol Haritası (Roadmap)
-
-ApexConnect mimari hedefleri, masaüstü x64 uygulama genişlemesi ve kurumsal dağıtım takvimi:
-
-### 📍 Faz 1: Temel Ekosistem ve Çekirdek Motor ![Tamamlandı](https://img.shields.io/badge/Durum-Tamamlandı-success?style=flat-square) `v1.0.0`
-- [x] Win32 GDI Ekran yakalama ve JPEG sıkıştırma
-- [x] Adaptif değişen kare (dirty-frame) tespiti ile boşta %0 CPU / ~0 Kbps optimizasyonu
-- [x] Çoklu monitör ve tüm sanal masaüstü desteği
-- [x] 64 KB parçalı çift yönlü dosya transferi ve güvenli indirme klasörü (`Downloads\ApexConnect`)
-- [x] AES-256-GCM uçtan uca şifreleme ve PIN tabanlı anahtar türetimi
-- [x] Çok kanallı WebSocket mimarisi (ping/pong, gecikme, FPS, pano senkronizasyonu)
-- [x] Windows 11 WinUI 3 Fluent masaüstü yönetim arayüzü ve mobil web konsolu
-- [x] Yerel ağ (LAN) UDP otomatik cihaz keşfi ve kalıcı JSON adres defteri
-- [x] Otomatik port arama (8080-8090) ve açılışta otomatik tarayıcı başlatma
-
----
-
-### 📍 Faz 2: Masaüstü x64 Yerel Uygulama & Taşınabilir Mini Hızlı Bağlantı Aracı ![Tamamlandı](https://img.shields.io/badge/Durum-Tamamlandı-success?style=flat-square) `v1.1.0`
-- [x] **Çift İkili (Dual-Binary) Kurumsal Dağıtım:**
-  - `apex_connect.exe`: Bilgi işlem uzmanının kullandığı tam yetkili yönetim paketi, ağ keşif radarı ve adres defteri.
-  - `apex_qs.exe`: Kurum personelinin tek tıkla açabileceği (~2 MB), kurulum gerektirmeyen taşınabilir (portable) son kullanıcı aracı.
-- [x] **Otomatik SOS Ağı Anonsu (Zero-Config SOS Beacon):**
-  - Mini aracı açan kullanıcının makine adı, kullanıcı adı, yerel IP ve 9 haneli Apex ID'si aynı ağdaki ana programa anında anons geçer.
-  - Ana programın Ağ Keşfi sekmesinde otomatik "Destek Bekliyor (SOS)" kartı olarak belirir.
-- [x] **Güvenilen Cihaz & Gözetimsiz Erişim (Trusted Unattended Access):**
-  - Kullanıcı ana programda adres defterine kaydedilmiş ve yetkilendirilmişse, PIN sormadan tek tıkla tam yetkili oturum başlatma.
-- [x] **Dağıtım Otomasyonu (`scripts/build_distribution.ps1`):**
-  - Tek komutla hem ana programı hem de mini hızlı bağlantı aracını derleyip `dist/` klasörüne hazır paket olarak çıkarma.
-
----
-
-### 📍 Faz 3: Geniş Alan Ağı (WAN) ve NAT Aşma ![Tamamlandı](https://img.shields.io/badge/Durum-Tamamlandı-success?style=flat-square) `v1.2.0`
-- [x] **Rendezvous / Signaling & Relay Sunucusu (`apex_rendezvous`):**
-  - Farklı internet ağlarındaki veya CGNAT arkasındaki istemcileri bağlayan bağımsız WebSocket sinyal sunucusu.
-  - Cihaz ID tescili, heartbeat izleme, P2P STUN/Hole-punching ve gerektiğinde Relay köprüleme.
-- [x] **DXGI & GDI Hibrit Ekran Motoru Mimarisi:**
-  - DirectX 11 donanım hızlandırma ve sanal ortamlar için GDI adaptif dirty-frame fallback desteği.
-- [x] **Ses Aktarımı (Windows WASAPI Loopback):**
-  - Windows WASAPI Loopback ile uzak bilgisayarın ses çıkışını 48 kHz stereo PCM akışı olarak yakalama altyapısı (`src/audio.rs`).
-- [x] **Üçlü İkili (Triple-Binary) Dağıtım Paketi:**
-  - `apex_connect.exe`, `apex_qs.exe` ve `apex_rendezvous.exe` tek tıkla `dist/` klasörüne derleme ve paketleme (`scripts/build_distribution.ps1`).
-
----
-
-### 📍 Faz 4: Windows Servisi ve Kurumsal Filo Yönetimi ![Tamamlandı](https://img.shields.io/badge/Durum-Tamamlandı-success?style=flat-square) `v2.0.0`
-- [x] **Windows Hizmeti (Unattended Service - `apex_service`):**
-  - Kullanıcı oturumu kapalıyken veya Windows Kilit ekranındayken (`Winlogon`) `NT AUTHORITY\SYSTEM` yetkileriyle arka planda çalışabilme.
-  - UAC (Kullanıcı Hesabı Denetimi) pencerelerini uzaktan onaylayabilme ve tam yetkili kontrol ayrıcalığı.
-- [x] **Merkezi IT Politikaları ve Rol Tabanlı Erişim (RBAC):**
-  - Rol tabanlı erişim kontrolü (`ViewOnly`, `FullControl`, `FileManager`, `Administrator`).
-  - Güvenlik ve denetim logları (`AuditLogger` / `src/audit.rs`) ile kimin, ne zaman, hangi IP ve yetkiyle bağlandığının kalıcı kaydı (Audit Trail).
-- [x] **Dörtlü İkili (Quad-Binary) Kurumsal Dağıtım Paketi:**
-  - `apex_connect.exe`, `apex_qs.exe`, `apex_rendezvous.exe` ve `apex_service.exe` tek komutla derleme ve dağıtım (`scripts/build_distribution.ps1`).
-
-Detaylı teknik yol haritası ve geçmiş için ayrıca [`ROADMAP.md`](ROADMAP.md) belgesini inceleyebilirsiniz.
 
 ---
 

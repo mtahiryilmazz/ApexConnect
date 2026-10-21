@@ -35,7 +35,7 @@ impl NativeQuickSupportGui {
             GLOBAL_STATE = Some(state);
 
             let instance = GetModuleHandleW(None).unwrap_or_default();
-            let class_name = w!("ApexQuickSupportNativeClass");
+            let class_name = w!("OxiDeskQuickSupportNativeClass");
 
             let bg_brush = CreateSolidBrush(COLORREF(0x001A120F)); // Dark background #0F121A
 
@@ -58,7 +58,7 @@ impl NativeQuickSupportGui {
             let hwnd = CreateWindowExW(
                 WINDOW_EX_STYLE(0),
                 class_name,
-                w!("ApexConnect Hızlı Destek (Native GUI)"),
+                w!("OxiDesk Hızlı Destek (Native GUI)"),
                 WS_OVERLAPPED | WS_SYSMENU | WS_CLIPCHILDREN,
                 CW_USEDEFAULT,
                 CW_USEDEFAULT,
@@ -234,7 +234,7 @@ unsafe fn paint_native_gui(hdc: HDC, hwnd: HWND) {
     let mut title_rect = RECT { left: 0, top: 20, right: rect.right, bottom: 50 };
     draw_text_helper(
         hdc,
-        "ApexConnect Hızlı Destek (Native GUI)",
+        "OxiDesk Hızlı Destek (Native GUI)",
         &mut title_rect,
         DT_CENTER | DT_SINGLELINE | DT_NOPREFIX,
     );
@@ -259,7 +259,7 @@ unsafe fn paint_native_gui(hdc: HDC, hwnd: HWND) {
         DT_CENTER | DT_SINGLELINE | DT_NOPREFIX,
     );
 
-    // Draw Card 1: Apex ID Box
+    // Draw Card 1: OxiDesk ID Box
     let card1_brush = CreateSolidBrush(COLORREF(0x002B211A)); // Card dark
     let card1_rect = RECT { left: 25, top: 110, right: rect.right - 25, bottom: 235 };
     FillRect(hdc, &card1_rect, card1_brush);
@@ -270,7 +270,7 @@ unsafe fn paint_native_gui(hdc: HDC, hwnd: HWND) {
     let mut card1_lbl = RECT { left: 35, top: 122, right: rect.right - 35, bottom: 142 };
     draw_text_helper(
         hdc,
-        "BU BİLGİSAYARIN APEX KİMLİĞİ",
+        "BU BİLGİSAYARIN OXİDESK KİMLİĞİ",
         &mut card1_lbl,
         DT_CENTER | DT_SINGLELINE | DT_NOPREFIX,
     );

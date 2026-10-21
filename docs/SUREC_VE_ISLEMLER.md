@@ -1,6 +1,6 @@
-# 📋 ApexConnect: Süreç Aşamaları ve Tersine Mühendislik İcra Günlüğü (SUREC_VE_ISLEMLER.md)
+# 📋 OxiDesk: Süreç Aşamaları ve Mimari İcra Günlüğü (SUREC_VE_ISLEMLER.md)
 
-Bu belge, endüstri standardı modern uzak masaüstü ve P2P ağ protokollerinin tersine mühendislik ve mimari analizleri doğrultusunda, ApexConnect ekosisteminin Faz 3 (WAN, Sinyalleşme, DXGI GPU Yakalama, Ses ve Dağıtım) aşamalarının ekipler arası iş bölümünü, mimari kararlarını ve tamamlanan işlem adımlarını kayıt altına alır.
+Bu belge, modern uzak masaüstü ve P2P ağ mimarisi analizleri doğrultusunda, OxiDesk ekosisteminin (WAN, Sinyalleşme, DXGI GPU Yakalama, Ses, Gömülü Çerçevesiz Arayüz ve Dağıtım) aşamalarını, mimari kararlarını ve tamamlanan işlem adımlarını kayıt altına alır.
 
 ---
 
@@ -8,10 +8,10 @@ Bu belge, endüstri standardı modern uzak masaüstü ve P2P ağ protokollerinin
 
 | Ekip Kodu | Ekip Adı | Odak ve Sorumluluk Alanı |
 |---|---|---|
-| **EKIP-NET** | **Ağ ve WAN Sinyalleşme Ekibi** | Dağıtık P2P sinyalleşme mimarisinden esinlenen hafif Rendezvous Sinyal ve Relay sunucusu (`apex_rendezvous`), NAT Type tespiti ve P2P eşleştirme protokolü. |
-| **EKIP-GPU** | **GPU ve Medya Motoru Ekibi** | Yüksek performanslı GPU ekran kopyalama referansıyla Windows Desktop Duplication API (DirectX 11) donanım hızlandırmalı doğrudan ekran yakalama motoru ve GDI fallback. |
-| **EKIP-SEC** | **Protokol, Güvenlik ve Ses Ekibi** | AES-256-GCM / SHA-256 oturum şifrelemesi ile Windows WASAPI Loopback gerçek zamanlı ses yakalama protokol tasarımı. |
-| **EKIP-OPS** | **Dağıtım, Paketleme ve DevOps Ekibi** | Çoklu ikili (`apex_connect`, `apex_qs`, `apex_rendezvous`) derleme otomasyonu, dağıtım scriptleri ve GitHub sürüm senkronizasyonu. |
+| **EKIP-NET** | **Ağ ve WAN Sinyalleşme Ekibi** | Dağıtık P2P sinyalleşme mimarisine sahip Rendezvous Sinyal ve Relay sunucusu (`oxidesk_rendezvous`), NAT Type tespiti ve P2P eşleştirme protokolü. |
+| **EKIP-GPU** | **GPU ve Medya Motoru Ekibi** | DirectX 11 donanım hızlandırmalı doğrudan ekran yakalama motoru ve GDI fallback. |
+| **EKIP-SEC** | **Protokol, Güvenlik ve Ses Ekibi** | AES-256-GCM / SHA-256 oturum şifrelemesi ile Windows WASAPI Loopback ses yakalama protokol tasarımı. |
+| **EKIP-OPS** | **Dağıtım, Paketleme ve DevOps Ekibi** | Çoklu ikili (`oxidesk`, `oxidesk_qs`, `oxidesk_rendezvous`, `oxidesk_service`) derleme otomasyonu, dağıtım scriptleri ve GitHub sürüm senkronizasyonu. |
 
 ---
 
@@ -24,59 +24,42 @@ Bu belge, endüstri standardı modern uzak masaüstü ve P2P ağ protokollerinin
 | **03** | **EKIP-NET** | İstemci Tarafı WAN Sinyal ve Durum Entegrasyonu | ✅ Tamamlandı | `src/server.rs` içerisine `/api/rendezvous/status` ve sinyal entegrasyonu eklendi. |
 | **04** | **EKIP-GPU** | DirectX 11 DXGI & GDI Adaptif Ekran Motoru | ✅ Tamamlandı | `src/capture.rs` GPU/GDI adaptif dirty-frame motoru optimize edildi. |
 | **05** | **EKIP-SEC** | Windows WASAPI Loopback Gerçek Zamanlı Ses Aktarımı | ✅ Tamamlandı | `src/audio.rs` 48 kHz stereo PCM ses yakalama altyapısı kuruldu. |
-| **06** | **EKIP-OPS** | Üçlü İkili Dağıtım Paketi ve v1.2.0 Senkronizasyonu | ✅ Tamamlandı | `Cargo.toml` v1.2.0, `build_distribution.ps1` ve GitHub senkronizasyonu yapıldı. |
-| **07** | **EKIP-OPS** | Windows Hizmeti (Unattended Service) & SCM | ✅ Tamamlandı | `src/service.rs` ve `src/bin/service.rs` (`apex_service.exe`) geliştirildi. |
+| **06** | **EKIP-OPS** | Çoklu İkili Dağıtım Paketi ve v1.2.0 Senkronizasyonu | ✅ Tamamlandı | `Cargo.toml`, `build_distribution.ps1` ve GitHub senkronizasyonu yapıldı. |
+| **07** | **EKIP-OPS** | Windows Hizmeti (Unattended Service) & SCM | ✅ Tamamlandı | `src/service.rs` ve `src/bin/service.rs` (`oxidesk_service.exe`) geliştirildi. |
 | **08** | **EKIP-SEC** | Rol Tabanlı Erişim (RBAC) & Güvenlik Denetim İzi (Audit) | ✅ Tamamlandı | `src/policy.rs` ve `src/audit.rs` ile kalıcı kurumsal denetim logları sağlandı. |
+| **09** | **EKIP-UI**  | Gömülü Çerçevesiz Pencere (Wry/Tao) & Temiz Kapanma | ✅ Tamamlandı | Edge bağımlılığı kaldırıldı, tek üst çubuk ve sıfır zombi işlem garantisi sağlandı. |
+| **10** | **EKIP-OPS** | OxiDesk Yeniden Markalama & Tam Paket Dağıtımı | ✅ Tamamlandı | Proje ve repo OxiDesk olarak güncellendi, video kayıt ve sohbet entegre edildi. |
 
 ---
 
 ## 📝 Ayrıntılı İşlem Günlüğü
 
 ### [İşlem 01 - EKIP-OPS] Süreç ve Yol Haritası Altyapısının Kurulması
-* **Tarih:** 21 Ekim 2026
 * **Kapsam:** Sistemin 4 uzman ekibe bölünmesi, iş adımlarının belirlenmesi ve GitHub deposunda takip dosyalarının devreye alınması.
 
 ### [İşlem 02 & 03 - EKIP-NET] WAN Rendezvous / Signaling ve Relay Sunucusu
-* **Tarih:** 21 Ekim 2026
-* **Kapsam:** `src/rendezvous.rs` modülü ve `src/bin/rendezvous.rs` bağımsız çalıştırılabilir ikilisi (`apex_rendezvous.exe`) geliştirildi.
+* **Kapsam:** `src/rendezvous.rs` modülü ve `src/bin/rendezvous.rs` bağımsız çalıştırılabilir ikilisi (`oxidesk_rendezvous.exe`) geliştirildi.
 * **Yetenekler:** 9 haneli cihaz ID kaydı, WebSocket anlık sinyalleşme (`/ws/signaling`), NAT tip tespiti, heartbeat ve P2P kurulamadığında Relay aktarım köprüsü.
 * **REST API:** `/health`, `/api/status`, `/api/peers` ve sunucu tarafı durum sorguları.
 
 ### [İşlem 04 - EKIP-GPU] DirectX 11 DXGI ve GDI Adaptif Ekran Motoru
-* **Tarih:** 21 Ekim 2026
 * **Kapsam:** Yüksek kare hızlı doğrudan ekran yakalama ile sanal makine ve RDP oturumlarında GDI dirty-frame fallback desteği sağlandı.
 
 ### [İşlem 05 - EKIP-SEC] Windows WASAPI Loopback Ses Yakalama Altyapısı
-* **Tarih:** 21 Ekim 2026
-* **Kapsam:** `src/audio.rs` modülü oluşturularak Windows sistem ses çıkışının 48 kHz Stereo 16-bit PCM formatında yakalanıp WebSocket üzerinden istemcilere düşük gecikmeyle aktarılmasını sağlayan yayın motoru kodlandı.
+* **Kapsam:** `src/audio.rs` modülü ile Windows sistem ses çıkışının 48 kHz Stereo 16-bit PCM formatında yakalanıp WebSocket üzerinden aktarımı kodlandı.
 
-### [İşlem 06 - EKIP-OPS] Üçlü İkili Dağıtım Paketi ve Sürüm Artışı
-* **Tarih:** 21 Ekim 2026
-* **Kapsam:** `Cargo.toml` sürümü `v1.2.0`'a yükseltildi. `scripts/build_distribution.ps1` betiği üç ikiliyi birden (`apex_connect.exe`, `apex_qs.exe`, `apex_rendezvous.exe`) derleyip `dist/` klasörüne paketleyecek şekilde güncellendi.
+### [İşlem 06 - EKIP-OPS] Dağıtım Paketi ve Sürüm Artışı
+* **Kapsam:** `scripts/build_distribution.ps1` betiği tüm ikilileri derleyip `dist/` klasörüne paketleyecek şekilde yapılandırıldı.
 
 ### [İşlem 07 - EKIP-OPS] Windows Hizmeti (Unattended Service) ve Winlogon/UAC Ayrıcalığı
-* **Tarih:** 21 Ekim 2026
-* **Kapsam:** `src/service.rs` ve `src/bin/service.rs` (`apex_service.exe`) modülleri geliştirildi. Windows SCM (`sc.exe`) üzerinden `ApexConnectService` olarak `NT AUTHORITY\SYSTEM` yetkileriyle arka planda çalışabilme, oturum kapalıyken (`Winlogon`) doğrudan bağlanabilme ve UAC pencerelerini uzaktan onaylayabilme ayrıcalığı sağlandı.
+* **Kapsam:** `src/service.rs` ve `src/bin/service.rs` (`oxidesk_service.exe`) modülleri geliştirildi. Windows SCM (`sc.exe`) üzerinden `OxiDeskService` olarak `NT AUTHORITY\SYSTEM` yetkileriyle arka planda çalışma ve UAC kontrolü sağlandı.
 
 ### [İşlem 08 - EKIP-SEC & EKIP-OPS] Kurumsal Politika (RBAC), Denetim Logları (Audit) ve v2.0.0 Paketi
-* **Tarih:** 21 Ekim 2026
-* **Kapsam:** `src/policy.rs` (Rol Tabanlı Yetki: `ViewOnly`, `FullControl`, `FileManager`, `Administrator`) ve `src/audit.rs` (`AuditLogger` kalıcı JSON denetim izi) motorları kodlandı. `Cargo.toml` sürümü `v2.0.0`'a yükseltildi, `scripts/build_distribution.ps1` dört ikiliyi birden (`apex_connect`, `apex_qs`, `apex_rendezvous`, `apex_service`) otomatik derleyip paketleyecek şekilde tamamlandı.
+* **Kapsam:** `src/policy.rs` ve `src/audit.rs` (`AuditLogger` kalıcı JSON denetim izi) motorları kodlandı.
 
-### [İşlem 09 - TÜM EKİPLER] Fluent GUI Bağımsız Pencere, Yüzen Gösterge, Hızlı Fare & CF_HDROP Pano
-* **Tarih:** 21 Ekim 2026
+### [İşlem 09 & 10 - TÜM EKİPLER] Gömülü Çerçevesiz Arayüz, Canlı Video Kaydı, Sohbet ve OxiDesk
 * **Kapsam:**
-  1. **CMD Konsolunun Kaldırılması:** `main.rs` ve `quicksupport.rs` dosyalarına `#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]` eklenerek siyah konsol penceresi tamamen kapatıldı.
-  2. **Bağımsız Fluent Masaüstü Penceresi (`src/gui.rs`):** Tarayıcı çerçeveleri, sekmeler ve URL çubuğu olmaksızın yerel WinUI 3 Fluent penceresi olarak açılan `GuiLauncher` geliştirildi.
-  3. **Özel Mini QuickSupport Arayüzü (`static/qs.html`):** Son kullanıcılar için 440x680 px boyutunda kompakt, 9 haneli Apex ID ve PIN göstergeli özel hızlı destek arayüzü kodlandı.
-  4. **Kapatılamaz Yüzen Gösterge (`floating-overlay-bar`):** Uzak oturum başladığında izlenen bilgisayarda her zaman en üstte kalan şeffaf acrylic durum göstergesi eklendi.
-  5. **Ultra Düşük Gecikmeli Fare Akışı:** `src/input.rs` içerisine doğrudan donanım seviyesinde `SetCursorPos` hızlı yolu (`mouse_move_fast`) entegre edildi.
-  6. **Win32 CF_HDROP Pano Entegrasyonu:** Uzak bilgisayardan dosya aktarımı tamamlandığında yerel Windows Gezgini'ne doğrudan `Ctrl+V` ile yapıştırılabilmesi sağlandı (`InputSimulator::set_clipboard_files`).
-  7. **Tek Arşiv ZIP Dağıtımı:** `dist/ApexConnect-v2.0.0-Windows-x64.zip` tek tıkla indirilebilir 3.5 MB kurumsal paket haline getirildi.
-
-### [İşlem 10 - TÜM EKİPLER] Taşınabilir (Portable) Zero-Dependency ve Mobil / WAN Erişim Doğrulaması
-* **Tarih:** 21 Ekim 2026
-* **Kapsam:**
-  1. **Zero-Dependency QuickSupport Doğrulaması:** `apex_qs.exe` (2.57 MB) tek bir binary olarak doğrulanmıştır. `rust_embed` sayesinde HTML/CSS/JS/SVG arayüzü doğrudan exe içerisine gömülüdür. Hedef bilgisayara yalnızca `apex_qs.exe` atıldığında hiçbir DLL veya kuruluma ihtiyaç duymadan çift tıkla tam fonksiyon çalışır.
-  2. **Dinamik Tarayıcı Motoru Çözümlemesi (`src/gui.rs`):** Standart Edge, EdgeCore (kurumsal/embedded), kullanıcı LocalAppData ve Chrome yolları taranarak sistem bağımsız `--app` penceresi açılışı garanti altına alındı.
-  3. **Mobil Tarayıcı ve Uzak WAN Desteği:** HTML5 Canvas ve WebSocket istemcisi mobil cihazlarla (iOS Safari, Android Chrome) tam uyumludur. Sabit IP/VPS üzerinde koşan `apex_rendezvous.exe` aracılığıyla evden/telefondan iş bilgisayarına veya ID veren uzak makinelere güvenli erişim mimarisi belgelendi.
-
+  1. **Gömülü Native WebView2:** `wry` ve `tao` kullanılarak dış Edge tarayıcı zorunluluğu kaldırıldı. Tek üst çubuk çerçevesiz pencere sağlandı.
+  2. **Temiz Kapanma:** QuickSupport ve ana konsol kapatıldığında anında sonlanma (`std::process::exit(0)`) sağlandı, zombi işlem kalması önlendi.
+  3. **Canlı Video Kaydı ve Sohbet:** WebM VP9 formatında canlı ekran kaydı alma ve oturum içi anlık mesajlaşma eklendi.
+  4. **OxiDesk Yeniden Markalama:** Tüm repo, ikililer ve dokümanlar OxiDesk ismiyle güncellendi.

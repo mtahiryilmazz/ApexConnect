@@ -47,30 +47,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "apex_connect"
-version = "2.0.0"
-dependencies = [
- "aes-gcm",
- "axum",
- "base64",
- "chrono",
- "futures-util",
- "jpeg-decoder",
- "jpeg-encoder",
- "rand 0.8.8",
- "rust-embed",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tao",
- "tokio",
- "tokio-tungstenite 0.23.1",
- "tower-http",
- "windows",
- "wry",
-]
-
-[[package]]
 name = "async-trait"
 version = "0.1.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1934,6 +1910,30 @@ name = "opaque-debug"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
+
+[[package]]
+name = "oxidesk"
+version = "2.0.0"
+dependencies = [
+ "aes-gcm",
+ "axum",
+ "base64",
+ "chrono",
+ "futures-util",
+ "jpeg-decoder",
+ "jpeg-encoder",
+ "rand 0.8.8",
+ "rust-embed",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tao",
+ "tokio",
+ "tokio-tungstenite 0.23.1",
+ "tower-http",
+ "windows",
+ "wry",
+]
 
 [[package]]
 name = "pango"

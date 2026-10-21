@@ -31,7 +31,7 @@ impl AuditLogger {
     pub fn new() -> Self {
         // Choose ProgramData or local directory
         let log_dir = std::env::var("PROGRAMDATA")
-            .map(|p| PathBuf::from(p).join("ApexConnect"))
+            .map(|p| PathBuf::from(p).join("OxiDesk"))
             .unwrap_or_else(|_| PathBuf::from("logs"));
 
         let _ = create_dir_all(&log_dir);

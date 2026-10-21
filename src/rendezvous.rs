@@ -120,7 +120,7 @@ pub fn create_rendezvous_router(state: Arc<RendezvousState>) -> Router {
 }
 
 async fn health_handler() -> &'static str {
-    "ApexConnect Rendezvous & Signaling Server - OK (v1.2.0)"
+    "OxiDesk Rendezvous & Signaling Server - OK (v2.0.0)"
 }
 
 #[derive(Serialize)]

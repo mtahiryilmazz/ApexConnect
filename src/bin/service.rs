@@ -1,8 +1,8 @@
 use std::env;
 use std::sync::Arc;
-use apex_connect::service::ServiceManager;
-use apex_connect::server::create_router;
-use apex_connect::state::AppState;
+use oxidesk::service::ServiceManager;
+use oxidesk::server::create_router;
+use oxidesk::state::AppState;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let command = args.get(1).map(|s| s.as_str()).unwrap_or("status");
 
     println!("============================================================");
-    println!("  ApexConnect Unattended Windows Service Manager (v2.0.0)");
+    println!("  OxiDesk Unattended Windows Service Manager (v2.0.0)");
     println!("  Winlogon Kilit Ekrani ve UAC Yetkili Arka Plan Hizmeti");
     println!("============================================================");
 
@@ -51,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let device_id = rand::Rng::gen_range(&mut rng, 100_000_000..999_999_999).to_string();
             let pin = "123456".to_string();
             let port = 8080u16;
-            let hostname = std::env::var("COMPUTERNAME").unwrap_or_else(|_| "APEX-HOST".to_string());
+            let hostname = std::env::var("COMPUTERNAME").unwrap_or_else(|_| "OXIDESK-HOST".to_string());
             let local_ip = "0.0.0.0".to_string();
 
             let state = Arc::new(AppState::new(
@@ -64,19 +64,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let app = create_router(state);
             let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
-            println!("[INFO] ApexConnect Arka Plan Hizmeti Port {} uzerinde aktif.", port);
+            println!("[INFO] OxiDesk Arka Plan Hizmeti Port {} uzerinde aktif.", port);
 
             let listener = tokio::net::TcpListener::bind(addr).await?;
             axum::serve(listener, app.into_make_service()).await?;
         }
         _ => {
             println!("Kullanim:");
-            println!("  apex_service.exe install      - Windows Hizmeti olarak kaydet");
-            println!("  apex_service.exe uninstall    - Windows Hizmetini sistemden sil");
-            println!("  apex_service.exe start        - Hizmeti baslat");
-            println!("  apex_service.exe stop         - Hizmeti durdur");
-            println!("  apex_service.exe status       - Hizmet calisma durumunu sorgula");
-            println!("  apex_service.exe run-service  - Hizmet arka plan dongusunu calistir");
+            println!("  oxidesk_service.exe install      - Windows Hizmeti olarak kaydet");
+            println!("  oxidesk_service.exe uninstall    - Windows Hizmetini sistemden sil");
+            println!("  oxidesk_service.exe start        - Hizmeti baslat");
+            println!("  oxidesk_service.exe stop         - Hizmeti durdur");
+            println!("  oxidesk_service.exe status       - Hizmet calisma durumunu sorgula");
+            println!("  oxidesk_service.exe run-service  - Hizmet arka plan dongusunu calistir");
         }
     }
 

@@ -217,7 +217,8 @@ struct RendezvousStatusDto {
 }
 
 async fn get_rendezvous_status_handler(State(_state): State<SharedState>) -> Json<RendezvousStatusDto> {
-    let server_url = std::env::var("APEX_RENDEZVOUS_SERVER")
+    let server_url = std::env::var("OXIDESK_RENDEZVOUS_SERVER")
+        .or_else(|_| std::env::var("APEX_RENDEZVOUS_SERVER"))
         .unwrap_or_else(|_| "ws://127.0.0.1:8095/ws/signaling".to_string());
     Json(RendezvousStatusDto {
         enabled: true,

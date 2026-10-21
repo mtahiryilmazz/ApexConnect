@@ -26,12 +26,12 @@ pub struct FileTransferManager {
 
 impl FileTransferManager {
     pub fn new() -> Self {
-        // Safe directory: %USERPROFILE%\Downloads\ApexConnect
+        // Safe directory: %USERPROFILE%\Downloads\OxiDesk
         let base_dir = std::env::var("USERPROFILE")
             .map(PathBuf::from)
             .unwrap_or_else(|_| PathBuf::from("."));
 
-        let storage_dir = base_dir.join("Downloads").join("ApexConnect");
+        let storage_dir = base_dir.join("Downloads").join("OxiDesk");
         let _ = fs::create_dir_all(&storage_dir);
 
         Self {

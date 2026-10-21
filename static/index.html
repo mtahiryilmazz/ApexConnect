@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ApexConnect - Windows Fluent IT Uzak Masaüstü</title>
+  <title>OxiDesk - Windows Fluent IT Uzak Masaüstü</title>
   <link rel="stylesheet" href="/static/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +22,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
             </svg>
           </div>
-          <span class="app-name">ApexConnect</span>
+          <span class="app-name">OxiDesk</span>
           <span class="app-version-badge">v2.0.0 Fluent</span>
         </div>
 
@@ -149,7 +149,7 @@
 
               <div class="fluent-id-card">
                 <div class="id-row">
-                  <span class="id-label">Apex Cihaz Kimliği</span>
+                  <span class="id-label">OxiDesk Cihaz Kimliği</span>
                   <button class="icon-action-btn" onclick="copyDeviceId()" title="Kopyala">📋</button>
                 </div>
                 <div class="id-display-box" id="my-device-id">--- --- ---</div>
@@ -186,7 +186,7 @@
 
               <form id="connect-form" onsubmit="event.preventDefault(); initiateConnection();" class="fluent-form">
                 <div class="form-item">
-                  <label class="fluent-label" for="target-input">Hedef Apex ID veya Yerel IP</label>
+                  <label class="fluent-label" for="target-input">Hedef OxiDesk ID veya Yerel IP</label>
                   <div class="input-with-icon">
                     <span class="input-icon">💻</span>
                     <input type="text" id="target-input" class="fluent-input" placeholder="Örn: 744 972 033 veya 192.168.1.55" required>
@@ -220,7 +220,7 @@
           <div class="view-header flex-between">
             <div>
               <h1 class="view-title">Yerel Ağ Cihaz Keşif Radarı</h1>
-              <p class="view-subtitle">Bağlı olduğunuz alt ağdaki (LAN/Subnet) aktif ApexConnect istemcilerini tarayın.</p>
+              <p class="view-subtitle">Bağlı olduğunuz alt ağdaki (LAN/Subnet) aktif OxiDesk istemcilerini tarayın.</p>
             </div>
             <button class="btn btn-fluent-primary btn-sm" id="btn-scan" onclick="startNetworkScan()">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -236,7 +236,7 @@
                     <th>Durum</th>
                     <th>Cihaz / Host Adı</th>
                     <th>IP Adresi</th>
-                    <th>Apex ID</th>
+                    <th>OxiDesk ID</th>
                     <th>Hizmet Türü</th>
                     <th>İşlemler</th>
                   </tr>
@@ -293,7 +293,7 @@
           <div class="view-header flex-between">
             <div>
               <h1 class="view-title">Güvenli Dosya Transfer Yöneticisi</h1>
-              <p class="view-subtitle">Parçalı (chunked) dosya aktarımı. Dosyalar <code>Downloads\ApexConnect</code> dizininde saklanır.</p>
+              <p class="view-subtitle">Parçalı (chunked) dosya aktarımı. Dosyalar <code>Downloads\OxiDesk</code> dizininde saklanır.</p>
             </div>
             <div style="display: flex; gap: 8px;">
               <button class="btn btn-subtle btn-sm" onclick="openRemoteFolder()">📂 Klasörü Aç</button>
@@ -385,7 +385,7 @@
             <div class="fluent-setting-card">
               <div class="setting-text">
                 <div class="setting-name">Yerel Ağ UDP Keşif Yayını (Port 52899)</div>
-                <div class="setting-desc">Diğer ApexConnect cihazlarının bu makineyi otomatik keşfetmesine izin verin.</div>
+                <div class="setting-desc">Diğer OxiDesk cihazlarının bu makineyi otomatik keşfetmesine izin verin.</div>
               </div>
               <label class="fluent-switch">
                 <input type="checkbox" id="setting-udp-discovery" checked>
@@ -420,12 +420,12 @@
           <div class="settings-group">
             <h2 class="settings-group-title">Uygulama Hakkında</h2>
             <div class="fluent-card about-card">
-              <div style="font-weight: 600; font-size: 1.1rem; color: #fff;">ApexConnect v1.0.0</div>
+              <div style="font-weight: 600; font-size: 1.1rem; color: #fff;">OxiDesk v2.0.0</div>
               <p style="font-size: 0.82rem; color: var(--text-muted); margin: 6px 0 12px 0;">
-                Modern mimariler ve kurumsal pratiklerle geliştirilmiş yüksek performanslı Windows Uzak Masaüstü ekosistemi.
+                Rust ile geliştirilmiş (Oxide + Desktop) yüksek performanslı Windows Uzak Masaüstü ekosistemi.
               </p>
               <div style="display: flex; gap: 8px;">
-                <button class="btn btn-subtle btn-xs" onclick="window.open('https://github.com/mtahiryilmazz/ApexConnect', '_blank')">GitHub Deposu</button>
+                <button class="btn btn-subtle btn-xs" onclick="window.open('https://github.com/mtahiryilmazz/OxiDesk', '_blank')">GitHub Deposu</button>
                 <button class="btn btn-subtle btn-xs" onclick="switchNavTab('quick-connect')">Geri Dön</button>
               </div>
             </div>

@@ -45,7 +45,7 @@ impl NativeAdminGui {
             GLOBAL_ADMIN_STATE = Some(state);
 
             let instance = GetModuleHandleW(None).unwrap_or_default();
-            let class_name = w!("ApexConnectAdminNativeClass");
+            let class_name = w!("OxiDeskAdminNativeClass");
 
             let bg_brush = CreateSolidBrush(COLORREF(0x001A120F)); // Dark background #0F121A
 
@@ -68,7 +68,7 @@ impl NativeAdminGui {
             let hwnd = CreateWindowExW(
                 WINDOW_EX_STYLE(0),
                 class_name,
-                w!("ApexConnect - IT Uzak Masaüstü Yönetim Konsolu (Native Fluent)"),
+                w!("OxiDesk - IT Uzak Masaüstü Yönetim Konsolu (Native Fluent)"),
                 WS_OVERLAPPED | WS_SYSMENU | WS_CLIPCHILDREN,
                 CW_USEDEFAULT,
                 CW_USEDEFAULT,
@@ -174,7 +174,7 @@ unsafe extern "system" fn admin_wnd_proc(
                 None,
             );
 
-            // Right Card Inputs: Target Apex ID and PIN
+            // Right Card Inputs: Target OxiDesk ID and PIN
             let target_edit = CreateWindowExW(
                 WINDOW_EX_STYLE(0),
                 w!("EDIT"),
@@ -284,8 +284,8 @@ unsafe extern "system" fn admin_wnd_proc(
                 if target.is_empty() {
                     windows::Win32::UI::WindowsAndMessaging::MessageBoxW(
                         hwnd,
-                        w!("Lütfen bir hedef Apex ID veya IP adresi girin."),
-                        w!("ApexConnect Uyarı"),
+                        w!("Lütfen bir hedef OxiDesk ID veya IP adresi girin."),
+                        w!("OxiDesk Uyarı"),
                         windows::Win32::UI::WindowsAndMessaging::MB_OK | windows::Win32::UI::WindowsAndMessaging::MB_ICONWARNING,
                     );
                 } else {
@@ -366,7 +366,7 @@ unsafe fn paint_admin_gui(hdc: HDC, hwnd: HWND) {
     let mut title_rect = RECT { left: 35, top: 20, right: rect.right, bottom: 55 };
     draw_text_helper(
         hdc,
-        "ApexConnect IT Yönetim Konsolu (Native Fluent GUI)",
+        "OxiDesk IT Yönetim Konsolu (Native Fluent GUI)",
         &mut title_rect,
         DT_LEFT | DT_SINGLELINE | DT_NOPREFIX,
     );
@@ -398,7 +398,7 @@ unsafe fn paint_admin_gui(hdc: HDC, hwnd: HWND) {
     SelectObject(hdc, label_font);
     SetTextColor(hdc, COLORREF(0x009BA0A6));
     let mut c1_lbl = RECT { left: 45, top: 115, right: 395, bottom: 135 };
-    draw_text_helper(hdc, "Bu Bilgisayarın Apex ID'si:", &mut c1_lbl, DT_LEFT | DT_SINGLELINE | DT_NOPREFIX);
+    draw_text_helper(hdc, "Bu Bilgisayarın OxiDesk ID'si:", &mut c1_lbl, DT_LEFT | DT_SINGLELINE | DT_NOPREFIX);
 
     SelectObject(hdc, id_font);
     SetTextColor(hdc, COLORREF(0x00FFCD60)); // Cyan
@@ -435,7 +435,7 @@ unsafe fn paint_admin_gui(hdc: HDC, hwnd: HWND) {
     SelectObject(hdc, label_font);
     SetTextColor(hdc, COLORREF(0x009BA0A6));
     let mut t_lbl = RECT { left: 460, top: 135, right: 800, bottom: 155 };
-    draw_text_helper(hdc, "Hedef Apex ID veya Yerel IP:", &mut t_lbl, DT_LEFT | DT_SINGLELINE | DT_NOPREFIX);
+    draw_text_helper(hdc, "Hedef OxiDesk ID veya Yerel IP:", &mut t_lbl, DT_LEFT | DT_SINGLELINE | DT_NOPREFIX);
 
     let mut p_lbl = RECT { left: 460, top: 200, right: 800, bottom: 220 };
     draw_text_helper(hdc, "Bağlantı PIN Kodu:", &mut p_lbl, DT_LEFT | DT_SINGLELINE | DT_NOPREFIX);
@@ -464,7 +464,7 @@ unsafe fn paint_admin_gui(hdc: HDC, hwnd: HWND) {
             for (_, dev) in disc.iter().take(4) {
                 let id_text = dev.device_id.clone().unwrap_or_else(|| "-".to_string());
                 let sos_tag = if dev.is_sos { "🚨 SOS YARDIM BEKLİYOR" } else { "Hazır" };
-                let line_str = format!("• {} ({}) | Apex ID: {} | IP: {}:{} | [{}]", dev.hostname, dev.user_name.clone().unwrap_or_default(), id_text, dev.ip, dev.port, sos_tag);
+                let line_str = format!("• {} ({}) | OxiDesk ID: {} | IP: {}:{} | [{}]", dev.hostname, dev.user_name.clone().unwrap_or_default(), id_text, dev.ip, dev.port, sos_tag);
                 
                 SetTextColor(hdc, if dev.is_sos { COLORREF(0x0024BFFB) } else { COLORREF(0x005ECC34) });
                 let mut line_rect = RECT { left: 45, top: y_offset, right: 800, bottom: y_offset + 22 };
@@ -499,7 +499,7 @@ fn launch_native_viewer(target: &str, pin: &str) {
     let clean_target = target.replace(" ", "");
     let clean_pin = pin.to_string();
 
-    // Resolve target IP/port if it is an Apex ID
+    // Resolve target IP/port if it is an OxiDesk ID
     let mut resolved_host = clean_target.clone();
     unsafe {
         if let Some(state) = &GLOBAL_ADMIN_STATE {
@@ -538,7 +538,7 @@ fn launch_native_viewer(target: &str, pin: &str) {
     std::thread::spawn(move || {
         unsafe {
             let instance = GetModuleHandleW(None).unwrap_or_default();
-            let class_name = w!("ApexNativeViewerWindowClass");
+            let class_name = w!("OxiDeskNativeViewerWindowClass");
 
             let bg_brush = CreateSolidBrush(COLORREF(0x00000000)); // Black
 
@@ -561,7 +561,7 @@ fn launch_native_viewer(target: &str, pin: &str) {
             let hwnd = CreateWindowExW(
                 WINDOW_EX_STYLE(0),
                 class_name,
-                w!("ApexConnect Uzak Masaüstü (Native Viewer)"),
+                w!("OxiDesk Uzak Masaüstü (Native Viewer)"),
                 WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                 CW_USEDEFAULT,
                 CW_USEDEFAULT,

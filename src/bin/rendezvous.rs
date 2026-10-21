@@ -1,15 +1,16 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
-use apex_connect::rendezvous::{create_rendezvous_router, RendezvousState};
+use oxidesk::rendezvous::{create_rendezvous_router, RendezvousState};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("============================================================");
-    println!("  ApexConnect Rendezvous & Signaling Server (v1.2.0)");
+    println!("  OxiDesk Rendezvous & Signaling Server (v2.0.0)");
     println!("  WAN NAT Traversal, WebRTC P2P Signaling & Relay Bridge");
     println!("============================================================");
 
-    let port: u16 = std::env::var("APEX_RENDEZVOUS_PORT")
+    let port: u16 = std::env::var("OXIDESK_RENDEZVOUS_PORT")
+        .or_else(|_| std::env::var("APEX_RENDEZVOUS_PORT"))
         .ok()
         .and_then(|p| p.parse().ok())
         .unwrap_or(8095);

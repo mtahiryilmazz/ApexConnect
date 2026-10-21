@@ -1,4 +1,4 @@
-// ApexConnect Frontend & Remote Desktop Engine
+// OxiDesk Frontend & Remote Desktop Engine
 
 let currentTab = 'quick-connect';
 let hostInfo = null;
@@ -103,7 +103,7 @@ async function regeneratePinPrompt() {
 function copyDeviceId() {
   if (hostInfo && hostInfo.device_id) {
     navigator.clipboard.writeText(hostInfo.device_id.replace(/\s+/g, ''));
-    alert(`Apex Cihaz ID panoya kopyalandı: ${formatApexId(hostInfo.device_id)}`);
+    alert(`OxiDesk Cihaz ID panoya kopyalandı: ${formatApexId(hostInfo.device_id)}`);
   }
 }
 
@@ -211,7 +211,7 @@ async function quickAddToBook(hostname, ip, device_id) {
 function showAddDeviceModal() {
   const name = prompt('Cihaz Adı (Örn: Muhasebe-PC1):');
   if (!name) return;
-  const target = prompt('Apex ID veya Yerel IP Adresi:');
+  const target = prompt('OxiDesk ID veya Yerel IP Adresi:');
   if (!target) return;
   const group = prompt('Departman/Grup (Örn: Muhasebe, Satış, Sunucu):', 'Ofis') || 'Genel';
   const pin = prompt('Sabit Bağlantı Parolası (Opsiyonel):', '');
@@ -254,7 +254,7 @@ function initiateConnection() {
   const pin = document.getElementById('pin-input').value.trim();
 
   if (!target) {
-    alert('Lütfen bir hedef Apex ID veya IP adresi girin.');
+    alert('Lütfen bir hedef OxiDesk ID veya IP adresi girin.');
     return;
   }
 
@@ -291,7 +291,7 @@ async function startRemoteSession(target, pin) {
   }
 
   if (/^\d{6,12}$/.test(targetHost)) {
-    alert(`Apex ID (${target}) yerel ağda çözümlenemedi.\nLütfen hedef bilgisayarın açık olduğundan veya IP:PORT (Örn: 192.168.1.50:8080) şeklinde doğrudan bağlanmayı deneyin.`);
+    alert(`OxiDesk ID (${target}) yerel ağda çözümlenemedi.\nLütfen hedef bilgisayarın açık olduğundan veya IP:PORT (Örn: 192.168.1.50:8080) şeklinde doğrudan bağlanmayı deneyin.`);
     return;
   }
 
@@ -724,7 +724,7 @@ function escapeHtml(str) {
 
 // ==================== THEME MANAGEMENT (LIGHT / DARK) ====================
 function initTheme() {
-  const savedTheme = localStorage.getItem('apex_theme') || 'dark';
+  const savedTheme = localStorage.getItem('oxidesk_theme') || localStorage.getItem('apex_theme') || 'dark';
   applyTheme(savedTheme);
 }
 
@@ -733,11 +733,11 @@ function applyTheme(theme) {
   if (theme === 'light') {
     html.classList.remove('dark');
     html.classList.add('light');
-    localStorage.setItem('apex_theme', 'light');
+    localStorage.setItem('oxidesk_theme', 'light');
   } else {
     html.classList.remove('light');
     html.classList.add('dark');
-    localStorage.setItem('apex_theme', 'dark');
+    localStorage.setItem('oxidesk_theme', 'dark');
   }
 }
 
@@ -917,7 +917,7 @@ function saveRecordedSession() {
 
   const ext = chosenMimeType.includes('mp4') ? 'mp4' : 'webm';
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const fileName = `ApexConnect_Kayit_${timestamp}.${ext}`;
+  const fileName = `OxiDesk_Kayit_${timestamp}.${ext}`;
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1151,7 +1151,7 @@ async function startNetworkScan(silent = false) {
       tbody.innerHTML = `
         <tr>
           <td colspan="6" class="table-empty">
-            Ağda aktif başka bir ApexConnect veya QuickSupport cihazı bulunamadı.
+            Ağda aktif başka bir OxiDesk veya QuickSupport cihazı bulunamadı.
           </td>
         </tr>
       `;

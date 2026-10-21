@@ -5,11 +5,11 @@ use std::sync::Arc;
 use rand::Rng;
 use tokio::net::TcpListener;
 
-use apex_connect::address_book::AddressBookManager;
-use apex_connect::discovery::DiscoveryEngine;
-use apex_connect::gui::GuiLauncher;
-use apex_connect::server::create_router;
-use apex_connect::state::AppState;
+use oxidesk::address_book::AddressBookManager;
+use oxidesk::discovery::DiscoveryEngine;
+use oxidesk::gui::GuiLauncher;
+use oxidesk::server::create_router;
+use oxidesk::state::AppState;
 
 fn get_local_ip() -> String {
     if let Ok(socket) = UdpSocket::bind("0.0.0.0:0") {
@@ -22,7 +22,7 @@ fn get_local_ip() -> String {
     "127.0.0.1".to_string()
 }
 
-fn generate_apex_id() -> String {
+fn generate_oxidesk_id() -> String {
     let mut rng = rand::thread_rng();
     let num: u32 = rng.gen_range(100_000_000..999_999_999);
     num.to_string()
@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (local_url, _selected_port) = rt.block_on(async {
         let local_ip = get_local_ip();
         let hostname = std::env::var("COMPUTERNAME").unwrap_or_else(|_| "Windows-PC".to_string());
-        let device_id = generate_apex_id();
+        let device_id = generate_oxidesk_id();
         let pin = generate_pin();
 
         // Auto-detect an available port (try 8080 to 8090)
@@ -94,7 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         println!();
         println!("  ===============================================================");
-        println!("  🚀  ApexConnect - IT Uzak Masaüstü ve Cihaz Yönetim Ekosistemi");
+        println!("  🚀  OxiDesk - IT Uzak Masaüstü ve Cihaz Yönetim Ekosistemi");
         println!("  ===============================================================");
         println!("  🖥️   Bilgisayar Adı     : {}", hostname);
         println!("  🆔  Cihaz Kimliği (ID)  : \x1b[1;36m{}\x1b[0m", formatted_id);
@@ -103,7 +103,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("  ---------------------------------------------------------------");
         println!("  📱  Mobil / Web Konsol  : \x1b[1;32mhttp://{}:{}\x1b[0m", local_ip, selected_port);
         println!("  💻  Yerel Erişim        : \x1b[1;34mhttp://localhost:{}\x1b[0m", selected_port);
-        println!("  📡  Ağ Keşfi (UDP)      : Port {} üzerinden aktif", apex_connect::discovery::DISCOVERY_PORT);
+        println!("  📡  Ağ Keşfi (UDP)      : Port {} üzerinden aktif", oxidesk::discovery::DISCOVERY_PORT);
         println!("  ===============================================================");
         println!("  [Bilgi] Windows 11 Fluent Masaüstü Yönetim Konsolu başlatılıyor...\n");
 
@@ -117,7 +117,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     })?;
 
     // Run native embedded frameless WebView2 window on main UI thread
-    GuiLauncher::run_native_window(&local_url, "ApexConnect", 1280, 820);
+    GuiLauncher::run_native_window(&local_url, "OxiDesk", 1280, 820);
 
     Ok(())
 }
