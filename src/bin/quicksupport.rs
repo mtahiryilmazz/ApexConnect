@@ -32,85 +32,91 @@ fn generate_pin() -> String {
     num.to_string()
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let local_ip = get_local_ip();
-    let hostname = std::env::var("COMPUTERNAME").unwrap_or_else(|_| "Windows-PC".to_string());
-    let username = std::env::var("USERNAME").unwrap_or_else(|_| "Kullanıcı".to_string());
-    let device_id = generate_apex_id();
-    let pin = generate_pin();
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let rt = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()?;
 
-    // Auto-detect available port (try 8080 to 8095)
-    let mut selected_port = 8080;
-    let mut bound_listener = None;
+    let (local_url, _selected_port) = rt.block_on(async {
+        let local_ip = get_local_ip();
+        let hostname = std::env::var("COMPUTERNAME").unwrap_or_else(|_| "Windows-PC".to_string());
+        let username = std::env::var("USERNAME").unwrap_or_else(|_| "Kullanıcı".to_string());
+        let device_id = generate_apex_id();
+        let pin = generate_pin();
 
-    for p in 8080..=8095 {
-        let addr: SocketAddr = format!("0.0.0.0:{}", p).parse()?;
-        match TcpListener::bind(addr).await {
-            Ok(l) => {
-                selected_port = p;
-                bound_listener = Some(l);
-                break;
+        // Auto-detect available port (try 8080 to 8095)
+        let mut selected_port = 8080;
+        let mut bound_listener = None;
+
+        for p in 8080..=8095 {
+            let addr: SocketAddr = format!("0.0.0.0:{}", p).parse().unwrap();
+            match TcpListener::bind(addr).await {
+                Ok(l) => {
+                    selected_port = p;
+                    bound_listener = Some(l);
+                    break;
+                }
+                Err(_) => continue,
             }
-            Err(_) => continue,
         }
-    }
 
-    let listener = match bound_listener {
-        Some(l) => l,
-        None => {
-            eprintln!("\n[HATA] Port bulunamadı! Çıkmak için Enter'a basın...");
-            let mut s = String::new();
-            let _ = std::io::stdin().read_line(&mut s);
-            return Err("Ports occupied".into());
-        }
-    };
+        let listener = match bound_listener {
+            Some(l) => l,
+            None => {
+                eprintln!("\n[HATA] Port bulunamadı!");
+                return Err::<_, Box<dyn std::error::Error>>("Ports occupied".into());
+            }
+        };
 
-    let state = Arc::new(AppState::new(
-        device_id.clone(),
-        pin.clone(),
-        local_ip.clone(),
-        selected_port,
-        hostname.clone(),
-    ));
+        let state = Arc::new(AppState::new(
+            device_id.clone(),
+            pin.clone(),
+            local_ip.clone(),
+            selected_port,
+            hostname.clone(),
+        ));
 
-    // Start SOS UDP Broadcaster announcing assistance request to LAN IT admins
-    DiscoveryEngine::start_sos_broadcaster(
-        device_id.clone(),
-        hostname.clone(),
-        selected_port,
-        username.clone(),
-    );
+        // Start SOS UDP Broadcaster announcing assistance request to LAN IT admins
+        DiscoveryEngine::start_sos_broadcaster(
+            device_id.clone(),
+            hostname.clone(),
+            selected_port,
+            username.clone(),
+        );
 
-    let formatted_id = format!(
-        "{} {} {}",
-        &device_id[0..3],
-        &device_id[3..6],
-        &device_id[6..9]
-    );
+        let formatted_id = format!(
+            "{} {} {}",
+            &device_id[0..3],
+            &device_id[3..6],
+            &device_id[6..9]
+        );
 
-    println!();
-    println!("  ===============================================================");
-    println!("  🚨  ApexConnect Hızlı Destek (QuickSupport Portable v1.0)");
-    println!("  ===============================================================");
-    println!("  👤  Kullanıcı / Cihaz  : {} ({})", hostname, username);
-    println!("  🆔  Apex Kimliğiniz    : \x1b[1;36m{}\x1b[0m", formatted_id);
-    println!("  🔑  Geçici Bağlantı PIN: \x1b[1;33m{}\x1b[0m", pin);
-    println!("  🌐  Yerel Ağ Adresi    : {}:{}", local_ip, selected_port);
-    println!("  ---------------------------------------------------------------");
-    println!("  📡  Ağ Keşfi Durumu    : \x1b[1;32mAKTİF (Bilgi İşleme Anons Gönderiliyor)\x1b[0m");
-    println!("  ===============================================================");
-    println!("  [Bilgi] Bilgi İşlem personeli aynı ağdaysa bu cihazı doğrudan görebilir.");
-    println!("  [Bilgi] Destek penceresi açılıyor. Çıkmak için pencereyi kapatın.\n");
+        println!();
+        println!("  ===============================================================");
+        println!("  🚨  ApexConnect Hızlı Destek (QuickSupport Portable v1.0)");
+        println!("  ===============================================================");
+        println!("  👤  Kullanıcı / Cihaz  : {} ({})", hostname, username);
+        println!("  🆔  Apex Kimliğiniz    : \x1b[1;36m{}\x1b[0m", formatted_id);
+        println!("  🔑  Geçici Bağlantı PIN: \x1b[1;33m{}\x1b[0m", pin);
+        println!("  🌐  Yerel Ağ Adresi    : {}:{}", local_ip, selected_port);
+        println!("  ---------------------------------------------------------------");
+        println!("  📡  Ağ Keşfi Durumu    : \x1b[1;32mAKTİF (Bilgi İşleme Anons Gönderiliyor)\x1b[0m");
+        println!("  ===============================================================");
+        println!("  [Bilgi] Bilgi İşlem personeli aynı ağdaysa bu cihazı doğrudan görebilir.");
+        println!("  [Bilgi] Destek penceresi açılıyor. Çıkmak için pencereyi kapatın.\n");
+        println!("  [Bilgi] Windows 11 Fluent Hızlı Destek Penceresi açılıyor...\n");
 
-    println!("  [Bilgi] Windows 11 Fluent Hızlı Destek Penceresi açılıyor...\n");
+        let app = create_router(state);
+        tokio::spawn(async move {
+            let _ = axum::serve(listener, app).await;
+        });
 
-    // Automatically open standalone Frameless Fluent QuickSupport window
-    let local_url = format!("http://localhost:{}/qs", selected_port);
-    apex_connect::gui::GuiLauncher::launch(&local_url, "ApexQuickSupport", 440, 640, "QuickSupport");
+        let local_url = format!("http://localhost:{}/qs", selected_port);
+        Ok::<_, Box<dyn std::error::Error>>((local_url, selected_port))
+    })?;
 
-    let app = create_router(state);
-    axum::serve(listener, app).await?;
+    // Run native embedded frameless WebView2 QuickSupport window on main UI thread
+    apex_connect::gui::GuiLauncher::run_native_window(&local_url, "ApexQuickSupport", 440, 640);
 
     Ok(())
 }

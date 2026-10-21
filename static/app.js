@@ -26,12 +26,14 @@ document.addEventListener('DOMContentLoaded', () => {
   initDropZone();
   startNetworkScan(true);
 
-  // Auto-scan periodically for active QuickSupport nodes and SOS alerts
-  setInterval(() => {
-    if (currentTab === 'network-discovery' || currentTab === 'quick-connect') {
-      startNetworkScan(true);
-    }
-  }, 3000);
+  // Native Frameless Window Drag Region
+  const dragArea = document.querySelector('.titlebar-drag-area');
+  if (dragArea) {
+    dragArea.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button') || e.target.closest('input') || e.target.closest('select')) return;
+      if (window.ipc) window.ipc.postMessage('drag');
+    });
+  }
 });
 
 // WinUI 3 Navigation Tab Switcher
@@ -105,19 +107,33 @@ function copyDeviceId() {
   }
 }
 
-function simulateWindowControl(action) {
-  if (action === 'min') {
-    alert('Uygulama arka planda ve sistem tepsisinde çalışmaya devam ediyor.');
-  } else if (action === 'max') {
+function windowMinimize() {
+  if (window.ipc) {
+    window.ipc.postMessage('minimize');
+  } else {
+    fetch('/api/window/minimize', { method: 'POST' }).catch(() => {});
+  }
+}
+
+function windowMaximize() {
+  if (window.ipc) {
+    window.ipc.postMessage('maximize');
+  } else {
+    fetch('/api/window/maximize', { method: 'POST' }).catch(() => {});
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
     } else {
       document.exitFullscreen().catch(() => {});
     }
-  } else if (action === 'close') {
-    if (confirm('ApexConnect penceresini kapatmak istiyor musunuz?')) {
-      window.close();
-    }
+  }
+}
+
+function windowClose() {
+  if (window.ipc) {
+    window.ipc.postMessage('close');
+  } else {
+    fetch('/api/window/close', { method: 'POST' }).catch(() => {});
+    window.close();
   }
 }
 
@@ -128,67 +144,6 @@ function formatApexId(idStr) {
     return `${clean.slice(0,3)} ${clean.slice(3,6)} ${clean.slice(6,9)}`;
   }
   return idStr;
-}
-
-// Network Discovery Scanner
-async function startNetworkScan() {
-  const tbody = document.getElementById('scan-results-body');
-  const btn = document.getElementById('btn-scan');
-  btn.disabled = true;
-  btn.innerText = 'Taranıyor...';
-
-  tbody.innerHTML = `
-    <tr>
-      <td colspan="6" style="text-align: center; color: #60a5fa; padding: 2rem;">
-        Yerel ağ cihazları ve aktif ApexConnect istemcileri taranıyor, lütfen bekleyin...
-      </td>
-    </tr>
-  `;
-
-  try {
-    const res = await fetch('/api/scan');
-    const data = await res.json();
-
-    if (!data.devices || data.devices.length === 0) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-            Ağda aktif cihaz bulunamadı.
-          </td>
-        </tr>
-      `;
-      return;
-    }
-
-    tbody.innerHTML = data.devices.map(d => `
-      <tr>
-        <td><span class="badge ${d.is_online ? 'badge-online' : 'badge-offline'}">${d.is_online ? 'Online' : 'Offline'}</span></td>
-        <td><strong>${escapeHtml(d.hostname)}</strong></td>
-        <td><code>${d.ip}</code></td>
-        <td><strong style="color: #60a5fa;">${formatApexId(d.device_id || '-')}</strong></td>
-        <td><span class="badge badge-tag">${d.service_type || 'LAN Host'}</span></td>
-        <td>
-          <button class="btn btn-primary btn-sm" onclick="connectToTarget('${d.ip}', '${d.device_id || ''}', ${d.port || 8080})">
-            Bağlan
-          </button>
-          <button class="btn btn-secondary btn-sm" onclick="quickAddToBook('${escapeHtml(d.hostname)}', '${d.ip}', '${d.device_id}')">
-            Kaydet
-          </button>
-        </td>
-      </tr>
-    `).join('');
-  } catch (err) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align: center; color: #ef4444; padding: 2rem;">
-          Tarama hatası: ${err.message}
-        </td>
-      </tr>
-    `;
-  } finally {
-    btn.disabled = false;
-    btn.innerText = 'Ağı Tara';
-  }
 }
 
 // Address Book (Adres Defteri)
@@ -374,10 +329,14 @@ async function startRemoteSession(target, pin) {
         } else if (msg.type === 'pong') {
           latency = Date.now() - msg.timestamp;
           updateStatsDisplay();
+        } else if (msg.type === 'chat') {
+          receiveChatMessage(msg);
         } else if (msg.type === 'file_progress') {
           updateUploadProgress(msg.id, msg.received);
+          updateSessionUploadProgress(msg.id, msg.received);
         } else if (msg.type === 'file_complete') {
           finishUploadProgress(msg.name);
+          finishSessionUploadProgress(msg.name);
         }
       } catch (e) {}
     } else {
@@ -395,6 +354,11 @@ async function startRemoteSession(target, pin) {
         }
         ctx.drawImage(bitmap, 0, 0);
         bitmap.close();
+
+        // Push frame to recording stream if actively recording
+        if (recordingStreamTrack && recordingStreamTrack.requestFrame) {
+          try { recordingStreamTrack.requestFrame(); } catch (e) {}
+        }
 
         frameCount++;
         const now = performance.now();
@@ -824,6 +788,8 @@ let mediaRecorder = null;
 let recordedChunks = [];
 let recordingStartTime = null;
 let recordingTimerInterval = null;
+let recordingFramePump = null;
+let recordingStreamTrack = null;
 let chosenMimeType = 'video/webm';
 
 function getBestSupportedMimeType() {
@@ -859,8 +825,9 @@ function startSessionRecording() {
 
   try {
     chosenMimeType = getBestSupportedMimeType();
-    const stream = canvas.captureStream(30); // 30 FPS smooth video stream
+    const stream = canvas.captureStream(30); // 30 FPS stream
     recordedChunks = [];
+    recordingStreamTrack = stream.getVideoTracks()[0] || null;
 
     mediaRecorder = new MediaRecorder(stream, {
       mimeType: chosenMimeType,
@@ -877,6 +844,13 @@ function startSessionRecording() {
 
     mediaRecorder.start(1000); // 1-second chunks
     recordingStartTime = Date.now();
+
+    // Active frame pump to ensure video frames continuously reach the encoder even on static desktop
+    recordingFramePump = setInterval(() => {
+      if (recordingStreamTrack && recordingStreamTrack.requestFrame) {
+        try { recordingStreamTrack.requestFrame(); } catch (e) {}
+      }
+    }, 33);
 
     const btn = document.getElementById('btn-record-session');
     if (btn) {
@@ -903,7 +877,16 @@ function startSessionRecording() {
 }
 
 function stopSessionRecording() {
+  if (recordingFramePump) {
+    clearInterval(recordingFramePump);
+    recordingFramePump = null;
+  }
+  recordingStreamTrack = null;
+
   if (mediaRecorder && mediaRecorder.state === 'recording') {
+    try {
+      mediaRecorder.requestData(); // Flush all recorded chunks before stopping
+    } catch (e) {}
     mediaRecorder.stop();
   }
 
@@ -921,9 +904,17 @@ function stopSessionRecording() {
 }
 
 function saveRecordedSession() {
-  if (recordedChunks.length === 0) return;
+  if (recordedChunks.length === 0) {
+    alert('Kayıt dosyası oluşturulamadı: Video karesi alınamadı.');
+    return;
+  }
 
   const blob = new Blob(recordedChunks, { type: chosenMimeType });
+  if (blob.size === 0) {
+    alert('Kayıt dosyası boş (0 byte).');
+    return;
+  }
+
   const ext = chosenMimeType.includes('mp4') ? 'mp4' : 'webm';
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const fileName = `ApexConnect_Kayit_${timestamp}.${ext}`;
@@ -942,6 +933,201 @@ function saveRecordedSession() {
   }, 100);
 
   alert(`Oturum videosu (${(blob.size / (1024 * 1024)).toFixed(2)} MB) başarıyla kaydedildi:\n${fileName}`);
+}
+
+// ==================== IN-SESSION FILE TRANSFER POPUP ====================
+function toggleSessionFileModal() {
+  const modal = document.getElementById('session-file-modal');
+  if (!modal) return;
+  modal.classList.toggle('hidden');
+  if (!modal.classList.contains('hidden')) {
+    loadSessionFilesList();
+  }
+}
+
+async function loadSessionFilesList() {
+  const container = document.getElementById('session-files-items');
+  if (!container) return;
+  try {
+    const res = await fetch('/api/files');
+    if (!res.ok) return;
+    const files = await res.json();
+    if (files.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:0.75rem;padding:6px;">Henüz aktarılan dosya yok.</div>';
+      return;
+    }
+    container.innerHTML = files.slice(0, 8).map(f => `
+      <div class="session-file-item">
+        <span class="session-file-name" title="${escapeHtml(f.name)}">📄 ${escapeHtml(f.name)}</span>
+        <button class="btn btn-subtle btn-xs" onclick="window.open('/api/files/download/${encodeURIComponent(f.name)}')">İndir</button>
+      </div>
+    `).join('');
+  } catch (e) {}
+}
+
+function handleSessionFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  uploadSessionFile(file);
+}
+
+function uploadSessionFile(file) {
+  if (!activeWs || activeWs.readyState !== WebSocket.OPEN) {
+    alert('Aktif bir oturum bağlı değil.');
+    return;
+  }
+  const fileId = 'sf_' + Date.now();
+  const chunkSize = 64 * 1024; // 64 KB chunks
+  let offset = 0;
+
+  const progressCard = document.getElementById('session-upload-progress');
+  const filenameEl = document.getElementById('session-upload-filename');
+  const percentEl = document.getElementById('session-upload-percentage');
+  const barEl = document.getElementById('session-upload-bar');
+
+  if (progressCard) progressCard.style.display = 'block';
+  if (filenameEl) filenameEl.innerText = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+
+  activeWs.send(JSON.stringify({
+    type: 'file_start',
+    id: fileId,
+    name: file.name,
+    size: file.size
+  }));
+
+  const reader = new FileReader();
+
+  function sendNextChunk() {
+    if (offset >= file.size) {
+      activeWs.send(JSON.stringify({
+        type: 'file_end',
+        id: fileId
+      }));
+      if (percentEl) percentEl.innerText = '100% Tamamlandı';
+      if (barEl) barEl.style.width = '100%';
+      setTimeout(() => {
+        if (progressCard) progressCard.style.display = 'none';
+        loadSessionFilesList();
+      }, 1500);
+      return;
+    }
+
+    const slice = file.slice(offset, offset + chunkSize);
+    reader.onload = (e) => {
+      const arrayBuffer = e.target.result;
+      const base64Data = arrayBufferToBase64(arrayBuffer);
+      activeWs.send(JSON.stringify({
+        type: 'file_chunk',
+        id: fileId,
+        offset: offset,
+        data: base64Data
+      }));
+
+      offset += chunkSize;
+      const pct = Math.min(100, Math.round((offset / file.size) * 100));
+      if (percentEl) percentEl.innerText = `${pct}%`;
+      if (barEl) barEl.style.width = `${pct}%`;
+
+      setTimeout(sendNextChunk, 10);
+    };
+    reader.readAsArrayBuffer(slice);
+  }
+
+  setTimeout(sendNextChunk, 80);
+}
+
+function updateSessionUploadProgress(id, received) {
+  // Handled by local chunk loop
+}
+
+function finishSessionUploadProgress(name) {
+  loadSessionFilesList();
+}
+
+// ==================== IN-SESSION CHAT DRAWER ====================
+let unreadChatCount = 0;
+let chatMessages = [];
+
+function toggleSessionChatModal() {
+  const modal = document.getElementById('session-chat-modal');
+  if (!modal) return;
+  modal.classList.toggle('hidden');
+  if (!modal.classList.contains('hidden')) {
+    unreadChatCount = 0;
+    const badge = document.getElementById('chat-unread-badge');
+    if (badge) badge.classList.add('hidden');
+    const input = document.getElementById('session-chat-input');
+    if (input) input.focus();
+    renderChatMessages();
+  }
+}
+
+function handleChatKeyDown(event) {
+  if (event.key === 'Enter') {
+    sendChatMessage();
+  }
+}
+
+function sendChatMessage() {
+  const input = document.getElementById('session-chat-input');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  const msg = {
+    type: 'chat',
+    sender: 'IT Yöneticisi',
+    text: text,
+    timestamp: Math.floor(Date.now() / 1000)
+  };
+
+  if (activeWs && activeWs.readyState === WebSocket.OPEN) {
+    activeWs.send(JSON.stringify(msg));
+  } else {
+    fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sender: msg.sender, text: msg.text })
+    }).catch(() => {});
+  }
+
+  chatMessages.push({ ...msg, isMine: true });
+  renderChatMessages();
+  input.value = '';
+}
+
+function receiveChatMessage(msg) {
+  const isMine = msg.sender === 'IT Yöneticisi';
+  chatMessages.push({ ...msg, isMine });
+  const modal = document.getElementById('session-chat-modal');
+  if (modal && modal.classList.contains('hidden') && !isMine) {
+    unreadChatCount++;
+    const badge = document.getElementById('chat-unread-badge');
+    if (badge) {
+      badge.innerText = unreadChatCount;
+      badge.classList.remove('hidden');
+    }
+  }
+  renderChatMessages();
+}
+
+function renderChatMessages() {
+  const container = document.getElementById('session-chat-messages');
+  if (!container) return;
+  container.innerHTML = `
+    <div class="chat-system-msg">Uzak kullanıcı ile canlı mesajlaşma aktif.</div>
+    ${chatMessages.map(m => {
+      const timeStr = new Date(m.timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return `
+        <div class="chat-msg ${m.isMine ? 'mine' : 'theirs'}">
+          <span style="font-size:0.68rem;opacity:0.85;margin-bottom:2px;">${escapeHtml(m.sender)}</span>
+          <span>${escapeHtml(m.text)}</span>
+          <span class="chat-meta">${timeStr}</span>
+        </div>
+      `;
+    }).join('')}
+  `;
+  container.scrollTop = container.scrollHeight;
 }
 
 // ==================== NETWORK DISCOVERY & SOS RADAR ====================

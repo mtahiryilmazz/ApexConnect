@@ -53,6 +53,7 @@ pub fn create_router(state: SharedState) -> Router {
         .route("/api/pin/refresh", get(refresh_pin_handler))
         .route("/api/audit", get(get_audit_handler))
         .route("/api/policy", get(get_policy_handler).post(update_policy_handler))
+        .route("/api/chat", get(get_chat_handler).post(send_chat_handler))
         .route("/api/service/status", get(get_service_status_handler))
         .route("/api/window/minimize", post(window_minimize_handler))
         .route("/api/window/maximize", post(window_maximize_handler))
@@ -268,6 +269,34 @@ async fn get_service_status_handler() -> Json<ServiceStatusDto> {
     })
 }
 
+#[derive(Deserialize)]
+struct SendChatDto {
+    sender: String,
+    text: String,
+}
+
+async fn get_chat_handler(State(state): State<SharedState>) -> Json<Vec<crate::state::ChatMessage>> {
+    let list = state.chat_messages.lock().unwrap().clone();
+    Json(list)
+}
+
+async fn send_chat_handler(
+    State(state): State<SharedState>,
+    Json(payload): Json<SendChatDto>,
+) -> Json<crate::state::ChatMessage> {
+    let msg = crate::state::ChatMessage {
+        id: format!("{}", rand::random::<u32>()),
+        sender: payload.sender,
+        text: payload.text,
+        timestamp: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs(),
+    };
+    state.chat_messages.lock().unwrap().push(msg.clone());
+    Json(msg)
+}
+
 async fn index_handler() -> impl IntoResponse {
     match StaticAssets::get("index.html") {
         Some(content) => Html(content.data).into_response(),
@@ -446,6 +475,8 @@ enum ClientEvent {
     FileChunk { id: String, offset: u64, data: String },
     #[serde(rename = "file_end")]
     FileEnd { id: String },
+    #[serde(rename = "chat")]
+    Chat { sender: String, text: String, timestamp: u64 },
 }
 
 async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
@@ -628,6 +659,22 @@ async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
                                     .to_string();
                                     let _ = tx_ctrl.send(Message::Text(ack)).await;
                                 }
+                            }
+                            ClientEvent::Chat { sender, text, timestamp } => {
+                                let chat_obj = crate::state::ChatMessage {
+                                    id: format!("{}", rand::random::<u32>()),
+                                    sender: sender.clone(),
+                                    text: text.clone(),
+                                    timestamp,
+                                };
+                                state_ctrl.chat_messages.lock().unwrap().push(chat_obj);
+                                let broadcast = serde_json::json!({
+                                    "type": "chat",
+                                    "sender": sender,
+                                    "text": text,
+                                    "timestamp": timestamp
+                                }).to_string();
+                                let _ = tx_ctrl.send(Message::Text(broadcast)).await;
                             }
                         }
                     }

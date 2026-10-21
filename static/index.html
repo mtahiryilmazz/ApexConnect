@@ -436,7 +436,7 @@
         <section id="remote-viewer" class="fluent-view viewer-fullscreen-view">
           <div id="viewer-container">
             
-            <!-- WinUI 3 Floating Command Island -->
+            <!-- WinUI 3 Sleek Floating Command Island (Compact & Modern) -->
             <div class="floating-island-toolbar">
               <div class="island-left">
                 <span class="live-pill"><span class="pulse-indicator"></span> CANLI</span>
@@ -446,22 +446,86 @@
 
               <div class="island-right">
                 <select id="quality-select" onchange="changeQuality(this.value)" class="island-select" title="Görüntü Kalitesi">
-                  <option value="40">Kalite: Düşük (%40)</option>
-                  <option value="65" selected>Kalite: Normal (%65)</option>
-                  <option value="85">Kalite: Yüksek (%85)</option>
+                  <option value="40">%40</option>
+                  <option value="65" selected>%65</option>
+                  <option value="85">%85</option>
                 </select>
 
-                <select id="monitor-select" onchange="changeMonitor(this.value)" class="island-select" title="Monitör Seçimi">
-                  <option value="primary" selected>Ana Monitör</option>
-                  <option value="virtual">Tüm Ekranlar</option>
+                <select id="monitor-select" onchange="changeMonitor(this.value)" class="island-select" title="Monitör">
+                  <option value="primary" selected>Monitör 1</option>
+                  <option value="virtual">Tüm Ekran</option>
                 </select>
+
+                <div class="island-divider"></div>
 
                 <button class="island-btn" onclick="sendClipboardPrompt()" title="Panoya Metin Gönder">📋 Pano</button>
-                <button class="island-btn" onclick="switchNavTab('files-tab')" title="Dosya Transferi">📁 Dosyalar</button>
-                <button class="island-btn" onclick="sendCtrlAltDel()" title="Ctrl+Alt+Del">Ctrl+Alt+Del</button>
-                <button class="island-btn" id="btn-record-session" onclick="toggleSessionRecording()" title="Oturumu Video Olarak Kaydet (WebM VP9 / H.264)">🔴 Kaydet</button>
+                <button class="island-btn" id="btn-session-files" onclick="toggleSessionFileModal()" title="Canlı Dosya Aktarımı">📁 Dosyalar</button>
+                <button class="island-btn" id="btn-session-chat" onclick="toggleSessionChatModal()" title="Canlı Sohbet">
+                  💬 Sohbet <span id="chat-unread-badge" class="badge-unread hidden">1</span>
+                </button>
+                <button class="island-btn" onclick="sendCtrlAltDel()" title="Ctrl+Alt+Del">⌨️ CAD</button>
+                <button class="island-btn" id="btn-record-session" onclick="toggleSessionRecording()" title="Oturumu Video Olarak Kaydet">🔴 Kaydet</button>
+                
+                <div class="island-divider"></div>
+
                 <button class="island-btn" onclick="toggleFullscreen()" title="Tam Ekran">⛶</button>
                 <button class="island-btn btn-danger-pill" onclick="closeSession()" title="Bağlantıyı Kes">✕ Çıkış</button>
+              </div>
+            </div>
+
+            <!-- In-Session File Transfer Popup Modal (Overlaid on Remote Desktop) -->
+            <div id="session-file-modal" class="session-modal hidden">
+              <div class="session-modal-header">
+                <div class="modal-title">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                  <span>Canlı Dosya Aktarımı</span>
+                </div>
+                <button class="modal-close-btn" onclick="toggleSessionFileModal()" title="Kapat">✕</button>
+              </div>
+              <div class="session-modal-body">
+                <div class="drop-zone compact-drop" id="session-drop-zone" onclick="document.getElementById('session-file-input').click()">
+                  <div class="drop-icon">☁️</div>
+                  <div class="drop-title">Dosyayı buraya sürükleyin veya tıklayın</div>
+                  <div class="drop-desc">Hedef bilgisayara 64 KB şifreli parçalarla gönderilir</div>
+                  <input type="file" id="session-file-input" style="display: none;" onchange="handleSessionFileSelect(event)">
+                </div>
+
+                <div id="session-upload-progress" class="upload-progress-card" style="display: none; margin-top: 10px;">
+                  <div class="progress-info">
+                    <span id="session-upload-filename">Gönderiliyor...</span>
+                    <strong id="session-upload-percentage">0%</strong>
+                  </div>
+                  <div class="fluent-progress-track">
+                    <div id="session-upload-bar" class="fluent-progress-fill"></div>
+                  </div>
+                </div>
+
+                <div class="session-files-section">
+                  <div class="list-heading">Aktarılan Dosyalar</div>
+                  <div id="session-files-items" class="session-files-items">
+                    <!-- JS fills recent transferred files -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- In-Session Chat Popup Modal (Overlaid on Remote Desktop) -->
+            <div id="session-chat-modal" class="session-modal chat-modal hidden">
+              <div class="session-modal-header">
+                <div class="modal-title">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                  <span>Canlı Oturum Sohbeti</span>
+                </div>
+                <button class="modal-close-btn" onclick="toggleSessionChatModal()" title="Kapat">✕</button>
+              </div>
+              <div class="session-modal-body chat-body">
+                <div id="session-chat-messages" class="chat-messages-container">
+                  <div class="chat-system-msg">Uzak kullanıcı ile canlı mesajlaşma başlatıldı.</div>
+                </div>
+                <div class="chat-input-row">
+                  <input type="text" id="session-chat-input" class="fluent-input chat-input" placeholder="Mesajınızı yazın..." onkeydown="handleChatKeyDown(event)">
+                  <button class="btn btn-fluent-primary btn-sm chat-send-btn" onclick="sendChatMessage()">Gönder</button>
+                </div>
               </div>
             </div>
 

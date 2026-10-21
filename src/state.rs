@@ -52,6 +52,14 @@ fn default_port() -> u16 {
     8080
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatMessage {
+    pub id: String,
+    pub sender: String,
+    pub text: String,
+    pub timestamp: u64,
+}
+
 pub struct AppState {
     pub info: Mutex<HostInfo>,
     pub address_book: Mutex<Vec<AddressBookItem>>,
@@ -59,6 +67,7 @@ pub struct AppState {
     pub file_transfer: Arc<FileTransferManager>,
     pub audit_logger: Arc<crate::audit::AuditLogger>,
     pub policy: Mutex<crate::policy::SessionPolicy>,
+    pub chat_messages: Mutex<Vec<ChatMessage>>,
 }
 
 pub type SharedState = Arc<AppState>;
@@ -79,6 +88,7 @@ impl AppState {
             file_transfer: Arc::new(FileTransferManager::new()),
             audit_logger: Arc::new(crate::audit::AuditLogger::new()),
             policy: Mutex::new(crate::policy::SessionPolicy::default()),
+            chat_messages: Mutex::new(Vec::new()),
         }
     }
 }

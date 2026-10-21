@@ -114,8 +114,15 @@ impl DiscoveryEngine {
                                 .as_secs();
 
                             let mut disc = state.discovered.lock().unwrap();
+                            // Strict deduplication: Use device_id as primary unique key to prevent duplicate entries
+                            let device_key = if !pkt.device_id.is_empty() {
+                                pkt.device_id.clone()
+                            } else {
+                                format!("{}:{}", ip, pkt.port)
+                            };
+
                             disc.insert(
-                                format!("{}:{}", ip, pkt.port),
+                                device_key,
                                 DiscoveredDevice {
                                     ip,
                                     hostname: pkt.hostname,
@@ -145,11 +152,11 @@ impl DiscoveryEngine {
             .unwrap_or_default()
             .as_secs();
 
-        // Include any recently discovered active nodes (clean up stale nodes older than 12s)
+        // Include any recently discovered active nodes (clean up stale nodes older than 5s)
         {
             let mut disc = state.discovered.lock().unwrap();
             disc.retain(|_, dev| {
-                dev.last_seen == 0 || (now.saturating_sub(dev.last_seen) < 12)
+                dev.last_seen == 0 || (now.saturating_sub(dev.last_seen) < 5)
             });
             for (_, dev) in disc.iter() {
                 results.push(dev.clone());

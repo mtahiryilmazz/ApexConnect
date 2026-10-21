@@ -362,6 +362,22 @@
       </div>
     </div>
 
+    <!-- Live Chat Drawer Toggle Button -->
+    <button class="btn btn-primary" onclick="toggleQsChat()" style="width: 100%; justify-content: center; gap: 8px;">
+      💬 IT Uzmanı ile Canlı Sohbet <span id="qs-chat-badge" style="display:none; background:#ef4444; color:#fff; border-radius:10px; padding:1px 6px; font-size:0.7rem;">1</span>
+    </button>
+
+    <!-- Collapsible Chat Drawer -->
+    <div id="qs-chat-drawer" style="display: none; flex-direction: column; height: 160px; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden; padding: 8px; gap: 6px;">
+      <div id="qs-chat-messages" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem;">
+        <div style="color: var(--text-muted); text-align: center; font-size: 0.7rem;">Bağlantı kurulduğunda buradan mesajlaşabilirsiniz.</div>
+      </div>
+      <div style="display: flex; gap: 6px;">
+        <input type="text" id="qs-chat-input" placeholder="Cevap yazın..." style="flex:1; padding: 5px 8px; border-radius: 4px; border: 1px solid var(--card-border); background: rgba(255,255,255,0.06); color: var(--text-main); font-size: 0.78rem;" onkeydown="if(event.key==='Enter') sendQsChatMessage()">
+        <button class="btn btn-primary" onclick="sendQsChatMessage()" style="padding: 4px 10px; font-size: 0.75rem;">Gönder</button>
+      </div>
+    </div>
+
     <!-- Device Details -->
     <div class="footer-info">
       <span id="hostname-display">Cihaz: ...</span>
@@ -370,12 +386,15 @@
   </div>
 
   <script>
+    let myHostname = 'Kullanıcı';
+    let lastChatCount = 0;
+
     async function loadInfo() {
       try {
         const res = await fetch('/api/info');
         const data = await res.json();
         
-        // Format ID with spaces (e.g. 123 456 789)
+        myHostname = data.hostname || 'Kullanıcı';
         const id = data.device_id || '---';
         const formatted = id.length === 9 ? `${id.slice(0,3)} ${id.slice(3,6)} ${id.slice(6,9)}` : id;
         
@@ -408,6 +427,70 @@
       setTimeout(() => span.innerText = 'Kimliği Kopyala', 2000);
     }
 
+    // Chat Drawer Handling
+    function toggleQsChat() {
+      const drawer = document.getElementById('qs-chat-drawer');
+      if (!drawer) return;
+      const isHidden = drawer.style.display === 'none';
+      drawer.style.display = isHidden ? 'flex' : 'none';
+      if (isHidden) {
+        document.getElementById('qs-chat-badge').style.display = 'none';
+        document.getElementById('qs-chat-input').focus();
+        fetchChatMessages();
+      }
+    }
+
+    async function sendQsChatMessage() {
+      const input = document.getElementById('qs-chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      try {
+        await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sender: myHostname, text })
+        });
+        input.value = '';
+        fetchChatMessages();
+      } catch (e) {}
+    }
+
+    async function fetchChatMessages() {
+      try {
+        const res = await fetch('/api/chat');
+        if (!res.ok) return;
+        const messages = await res.json();
+        const container = document.getElementById('qs-chat-messages');
+        const badge = document.getElementById('qs-chat-badge');
+        const drawer = document.getElementById('qs-chat-drawer');
+
+        if (messages.length > lastChatCount && drawer.style.display === 'none') {
+          badge.style.display = 'inline-block';
+          badge.innerText = messages.length - lastChatCount;
+        }
+        lastChatCount = messages.length;
+
+        if (container && messages.length > 0) {
+          container.innerHTML = messages.map(m => {
+            const isMine = m.sender === myHostname;
+            return `
+              <div style="align-self: ${isMine ? 'flex-end' : 'flex-start'}; background: ${isMine ? '#0078d4' : 'rgba(255,255,255,0.1)'}; padding: 4px 8px; border-radius: 6px; max-width: 85%;">
+                <div style="font-size:0.65rem; opacity:0.8;">${escapeHtml(m.sender)}</div>
+                <div>${escapeHtml(m.text)}</div>
+              </div>
+            `;
+          }).join('');
+          container.scrollTop = container.scrollHeight;
+        }
+      } catch (e) {}
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
     // Theme Handling
     function initTheme() {
       const savedTheme = localStorage.getItem('apex_theme') || 'dark';
@@ -438,34 +521,39 @@
       applyTheme(isLight ? 'dark' : 'light');
     }
 
-    async function windowMinimize() {
-      try { await fetch('/api/window/minimize', { method: 'POST' }); } catch (e) {}
+    function windowMinimize() {
+      if (window.ipc) window.ipc.postMessage('minimize');
+      else fetch('/api/window/minimize', { method: 'POST' }).catch(() => {});
     }
 
-    async function windowMaximize() {
-      try {
-        await fetch('/api/window/maximize', { method: 'POST' });
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen().catch(() => {});
-        } else {
-          document.exitFullscreen().catch(() => {});
-        }
-      } catch (e) {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen().catch(() => {});
-        } else {
-          document.exitFullscreen().catch(() => {});
-        }
+    function windowMaximize() {
+      if (window.ipc) window.ipc.postMessage('maximize');
+      else fetch('/api/window/maximize', { method: 'POST' }).catch(() => {});
+    }
+
+    function windowClose() {
+      if (window.ipc) window.ipc.postMessage('close');
+      else {
+        fetch('/api/window/close', { method: 'POST' }).catch(() => {});
+        window.close();
       }
     }
 
-    async function windowClose() {
-      try { await fetch('/api/window/close', { method: 'POST' }); } catch (e) { window.close(); }
-    }
+    // Titlebar Drag support
+    document.addEventListener('DOMContentLoaded', () => {
+      const titlebar = document.querySelector('.titlebar');
+      if (titlebar) {
+        titlebar.addEventListener('mousedown', (e) => {
+          if (e.target.closest('button')) return;
+          if (window.ipc) window.ipc.postMessage('drag');
+        });
+      }
+    });
 
     initTheme();
     loadInfo();
     setInterval(loadInfo, 3000);
+    setInterval(fetchChatMessages, 2000);
   </script>
 </body>
 </html>
