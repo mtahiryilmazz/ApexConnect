@@ -1,11 +1,11 @@
-# 🚀 ApexConnect (v1.0.0)
+# 🚀 ApexConnect (v2.0.0)
 
 **Windows 11 WinUI 3 Fluent Tasarımlı, Sıfır Kurulumlu (Portable), Yüksek Performanslı IT Uzak Masaüstü ve Cihaz Yönetim Ekosistemi**
 
 ApexConnect; modern kurumsal uzak masaüstü ve ağ mimarilerinin en iyi pratiklerinden ilham alarak **Rust** ile geliştirilmiş; CMD / konsol zorunluluğunu ortadan kaldıran, **Windows 11 Fluent Design / WinUI 3** estetiğine sahip bağımsız bir uzak masaüstü ve ağ kontrol ekosistemidir.
 
 [![Rust 1.80+](https://img.shields.io/badge/Rust-1.80%2B-orange.svg?style=flat-square&logo=rust)](https://www.rust-lang.org)
-[![Version 1.0.0](https://img.shields.io/badge/Release-v1.0.0-blue.svg?style=flat-square)](https://github.com/mtahiryilmazz/ApexConnect/releases)
+[![Version 2.0.0](https://img.shields.io/badge/Release-v2.0.0-blue.svg?style=flat-square)](https://github.com/mtahiryilmazz/ApexConnect/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
 [![Platform Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20%7C%20Server-0078d4.svg?style=flat-square&logo=windows)](https://microsoft.com)
 
@@ -128,13 +128,15 @@ ApexConnect mimari hedefleri, masaüstü x64 uygulama genişlemesi ve kurumsal d
 
 ---
 
-### 📍 Faz 4: Windows Servisi ve Kurumsal Filo Yönetimi ![Vizyon](https://img.shields.io/badge/Durum-Vizyon-purple?style=flat-square) `v2.0`
-- [ ] **Windows Hizmeti (Unattended Service):**
-  - Kullanıcı oturumu kapalıyken veya Windows Kilit ekranındayken (`Winlogon`) doğrudan bağlanabilme.
-  - UAC (Kullanıcı Hesabı Denetimi) pencerelerini uzaktan onaylayabilme ayrıcalığı.
-- [ ] **Merkezi IT Kontrol Paneli ve Politika Yönetimi:**
-  - Rol tabanlı erişim kontrolü (Yalnızca İzleme, Tam Kontrol, Dosya Yetkisi).
-  - Şirket içi cihaz envanteri, oturum kayıtları ve güvenlik denetim logları (Audit Trail).
+### 📍 Faz 4: Windows Servisi ve Kurumsal Filo Yönetimi ![Tamamlandı](https://img.shields.io/badge/Durum-Tamamlandı-success?style=flat-square) `v2.0.0`
+- [x] **Windows Hizmeti (Unattended Service - `apex_service`):**
+  - Kullanıcı oturumu kapalıyken veya Windows Kilit ekranındayken (`Winlogon`) `NT AUTHORITY\SYSTEM` yetkileriyle arka planda çalışabilme.
+  - UAC (Kullanıcı Hesabı Denetimi) pencerelerini uzaktan onaylayabilme ve tam yetkili kontrol ayrıcalığı.
+- [x] **Merkezi IT Politikaları ve Rol Tabanlı Erişim (RBAC):**
+  - Rol tabanlı erişim kontrolü (`ViewOnly`, `FullControl`, `FileManager`, `Administrator`).
+  - Güvenlik ve denetim logları (`AuditLogger` / `src/audit.rs`) ile kimin, ne zaman, hangi IP ve yetkiyle bağlandığının kalıcı kaydı (Audit Trail).
+- [x] **Dörtlü İkili (Quad-Binary) Kurumsal Dağıtım Paketi:**
+  - `apex_connect.exe`, `apex_qs.exe`, `apex_rendezvous.exe` ve `apex_service.exe` tek komutla derleme ve dağıtım (`scripts/build_distribution.ps1`).
 
 Detaylı teknik yol haritası ve geçmiş için ayrıca [`ROADMAP.md`](ROADMAP.md) belgesini inceleyebilirsiniz.
 

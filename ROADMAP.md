@@ -44,10 +44,12 @@ Bu belge, ApexConnect projesinin kısa, orta ve uzun vadeli mimari, masaüstü x
 
 ---
 
-## 📍 Faz 4: Windows Servisi ve Kurumsal Filo Yönetimi (v2.0)
-- [ ] **Windows Hizmeti (Unattended Service):**
-  - Kullanıcı oturumu kapalıyken veya Windows Kilit ekranındayken (`Winlogon`) doğrudan bağlanabilme.
-  - UAC (Kullanıcı Hesabı Denetimi) pencerelerini uzaktan onaylayabilme ayrıcalığı.
-- [ ] **Merkezi IT Kontrol Paneli ve Politika Yönetimi:**
-  - Rol tabanlı erişim kontrolü (Yalnızca İzleme, Tam Kontrol, Dosya Yetkisi).
-  - Şirket içi cihaz envanteri, oturum kayıtları ve güvenlik denetim logları (Audit Trail).
+## 📍 Faz 4: Windows Servisi ve Kurumsal Filo Yönetimi (Tamamlandı - v2.0.0)
+- [x] **Windows Hizmeti (Unattended Service - `apex_service`):**
+  - Kullanıcı oturumu kapalıyken veya Windows Kilit ekranındayken (`Winlogon`) `NT AUTHORITY\SYSTEM` yetkileriyle arka planda çalışabilme.
+  - UAC (Kullanıcı Hesabı Denetimi) pencerelerini uzaktan onaylayabilme ve tam yetkili kontrol ayrıcalığı.
+- [x] **Merkezi IT Politikaları ve Rol Tabanlı Erişim (RBAC):**
+  - Rol tabanlı erişim kontrolü (`ViewOnly`, `FullControl`, `FileManager`, `Administrator`).
+  - Güvenlik ve denetim logları (`AuditLogger` / `src/audit.rs`) ile kimin, ne zaman, hangi IP ve yetkiyle bağlandığının kalıcı kaydı (Audit Trail).
+- [x] **Dörtlü İkili (Quad-Binary) Kurumsal Dağıtım Paketi:**
+  - `apex_connect.exe`, `apex_qs.exe`, `apex_rendezvous.exe` ve `apex_service.exe` tek komutla derleme ve dağıtım (`scripts/build_distribution.ps1`).

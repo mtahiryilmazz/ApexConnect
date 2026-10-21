@@ -48,6 +48,9 @@ pub fn create_router(state: SharedState) -> Router {
         .route("/api/files/download/:filename", get(download_file_handler))
         .route("/api/files/open-folder", get(open_folder_handler))
         .route("/api/rendezvous/status", get(get_rendezvous_status_handler))
+        .route("/api/audit", get(get_audit_handler))
+        .route("/api/policy", get(get_policy_handler).post(update_policy_handler))
+        .route("/api/service/status", get(get_service_status_handler))
         .route("/ws/client", get(ws_handler))
         .with_state(state)
 }
@@ -68,6 +71,48 @@ async fn get_rendezvous_status_handler(State(_state): State<SharedState>) -> Jso
         server_url,
         status: "Online / Ready".to_string(),
         nat_traversal: "P2P STUN / Relay Fallback".to_string(),
+    })
+}
+
+async fn get_audit_handler(State(state): State<SharedState>) -> Json<Vec<crate::audit::AuditEvent>> {
+    let events = state.audit_logger.get_recent_events();
+    Json(events)
+}
+
+async fn get_policy_handler(State(state): State<SharedState>) -> Json<crate::policy::SessionPolicy> {
+    let policy = state.policy.lock().unwrap().clone();
+    Json(policy)
+}
+
+async fn update_policy_handler(
+    State(state): State<SharedState>,
+    Json(new_policy): Json<crate::policy::SessionPolicy>,
+) -> Json<crate::policy::SessionPolicy> {
+    let mut lock = state.policy.lock().unwrap();
+    *lock = new_policy.clone();
+    state.audit_logger.record(
+        "POLICY_UPDATE",
+        "ADMIN",
+        "127.0.0.1",
+        &format!("Oturum politikasi guncellendi: {:?}", new_policy.role),
+        true,
+    );
+    Json(new_policy)
+}
+
+#[derive(Serialize)]
+struct ServiceStatusDto {
+    pub service_name: &'static str,
+    pub display_name: &'static str,
+    pub status: String,
+}
+
+async fn get_service_status_handler() -> Json<ServiceStatusDto> {
+    let status = crate::service::ServiceManager::status();
+    Json(ServiceStatusDto {
+        service_name: crate::service::ServiceManager::SERVICE_NAME,
+        display_name: crate::service::ServiceManager::DISPLAY_NAME,
+        status,
     })
 }
 

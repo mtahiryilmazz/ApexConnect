@@ -25,6 +25,8 @@ Bu belge, endüstri standardı modern uzak masaüstü ve P2P ağ protokollerinin
 | **04** | **EKIP-GPU** | DirectX 11 DXGI & GDI Adaptif Ekran Motoru | ✅ Tamamlandı | `src/capture.rs` GPU/GDI adaptif dirty-frame motoru optimize edildi. |
 | **05** | **EKIP-SEC** | Windows WASAPI Loopback Gerçek Zamanlı Ses Aktarımı | ✅ Tamamlandı | `src/audio.rs` 48 kHz stereo PCM ses yakalama altyapısı kuruldu. |
 | **06** | **EKIP-OPS** | Üçlü İkili Dağıtım Paketi ve v1.2.0 Senkronizasyonu | ✅ Tamamlandı | `Cargo.toml` v1.2.0, `build_distribution.ps1` ve GitHub senkronizasyonu yapıldı. |
+| **07** | **EKIP-OPS** | Windows Hizmeti (Unattended Service) & SCM | ✅ Tamamlandı | `src/service.rs` ve `src/bin/service.rs` (`apex_service.exe`) geliştirildi. |
+| **08** | **EKIP-SEC** | Rol Tabanlı Erişim (RBAC) & Güvenlik Denetim İzi (Audit) | ✅ Tamamlandı | `src/policy.rs` ve `src/audit.rs` ile kalıcı kurumsal denetim logları sağlandı. |
 
 ---
 
@@ -51,3 +53,11 @@ Bu belge, endüstri standardı modern uzak masaüstü ve P2P ağ protokollerinin
 ### [İşlem 06 - EKIP-OPS] Üçlü İkili Dağıtım Paketi ve Sürüm Artışı
 * **Tarih:** 21 Ekim 2026
 * **Kapsam:** `Cargo.toml` sürümü `v1.2.0`'a yükseltildi. `scripts/build_distribution.ps1` betiği üç ikiliyi birden (`apex_connect.exe`, `apex_qs.exe`, `apex_rendezvous.exe`) derleyip `dist/` klasörüne paketleyecek şekilde güncellendi.
+
+### [İşlem 07 - EKIP-OPS] Windows Hizmeti (Unattended Service) ve Winlogon/UAC Ayrıcalığı
+* **Tarih:** 21 Ekim 2026
+* **Kapsam:** `src/service.rs` ve `src/bin/service.rs` (`apex_service.exe`) modülleri geliştirildi. Windows SCM (`sc.exe`) üzerinden `ApexConnectService` olarak `NT AUTHORITY\SYSTEM` yetkileriyle arka planda çalışabilme, oturum kapalıyken (`Winlogon`) doğrudan bağlanabilme ve UAC pencerelerini uzaktan onaylayabilme ayrıcalığı sağlandı.
+
+### [İşlem 08 - EKIP-SEC & EKIP-OPS] Kurumsal Politika (RBAC), Denetim Logları (Audit) ve v2.0.0 Paketi
+* **Tarih:** 21 Ekim 2026
+* **Kapsam:** `src/policy.rs` (Rol Tabanlı Yetki: `ViewOnly`, `FullControl`, `FileManager`, `Administrator`) ve `src/audit.rs` (`AuditLogger` kalıcı JSON denetim izi) motorları kodlandı. `Cargo.toml` sürümü `v2.0.0`'a yükseltildi, `scripts/build_distribution.ps1` dört ikiliyi birden (`apex_connect`, `apex_qs`, `apex_rendezvous`, `apex_service`) otomatik derleyip paketleyecek şekilde tamamlandı.

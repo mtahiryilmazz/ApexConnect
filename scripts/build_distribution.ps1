@@ -17,7 +17,7 @@ Write-Host "==========================================================" -Foregro
 
 # 1. Release derlemeleri
 Write-Host "`nPaketler optimize ediliyor ve derleniyor..." -ForegroundColor Cyan
-& cargo build --release --bin apex_connect --bin apex_qs --bin apex_rendezvous
+& cargo build --release --bin apex_connect --bin apex_qs --bin apex_rendezvous --bin apex_service
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Release derlemesi basarisiz oldu!"
 }
@@ -40,14 +40,18 @@ $RendezvousSrc = Join-Path $RepoRoot "target\release\apex_rendezvous.exe"
 $RendezvousDst = Join-Path $DistDir "apex_rendezvous.exe"
 Copy-Item -Path $RendezvousSrc -Destination $RendezvousDst -Force
 
+$ServiceSrc = Join-Path $RepoRoot "target\release\apex_service.exe"
+$ServiceDst = Join-Path $DistDir "apex_service.exe"
+Copy-Item -Path $ServiceSrc -Destination $ServiceDst -Force
+
 # 3. Bilgilendirme Notu
 $ReadmeContent = @"
-ApexConnect Kurumsal Uzak Masaüstü Dağıtım Paketi (v1.2.0)
+ApexConnect Kurumsal Uzak Masaüstü Dağıtım Paketi (v2.0.0)
 ==========================================================
 
 1. apex_connect.exe:
    - IT Departmanı / Bilgi İşlem personeli için tam yetkili yönetim konsolu.
-   - Ağ tarayıcısı, adres defteri, dosya aktarımı ve WinUI 3 Fluent arayüz içerir.
+   - Ağ tarayıcısı, adres defteri, dosya aktarımı, denetim logları ve WinUI 3 Fluent arayüz içerir.
 
 2. apex_qs.exe:
    - Şirket çalışanlarına dağıtılacak taşınabilir (portable) Mini Hızlı Destek aracı.
@@ -56,6 +60,10 @@ ApexConnect Kurumsal Uzak Masaüstü Dağıtım Paketi (v1.2.0)
 3. apex_rendezvous.exe:
    - Şirket sunucusunda veya bulutta çalıştırılabilen bağımsız WAN Sinyalleşme ve Relay Köprüsü.
    - İnternet üzerindeki NAT ve CGNAT arkasındaki istemcileri birbirine bağlar ve P2P eşleştirme sağlar.
+
+4. apex_service.exe:
+   - Windows Hizmeti (Unattended Service) yönetim aracı.
+   - Oturum kapalıyken (Winlogon kilit ekranı) ve UAC korumalı pencerelerde tam yetkili uzaktan erişim sağlar.
 
 GitHub: https://github.com/mtahiryilmazz/ApexConnect
 "@

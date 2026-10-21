@@ -49,6 +49,8 @@ pub struct AppState {
     pub address_book: Mutex<Vec<AddressBookItem>>,
     pub discovered: Mutex<HashMap<String, DiscoveredDevice>>,
     pub file_transfer: Arc<FileTransferManager>,
+    pub audit_logger: Arc<crate::audit::AuditLogger>,
+    pub policy: Mutex<crate::policy::SessionPolicy>,
 }
 
 pub type SharedState = Arc<AppState>;
@@ -67,6 +69,8 @@ impl AppState {
             address_book: Mutex::new(Vec::new()),
             discovered: Mutex::new(HashMap::new()),
             file_transfer: Arc::new(FileTransferManager::new()),
+            audit_logger: Arc::new(crate::audit::AuditLogger::new()),
+            policy: Mutex::new(crate::policy::SessionPolicy::default()),
         }
     }
 }

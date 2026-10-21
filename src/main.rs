@@ -1,21 +1,12 @@
-mod address_book;
-mod capture;
-mod crypto;
-mod discovery;
-mod file_transfer;
-mod input;
-mod server;
-mod state;
-
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::Arc;
 use rand::Rng;
 use tokio::net::TcpListener;
 
-use crate::address_book::AddressBookManager;
-use crate::discovery::DiscoveryEngine;
-use crate::server::create_router;
-use crate::state::AppState;
+use apex_connect::address_book::AddressBookManager;
+use apex_connect::discovery::DiscoveryEngine;
+use apex_connect::server::create_router;
+use apex_connect::state::AppState;
 
 fn get_local_ip() -> String {
     if let Ok(socket) = UdpSocket::bind("0.0.0.0:0") {
@@ -109,7 +100,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("  ---------------------------------------------------------------");
     println!("  📱  Mobil / Web Konsol  : \x1b[1;32mhttp://{}:{}\x1b[0m", local_ip, selected_port);
     println!("  💻  Yerel Erişim        : \x1b[1;34mhttp://localhost:{}\x1b[0m", selected_port);
-    println!("  📡  Ağ Keşfi (UDP)      : Port {} üzerinden aktif", discovery::DISCOVERY_PORT);
+    println!("  📡  Ağ Keşfi (UDP)      : Port {} üzerinden aktif", apex_connect::discovery::DISCOVERY_PORT);
     println!("  ===============================================================");
     println!("  [Bilgi] Web yönetim paneli tarayıcınızda otomatik başlatılıyor...");
     println!("  [Bilgi] Çıkış yapmak için pencereyi kapatın veya Ctrl+C tuşlayın.\n");

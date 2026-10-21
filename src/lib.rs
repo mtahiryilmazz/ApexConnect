@@ -8,3 +8,6 @@ pub mod server;
 pub mod state;
 pub mod rendezvous;
 pub mod audio;
+pub mod policy;
+pub mod audit;
+pub mod service;
