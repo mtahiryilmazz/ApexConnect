@@ -72,3 +72,11 @@ Bu belge, endüstri standardı modern uzak masaüstü ve P2P ağ protokollerinin
   5. **Ultra Düşük Gecikmeli Fare Akışı:** `src/input.rs` içerisine doğrudan donanım seviyesinde `SetCursorPos` hızlı yolu (`mouse_move_fast`) entegre edildi.
   6. **Win32 CF_HDROP Pano Entegrasyonu:** Uzak bilgisayardan dosya aktarımı tamamlandığında yerel Windows Gezgini'ne doğrudan `Ctrl+V` ile yapıştırılabilmesi sağlandı (`InputSimulator::set_clipboard_files`).
   7. **Tek Arşiv ZIP Dağıtımı:** `dist/ApexConnect-v2.0.0-Windows-x64.zip` tek tıkla indirilebilir 3.5 MB kurumsal paket haline getirildi.
+
+### [İşlem 10 - TÜM EKİPLER] Taşınabilir (Portable) Zero-Dependency ve Mobil / WAN Erişim Doğrulaması
+* **Tarih:** 21 Ekim 2026
+* **Kapsam:**
+  1. **Zero-Dependency QuickSupport Doğrulaması:** `apex_qs.exe` (2.57 MB) tek bir binary olarak doğrulanmıştır. `rust_embed` sayesinde HTML/CSS/JS/SVG arayüzü doğrudan exe içerisine gömülüdür. Hedef bilgisayara yalnızca `apex_qs.exe` atıldığında hiçbir DLL veya kuruluma ihtiyaç duymadan çift tıkla tam fonksiyon çalışır.
+  2. **Dinamik Tarayıcı Motoru Çözümlemesi (`src/gui.rs`):** Standart Edge, EdgeCore (kurumsal/embedded), kullanıcı LocalAppData ve Chrome yolları taranarak sistem bağımsız `--app` penceresi açılışı garanti altına alındı.
+  3. **Mobil Tarayıcı ve Uzak WAN Desteği:** HTML5 Canvas ve WebSocket istemcisi mobil cihazlarla (iOS Safari, Android Chrome) tam uyumludur. Sabit IP/VPS üzerinde koşan `apex_rendezvous.exe` aracılığıyla evden/telefondan iş bilgisayarına veya ID veren uzak makinelere güvenli erişim mimarisi belgelendi.
+
