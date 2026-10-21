@@ -33,7 +33,7 @@ Bu belge, ApexConnect projesinin kısa, orta ve uzun vadeli mimari, masaüstü x
 
 ## 📍 Faz 3: Geniş Alan Ağı (WAN) ve NAT Aşma (v1.2 - v1.3)
 - [ ] **Rendezvous / Signaling & Relay Sunucusu:**
-  - Farklı internet ağlarındaki veya CGNAT arkasındaki istemcileri bağlamak için RustDesk benzeri hafif sinyal sunucusu.
+  - Farklı internet ağlarındaki veya CGNAT arkasındaki istemcileri bağlamak için hafif ve bağımsız bir P2P sinyal sunucusu.
   - WebRTC ICE / STUN / TURN protokol desteği ile doğrudan P2P bağlantı sağlama.
 - [ ] **DXGI Desktop Duplication API (DirectX 11):**
   - GPU donanım hızlandırmalı doğrudan ekran yakalama ile gecikmeyi 8 ms altına indirme.

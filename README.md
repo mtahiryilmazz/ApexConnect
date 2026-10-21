@@ -2,7 +2,7 @@
 
 **Windows 11 WinUI 3 Fluent Tasarımlı, Sıfır Kurulumlu (Portable), Yüksek Performanslı IT Uzak Masaüstü ve Cihaz Yönetim Ekosistemi**
 
-ApexConnect; **AnyDesk**, **TeamViewer**, **RustDesk** ve **Alpemix**'in mimari tersine mühendislik analizlerinden ilham alarak **Rust** ile geliştirilmiş; CMD / konsol zorunluluğunu ortadan kaldıran, **Windows 11 Fluent Design / WinUI 3** estetiğine sahip modern bir uzak masaüstü ve ağ kontrol yazılımıdır.
+ApexConnect; modern kurumsal uzak masaüstü ve ağ mimarilerinin en iyi pratiklerinden ilham alarak **Rust** ile geliştirilmiş; CMD / konsol zorunluluğunu ortadan kaldıran, **Windows 11 Fluent Design / WinUI 3** estetiğine sahip bağımsız bir uzak masaüstü ve ağ kontrol ekosistemidir.
 
 [![Rust 1.80+](https://img.shields.io/badge/Rust-1.80%2B-orange.svg?style=flat-square&logo=rust)](https://www.rust-lang.org)
 [![Version 1.0.0](https://img.shields.io/badge/Release-v1.0.0-blue.svg?style=flat-square)](https://github.com/mtahiryilmazz/ApexConnect/releases)
@@ -37,18 +37,18 @@ ApexConnect; **AnyDesk**, **TeamViewer**, **RustDesk** ve **Alpemix**'in mimari 
 
 ---
 
-## 🏗️ Mimari Karşılaştırma Analizi
+## 🏗️ Mimari ve Performans Karşılaştırma Analizi
 
-Detaylı teknik rapor ve tersine mühendislik incelemeleri için [`docs/uzakmasaustu_analiz.md`](docs/uzakmasaustu_analiz.md) belgesine başvurabilirsiniz.
+Aşağıdaki tablo, ApexConnect'in geleneksel uzak masaüstü mimarilerine kıyasla sunduğu avantajları özetler:
 
-| Özellik | AnyDesk | TeamViewer | RustDesk | Alpemix | **ApexConnect (v1.0)** |
-|---|---|---|---|---|---|
-| **Çekirdek Dil** | Erlang / C++ | C++, C#, Java | Rust / Flutter | C++ | **Rust (Sıfır Dış Bağımlılık)** |
-| **Arayüz Tasarımı** | Minimal GUI | Klasik Masaüstü | Flutter WinUI | Basit Form | **WinUI 3 Fluent Design** |
-| **Dağıtım** | Kurulum / Portable | Kurulum | Kurulum / Portable | Tek Dosya | **Taşınabilir Tek .exe (~2.1 MB)** |
-| **Ekran Motoru** | DeskRT Codec | Tescilli Motor | Vpx / WebRTC | Standart GDI | **GDI + Adaptif Dirty-Rect** |
-| **Boşta Ağ Tüketimi** | Çok Düşük | Düşük | Düşük | Orta | **~0 Kbps (Dirty Check)** |
-| **Şifreleme** | TLS 1.3 / AES | AES-256 | NaCl / ChaCha20 | 256-bit AES | **AES-256-GCM + SHA-256** |
+| Karşılaştırma Kriteri | Geleneksel Kurumsal Yazılımlar | Ağır Paket Çözümleri | Temel Form Araçları | **ApexConnect (v1.0)** |
+|---|---|---|---|---|
+| **Çekirdek Dil** | C++, C#, Java | Ağır Framework / Script | C++ / Temel Win32 | **Rust (Sıfır Dış Bağımlılık)** |
+| **Arayüz Tasarımı** | Klasik Ağır Masaüstü | Hantal Webview / Çerçeveler | Eski Tip Form Arayüzü | **WinUI 3 Fluent Design** |
+| **Dağıtım Boyutu** | 30 MB - 100 MB+ Kurulum | 50 MB - 120 MB | ~5 MB Basit .exe | **Taşınabilir Tek .exe (~2.1 MB)** |
+| **Ekran Motoru** | Standart Video Akışı | Genel Codec / WebRTC | Standart GDI | **GDI + Adaptif Dirty-Rect + DXGI** |
+| **Boşta Ağ Tüketimi** | Orta Düzey Akış | Düşük / Dalgalı | Yüksek / Sabit | **~0 Kbps (Dirty Check)** |
+| **Şifreleme Standardı** | Uçtan Uca Değişken | Simetrik / Asimetrik Hibrit | Standart AES | **AES-256-GCM + SHA-256** |
 
 ---
 
@@ -117,7 +117,7 @@ ApexConnect mimari hedefleri, masaüstü x64 uygulama genişlemesi ve kurumsal d
 
 ### 📍 Faz 3: Geniş Alan Ağı (WAN) ve NAT Aşma ![Planlandı](https://img.shields.io/badge/Durum-Planlandı-blue?style=flat-square) `v1.2 - v1.3`
 - [ ] **Rendezvous / Signaling & Relay Sunucusu:**
-  - Farklı internet ağlarındaki veya CGNAT arkasındaki istemcileri bağlamak için RustDesk benzeri hafif sinyal sunucusu.
+  - Farklı internet ağlarındaki veya CGNAT arkasındaki istemcileri bağlamak için hafif ve bağımsız bir P2P sinyal sunucusu.
   - WebRTC ICE / STUN / TURN protokol desteği ile doğrudan P2P bağlantı sağlama.
 - [ ] **DXGI Desktop Duplication API (DirectX 11):**
   - GPU donanım hızlandırmalı doğrudan ekran yakalama ile gecikmeyi 8 ms altına indirme.
