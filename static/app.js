@@ -55,10 +55,23 @@ async function loadHostInfo() {
     if (!res.ok) return;
     hostInfo = await res.json();
 
-    document.getElementById('my-device-id').innerText = formatApexId(hostInfo.device_id);
-    document.getElementById('my-device-pin').innerText = hostInfo.pin;
-  } catch (e) {
-    console.error('Host info error:', e);
+    const idEl = document.getElementById('my-device-id');
+    if (idEl) idEl.innerText = formatApexId(hostInfo.device_id);
+
+    const pinEl = document.getElementById('my-device-pin');
+    if (pinEl) pinEl.innerText = hostInfo.pin;
+
+    const ipDisplay = `${hostInfo.local_ip}:${hostInfo.port}`;
+    const titlebarIp = document.getElementById('titlebar-ip-status');
+    if (titlebarIp) titlebarIp.innerText = `Hazır: ${ipDisplay}`;
+
+    const hostIpDisp = document.getElementById('host-ip-display');
+    if (hostIpDisp) hostIpDisp.innerText = ipDisplay;
+
+    const directUrl = document.getElementById('mobile-direct-url');
+    if (directUrl) directUrl.innerText = `http://${hostInfo.local_ip}:${hostInfo.port}`;
+  } catch (err) {
+    console.error('Host info error:', err);
   }
 }
 
@@ -74,30 +87,12 @@ async function regeneratePinPrompt() {
     console.error('PIN refresh error:', e);
   }
 }
-    
-    const ipDisplay = `${hostInfo.local_ip}:${hostInfo.port}`;
-    const titlebarIp = document.getElementById('titlebar-ip-status');
-    if (titlebarIp) titlebarIp.innerText = `Hazır: ${ipDisplay}`;
-    
-    const hostIpDisp = document.getElementById('host-ip-display');
-    if (hostIpDisp) hostIpDisp.innerText = ipDisplay;
-
-    const directUrl = document.getElementById('mobile-direct-url');
-    if (directUrl) directUrl.innerText = `http://${hostInfo.local_ip}:${hostInfo.port}`;
-  } catch (err) {
-    console.error('Host info error:', err);
-  }
-}
 
 function copyDeviceId() {
   if (hostInfo && hostInfo.device_id) {
     navigator.clipboard.writeText(hostInfo.device_id.replace(/\s+/g, ''));
     alert(`Apex Cihaz ID panoya kopyalandı: ${formatApexId(hostInfo.device_id)}`);
   }
-}
-
-function regeneratePinPrompt() {
-  alert('Geçici PIN güvenlik gereği oturum yeniden başladığında otomatik olarak yenilenir.');
 }
 
 function simulateWindowControl(action) {
