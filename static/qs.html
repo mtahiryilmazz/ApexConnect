@@ -551,11 +551,17 @@
     }
 
     function windowClose() {
-      if (window.ipc) window.ipc.postMessage('close');
-      else {
+      try {
+        if (window.ipc && typeof window.ipc.postMessage === 'function') {
+          window.ipc.postMessage('close');
+        }
+      } catch (e) {}
+      try {
         fetch('/api/window/close', { method: 'POST' }).catch(() => {});
-        window.close();
-      }
+      } catch (e) {}
+      setTimeout(() => {
+        try { window.close(); } catch (e) {}
+      }, 50);
     }
 
     // Titlebar Drag support

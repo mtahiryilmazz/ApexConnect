@@ -93,7 +93,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         println!();
         println!("  ===============================================================");
-        println!("  🚨  OxiDesk Hızlı Destek (QuickSupport Portable v2.0)");
+        println!("  🚨  OxiDesk Hızlı Destek (QuickSupport Portable v3.0.0)");
         println!("  ===============================================================");
         println!("  👤  Kullanıcı / Cihaz  : {} ({})", hostname, username);
         println!("  🆔  Oxi Kimliğiniz     : \x1b[1;36m{}\x1b[0m", formatted_id);
@@ -118,5 +118,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Run native embedded frameless WebView2 QuickSupport window on main UI thread
     oxidesk::gui::GuiLauncher::run_native_window(&local_url, "OxiQuickSupport", 440, 640);
 
-    Ok(())
+    oxidesk::force_terminate_process();
 }

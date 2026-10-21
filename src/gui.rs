@@ -28,7 +28,7 @@ impl GuiLauncher {
             .with_ipc_handler(move |req| {
                 let msg = req.body();
                 if msg == "close" {
-                    std::process::exit(0);
+                    crate::force_terminate_process();
                 } else if msg == "minimize" {
                     win_for_ipc.set_minimized(true);
                 } else if msg == "maximize" {
@@ -46,14 +46,19 @@ impl GuiLauncher {
 
             match event {
                 Event::WindowEvent {
-                    event: WindowEvent::CloseRequested,
+                    event: WindowEvent::CloseRequested | WindowEvent::Destroyed,
                     ..
                 } => {
                     *control_flow = ControlFlow::Exit;
-                    std::process::exit(0);
+                    crate::force_terminate_process();
+                }
+                Event::LoopDestroyed => {
+                    crate::force_terminate_process();
                 }
                 _ => (),
             }
         });
+
+        crate::force_terminate_process();
     }
 }

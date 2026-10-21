@@ -3,7 +3,7 @@
 **Tarih:** 2026-10-21  
 **Hedef Kapsam:** Windows, macOS, Linux ve Web Platformları  
 **Referans Yaklaşım:** Endüstriyel Standartlar, Sıfır Güven (Zero-Trust) Güvenlik Modeli, Düşük Gecikmeli Medya Boru Hatları  
-**Uygulama:** OxiDesk (Rust Tabanlı Çapraz Platform Uzak Masaüstü Ekosistemi)
+**Uygulama:** OxiDesk v3.0.0 (Rust Tabanlı Çapraz Platform Uzak Masaüstü Ekosistemi)
 
 ---
 

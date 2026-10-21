@@ -52,18 +52,18 @@ Copy-Item -Path $ServiceSrc -Destination $ServiceDst -Force
 
 # 3. Bilgilendirme Notu
 $ReadmeContent = @"
-OxiDesk Kurumsal Uzak Masaüstü Dağıtım Paketi (v2.0.0)
+OxiDesk Kurumsal Uzak Masaüstü Dağıtım Paketi (v3.0.0)
 =====================================================
 
 ANA PROGRAMLAR:
 ---------------
 1. OxiDesk.exe:
-   - IT Departmanı / Sistem Yöneticisi için tam yetkili masaüstü yönetim konsolu.
-   - Ağ tarayıcısı, adres defteri, canlı oturum içi dosya aktarımı, anlık mesajlaşma, oturum video kaydı ve WinUI 3 Fluent tek parça çerçevesiz arayüz içerir.
+   - IT Departmanı / Sistem Yöneticisi için çoklu bağlantı (Multi-Session & Split Grid) destekli tam yetkili masaüstü yönetim konsolu.
+   - Aynı anda 3-4 veya daha fazla kullanıcıya eşzamanlı bağlanabilme, sekmeli arayüz, 2x2 ızgara bölünmüş ekran, ağ tarayıcısı, adres defteri, canlı oturum içi dosya aktarımı, anlık mesajlaşma, oturum video kaydı ve WinUI 3 Fluent tek parça çerçevesiz arayüz içerir.
 
 2. OxiDesk-QuickSup.exe:
    - Şirket personeline dağıtılacak tek tıkla çalışan taşınabilir (portable) Hızlı Destek aracı.
-   - Kurulum gerektirmez, açıldığı anda 9 haneli OxiDesk ID üretir ve IT masasına otomatik SOS anonsu gönderir. Kapatıldığında arka planda açık kalmaz, anında temizlenir.
+   - Kurulum gerektirmez, açıldığı anda 9 haneli OxiDesk ID üretir ve IT masasına otomatik SOS anonsu gönderir. Kapatıldığında arka plandaki tüm iş parçacıkları anında temizlenir (Zero Zombie Process).
 
 YARDIMCI VE SUNUCU ARAÇLARI (tools/ Klasörü):
 ----------------------------------------------
@@ -83,7 +83,7 @@ $utf8WithBom = New-Object System.Text.UTF8Encoding($true)
 [System.IO.File]::WriteAllText($kullanimPath, $ReadmeContent, $utf8WithBom)
 
 # 4. Tek Arşiv ZIP Paketi Oluşturma
-$ZipPath = Join-Path $DistDir "OxiDesk-v2.0.0-Windows-x64.zip"
+$ZipPath = Join-Path $DistDir "OxiDesk-v3.0.0-Windows-x64.zip"
 if (Test-Path $ZipPath) {
     Remove-Item -Path $ZipPath -Force
 }

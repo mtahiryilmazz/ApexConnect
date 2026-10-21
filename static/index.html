@@ -23,7 +23,7 @@
             </svg>
           </div>
           <span class="app-name">OxiDesk</span>
-          <span class="app-version-badge">v2.0.0 Fluent</span>
+          <span class="app-version-badge">v3.0.0 Fluent</span>
         </div>
 
         <div class="titlebar-status-pill">
@@ -125,6 +125,26 @@
       <!-- Content Area with Acrylic Backdrop -->
       <main class="fluent-content">
         
+        <!-- WinUI 3 Multi-Session Tab Strip (AnyDesk / Chrome style) -->
+        <div class="session-tab-bar" id="session-tab-bar">
+          <button class="session-tab-btn active" id="tab-btn-dashboard" onclick="switchToSessionTab('dashboard')">
+            <span class="tab-icon">🏠</span>
+            <span class="tab-title">Yönetim Masası</span>
+          </button>
+          <div id="dynamic-session-tabs" class="dynamic-session-tabs"></div>
+          <button class="session-tab-btn new-tab-btn" onclick="openNewConnectionTab()" title="Yeni Uzak Bağlantı Aç">
+            <span class="tab-icon">➕</span>
+            <span class="tab-title">Yeni Bağlantı</span>
+          </button>
+          <div class="tab-bar-spacer"></div>
+          <div class="tab-bar-controls" id="tab-bar-controls" style="display: none;">
+            <button class="tab-action-pill" id="btn-grid-toggle" onclick="toggleMultiGridMode()" title="Çoklu Ekran Grid Modu (Yan Yana)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              <span id="grid-mode-label">Bölünmüş Ekran</span>
+            </button>
+          </div>
+        </div>
+
         <!-- ==================== TAB 1: QUICK CONNECT ==================== -->
         <section id="quick-connect" class="fluent-view active">
           <div class="view-header">
@@ -420,7 +440,7 @@
           <div class="settings-group">
             <h2 class="settings-group-title">Uygulama Hakkında</h2>
             <div class="fluent-card about-card">
-              <div style="font-weight: 600; font-size: 1.1rem; color: #fff;">OxiDesk v2.0.0</div>
+              <div style="font-weight: 600; font-size: 1.1rem; color: #fff;">OxiDesk v3.0.0</div>
               <p style="font-size: 0.82rem; color: var(--text-muted); margin: 6px 0 12px 0;">
                 Rust ile geliştirilmiş yüksek performanslı Windows Uzak Masaüstü ekosistemi.
               </p>
@@ -468,8 +488,9 @@
                 
                 <div class="island-divider"></div>
 
+                <button class="island-btn" onclick="toggleMultiGridMode()" title="Yan Yana Bölünmüş Çoklu Ekran">⊞ Çoklu</button>
                 <button class="island-btn" onclick="toggleFullscreen()" title="Tam Ekran">⛶</button>
-                <button class="island-btn btn-danger-pill" onclick="closeSession()" title="Bağlantıyı Kes">✕ Çıkış</button>
+                <button class="island-btn btn-danger-pill" onclick="closeCurrentSession()" title="Bu Bağlantıyı Kes">✕ Çıkış</button>
               </div>
             </div>
 
@@ -529,9 +550,12 @@
               </div>
             </div>
 
-            <!-- Canvas Workspace -->
+            <!-- Multi-Session Canvas Viewport Workspace -->
             <div class="canvas-viewport" id="canvas-wrapper">
-              <canvas id="remote-canvas" tabindex="0"></canvas>
+              <div id="multi-sessions-grid" class="sessions-grid-container single-active-mode">
+                <!-- Dynamic active session canvases injected here -->
+              </div>
+              <canvas id="remote-canvas" tabindex="0" style="display: none;"></canvas>
             </div>
 
             <!-- Mobile Floating Action Controls -->

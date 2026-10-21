@@ -716,8 +716,8 @@ async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
 
 async fn window_close_handler() -> Json<serde_json::Value> {
     tokio::spawn(async {
-        tokio::time::sleep(std::time::Duration::from_millis(150)).await;
-        std::process::exit(0);
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        crate::force_terminate_process();
     });
     Json(serde_json::json!({ "status": "ok" }))
 }

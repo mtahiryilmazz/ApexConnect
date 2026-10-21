@@ -94,7 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         println!();
         println!("  ===============================================================");
-        println!("  🚀  OxiDesk - IT Uzak Masaüstü ve Cihaz Yönetim Ekosistemi");
+        println!("  🚀  OxiDesk - IT Uzak Masaüstü ve Cihaz Yönetim Ekosistemi v3.0.0");
         println!("  ===============================================================");
         println!("  🖥️   Bilgisayar Adı     : {}", hostname);
         println!("  🆔  Cihaz Kimliği (ID)  : \x1b[1;36m{}\x1b[0m", formatted_id);
@@ -119,5 +119,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Run native embedded frameless WebView2 window on main UI thread
     GuiLauncher::run_native_window(&local_url, "OxiDesk", 1280, 820);
 
-    Ok(())
+    oxidesk::force_terminate_process();
 }

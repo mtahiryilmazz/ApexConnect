@@ -1,22 +1,28 @@
-# 🚀 OxiDesk (v2.0.0)
+# 🚀 OxiDesk (v3.0.0)
 
-**Windows 11 Fluent Tasarımlı, Rust Tabanlı, Tek Parça Çerçevesiz (Frameless Native), Sıfır Kurulumlu IT Uzak Masaüstü Ekosistemi**
+**Windows 11 Fluent Tasarımlı, Çoklu Bağlantı Desteğine Sahip (Multi-Session & Grid View), Rust Tabanlı, Tek Parça Çerçevesiz (Frameless Native) IT Uzak Masaüstü Ekosistemi**
 
-**OxiDesk**; modern kurumsal uzak masaüstü ve ağ mimarilerinin en iyi pratiklerinden ilham alarak **Rust** ile geliştirilmiş, dış tarayıcı bağımlılığını ve konsol zorunluluğunu ortadan kaldıran, **Windows 11 Fluent Design / WinUI 3** estetiğine sahip bağımsız bir uzak masaüstü ve ağ kontrol ekosistemidir.
+**OxiDesk**; modern kurumsal uzak masaüstü ve ağ mimarilerinin en iyi pratiklerinden ilham alarak **Rust** ile geliştirilmiş, aynı anda **3-4 veya daha fazla kullanıcıya eşzamanlı bağlanabilen**, dış tarayıcı bağımlılığını ve konsol zorunluluğunu ortadan kaldıran, **Windows 11 Fluent Design / WinUI 3** estetiğine sahip bağımsız bir uzak masaüstü ve ağ kontrol ekosistemidir.
 
 [![Rust 1.80+](https://img.shields.io/badge/Rust-1.80%2B-orange.svg?style=flat-square&logo=rust)](https://www.rust-lang.org)
-[![Version 2.0.0](https://img.shields.io/badge/Release-v2.0.0-blue.svg?style=flat-square)](https://github.com/mtahiryilmazz/OxiDesk/releases)
+[![Version 3.0.0](https://img.shields.io/badge/Release-v3.0.0-blue.svg?style=flat-square)](https://github.com/mtahiryilmazz/OxiDesk/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
 [![Platform Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20%7C%20Server-0078d4.svg?style=flat-square&logo=windows)](https://microsoft.com)
 
 ---
 
-## 🌟 Öne Çıkan Özellikler ve OxiDesk Mimarisi
+## 🌟 Öne Çıkan Özellikler ve OxiDesk v3.0 Mimarisi
+
+### 🖥️ Çoklu Uzak Masaüstü Bağlantısı (Multi-Session & Split-Grid)
+- **Eşzamanlı Çoklu Bağlantı:** IT uzmanlarının aynı anda 3-4 farklı istemciye/sunucuya bağlanabilmesi için AnyDesk / Chrome sekmeli sekme çubuğu (`Tab Bar`).
+- **Sekmeler Arası Canlı Geçiş:** Sekmeler arasında gezinirken arka plandaki oturumlar kopmaz, canlı akış ve veri aktarımı kesintisiz devam eder.
+- **Bölünmüş Ekran (2x2 Grid View):** İstenirse 2, 3 veya 4 aktif oturum tek ekranda yan yana veya ızgara düzeninde gerçek zamanlı izlenebilir; tıklanan ekrana klavye/fare odağı anında aktarılır.
+- **İzole Oturum Yönetimi:** Herhangi bir sekmedeki `✕` butonuna basıldığında yalnızca o bağlantı sonlanır; diğer oturumlar çalışmaya devam eder.
 
 ### 🎨 Tek Parça Çerçevesiz Doğal Pencere (Frameless Embedded Native Window)
 - **Wry & Tao Entegrasyonu:** Edge tarayıcısını dışarıdan açma zorunluluğunu ortadan kaldıran, programın doğrudan kendi penceresi içinde çalışan gömülü modern WebView2 motoru.
 - **Tek Üst Çubuk & IPC Kontrolü:** Çift başlık çubuğu hatasını tamamen gideren, Windows 11 Fluent tasarımına uygun simge durumuna küçültme, ekranı kaplama, kapatma ve sürükleme kontrolleri.
-- **Temiz Kapanma Garantisi (Zero Zombie Process):** Hem ana konsol hem de Hızlı Destek (QuickSupport) penceresi kapatıldığında arka planda gizli işlem bırakmadan anında sonlanır.
+- **Temiz Kapanma Garantisi (Zero Zombie Process):** Hem ana konsol hem de Hızlı Destek penceresi kapatıldığında arka plandaki tüm Tokio iş parçacıkları ve ekran servisleri Win32 `TerminateProcess` (`force_terminate_process`) ile anında temizlenir.
 
 ### ⚡ Performans ve Ekran Motoru (`src/capture.rs`)
 - **Adaptif Değişen Kare Tespiti (Dirty-Frame Detection):** 64-bit hızlı hash taramasıyla ekranda hareket olmadığında gereksiz JPEG sıkıştırmayı ve ağ paketlerini durdurur; boşta **%0 CPU** ve **~0 Kbps** bant genişliği tüketir.
@@ -77,7 +83,7 @@ Proje `scripts/build_distribution.ps1` betiği ile tek komutta hazır dağıtım
 2. **`OxiDesk-QuickSup.exe` (`oxidesk_qs.exe`):** Kurulumsuz, tek tıkla çalışan taşınabilir (portable) Hızlı Destek aracı.
 3. **`tools\oxidesk_rendezvous.exe`:** İnternet üzerinden WAN/NAT aşma ve sinyalleşme sunucusu.
 4. **`tools\oxidesk_service.exe`:** Kilit ekranı ve UAC yetkili Windows Arka Plan Hizmeti yöneticisi.
-5. **`OxiDesk-v2.0.0-Windows-x64.zip`:** Tüm araçları içeren dağıtım arşivi.
+5. **`OxiDesk-v3.0.0-Windows-x64.zip`:** Tüm araçları içeren dağıtım arşivi.
 
 ```powershell
 # Dağıtım paketlerini ve ZIP arşivini üretmek için:

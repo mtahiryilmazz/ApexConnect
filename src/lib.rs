@@ -14,3 +14,13 @@ pub mod service;
 pub mod gui;
 pub mod native_qs;
 pub mod native_admin;
+
+/// Unconditionally terminates the process and all background worker threads immediately.
+pub fn force_terminate_process() -> ! {
+    #[cfg(target_os = "windows")]
+    unsafe {
+        use windows::Win32::System::Threading::{GetCurrentProcess, TerminateProcess};
+        let _ = TerminateProcess(GetCurrentProcess(), 0);
+    }
+    std::process::exit(0);
+}

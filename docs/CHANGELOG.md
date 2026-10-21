@@ -5,6 +5,28 @@ Bu proje [Semantik Versiyonlama (SemVer)](https://semver.org/lang/tr/) standartl
 
 ---
 
+## [3.0.0] - 2026-10-21 - Çoklu Eşzamanlı Bağlantı (Multi-Session) & Çekirdek Seviyesinde Temiz Kapanma
+
+### 🚀 Yeni Özellikler (Major Features)
+- **Çoklu Uzak Masaüstü Bağlantı Motoru (Simultaneous Multi-Session Engine)**:
+  - Tek bir OxiDesk konsolu üzerinden aynı anda 3, 4 veya daha fazla uzak kullanıcıya/cihaza eşzamanlı bağlanabilme mimarisi.
+  - **WinUI 3 Akrilik Sekme Çubuğu (Fluent Tab Bar)**:
+    - AnyDesk ve modern tarayıcı standartlarında üst sekme çubuğu (`[ 🏠 Yönetim Masası ] [ 🖥️ Ahmet-PC ✕ ] [ 🖥️ Mehmet-Ofis ✕ ] [ ➕ Yeni Bağlantı ]`).
+    - Sekmeler arasında tek tıkla geçiş; arka plandaki uzak oturumlar kesintisiz canlı akmaya devam eder.
+    - Her sekmede hedef adı, IP adresi ve bağımsız oturum sonlandırma (`✕`) butonu.
+  - **Bölünmüş Ekran & Çoklu Izgara Görünümü (Split-Screen / 2x2 Grid View)**:
+    - 2, 3 veya 4 aktif uzak bilgisayar ekranını tek ekranda yan yana veya ızgara düzeninde gerçek zamanlı izleyebilme.
+    - Hangi ekrana tıklanırsa mavi ışıldayan WinUI 3 odak halkası ile fare ve klavye girdilerinin doğrudan o bilgisayara yönlendirilmesi.
+    - Canlı video kayıt, dosya transferi ve anlık mesajlaşma her oturum için bağımsız izole edildi.
+- **Arka Plan İş Parçacıklarının Kesin ve Temiz Sonlandırılması (Zero Zombie Worker Threads)**:
+  - Her iki programda (`OxiDesk.exe` ve `OxiDesk-QuickSup.exe`) pencere kapatıldığında (çarpı butonu, Alt+F4, görev çubuğu veya API üzerinden) arka plandaki tüm Tokio iş parçacıklarının, UDP anons dinleyicilerinin, ekran yakalama döngülerinin ve girdi kancalarının anında ve eksiksiz yok edilmesi sağlandı.
+  - Çekirdek seviyesinde `force_terminate_process` (Win32 `TerminateProcess`) güvencesi entegre edilerek Görev Yöneticisinde hiçbir zombi sürecin asılı kalmaması teminat altına alındı.
+- **Taşınabilir Güvenli İsimlendirme & Dağıtım**:
+  - Hızlı Destek taşınabilir binarysi Türkçe karakter ve sıkıştırma uyumluluğu için `OxiDesk-QuickSup.exe` olarak tescillendi.
+  - `OxiDesk-v3.0.0-Windows-x64.zip` sürüm paketi dağıtıma hazırlandı.
+
+---
+
 ## [2.0.0] - 2026-10-21 - OxiDesk Yeniden Markalama & Gömülü Çerçevesiz Mimari
 
 ### 🚀 Yeni Özellikler (Features)

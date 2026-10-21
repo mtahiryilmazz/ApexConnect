@@ -129,12 +129,17 @@ function windowMaximize() {
 }
 
 function windowClose() {
-  if (window.ipc) {
-    window.ipc.postMessage('close');
-  } else {
+  try {
+    if (window.ipc && typeof window.ipc.postMessage === 'function') {
+      window.ipc.postMessage('close');
+    }
+  } catch (e) {}
+  try {
     fetch('/api/window/close', { method: 'POST' }).catch(() => {});
-    window.close();
-  }
+  } catch (e) {}
+  setTimeout(() => {
+    try { window.close(); } catch (e) {}
+  }, 50);
 }
 
 function formatApexId(idStr) {
@@ -261,16 +266,223 @@ function initiateConnection() {
   startRemoteSession(target, pin);
 }
 
-async function startRemoteSession(target, pin) {
-  if (activeWs) {
-    activeWs.close();
-  }
-  if (pingInterval) {
-    clearInterval(pingInterval);
-  }
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
+function getActiveWs() {
+  const sess = sessionManager.getActiveSession();
+  return sess && sess.ws ? sess.ws : activeWs;
+}
+
+// ==================== MULTI-SESSION REMOTE DESKTOP ENGINE ====================
+const sessionManager = {
+  sessions: new Map(), // sessionId -> Session Object
+  activeId: null,
+  isGridMode: false,
+
+  hasSessions() {
+    return this.sessions.size > 0;
+  },
+
+  getActiveSession() {
+    return this.sessions.get(this.activeId) || null;
+  },
+
+  updateTabBar() {
+    const dynamicContainer = document.getElementById('dynamic-session-tabs');
+    const controlsContainer = document.getElementById('tab-bar-controls');
+    const dashboardTabBtn = document.getElementById('tab-btn-dashboard');
+    const navViewerBtn = document.getElementById('nav-viewer-btn');
+
+    if (!dynamicContainer) return;
+
+    if (this.sessions.size > 0) {
+      if (controlsContainer) controlsContainer.style.display = 'flex';
+      if (navViewerBtn) navViewerBtn.style.display = 'inline-flex';
+    } else {
+      if (controlsContainer) controlsContainer.style.display = 'none';
+      if (navViewerBtn) navViewerBtn.style.display = 'none';
+      if (dashboardTabBtn) dashboardTabBtn.classList.add('active');
+    }
+
+    if (currentTab === 'remote-viewer' && this.activeId) {
+      if (dashboardTabBtn) dashboardTabBtn.classList.remove('active');
+    } else {
+      if (dashboardTabBtn) dashboardTabBtn.classList.add('active');
+    }
+
+    dynamicContainer.innerHTML = '';
+    this.sessions.forEach((session, id) => {
+      const btn = document.createElement('button');
+      btn.className = `session-tab-btn ${this.activeId === id && currentTab === 'remote-viewer' ? 'active' : ''}`;
+      btn.title = `${session.name} (${session.targetHost})`;
+      btn.innerHTML = `
+        <span class="tab-icon">🖥️</span>
+        <span class="tab-title">${escapeHtml(session.name)}</span>
+        <span class="tab-close-btn" onclick="event.stopPropagation(); sessionManager.closeSession('${id}')" title="Bu Bağlantıyı Kapat">✕</span>
+      `;
+      btn.onclick = () => this.switchToSession(id);
+      dynamicContainer.appendChild(btn);
+    });
+
+    this.updateGridClasses();
+  },
+
+  updateGridClasses() {
+    const gridContainer = document.getElementById('multi-sessions-grid');
+    if (!gridContainer) return;
+
+    const count = this.sessions.size;
+    gridContainer.className = 'sessions-grid-container';
+
+    if (this.isGridMode && count > 0) {
+      gridContainer.classList.add('grid-active-mode');
+      const capped = Math.min(Math.max(count, 1), 4);
+      gridContainer.classList.add(`grid-count-${capped}`);
+    } else {
+      gridContainer.classList.add('single-active-mode');
+    }
+
+    const gridLabel = document.getElementById('grid-mode-label');
+    const gridBtn = document.getElementById('btn-grid-toggle');
+    const islandGridBtn = document.getElementById('btn-island-grid');
+    if (gridLabel) {
+      gridLabel.innerText = this.isGridMode ? 'Tek Ekran' : 'Bölünmüş Ekran';
+    }
+    if (gridBtn) {
+      if (this.isGridMode) gridBtn.classList.add('active');
+      else gridBtn.classList.remove('active');
+    }
+    if (islandGridBtn) {
+      if (this.isGridMode) islandGridBtn.classList.add('active');
+      else islandGridBtn.classList.remove('active');
+    }
+  },
+
+  switchToSession(id) {
+    if (!this.sessions.has(id)) return;
+    this.activeId = id;
+    const session = this.sessions.get(id);
+
+    // Update global compatibility aliases
+    activeWs = session.ws;
+    canvas = session.canvas;
+    ctx = session.ctx;
+    remoteWidth = session.remoteWidth;
+    remoteHeight = session.remoteHeight;
+    latency = session.latency;
+    fps = session.fps;
+    bandwidth = session.bandwidth;
+
+    // Update active highlight on session containers
+    document.querySelectorAll('.session-view-wrapper').forEach(w => {
+      w.classList.remove('active');
+    });
+    if (session.wrapper) {
+      session.wrapper.classList.add('active');
+      session.canvas.focus();
+    }
+
+    // Switch view to remote viewer
+    switchNavTab('remote-viewer');
+    this.updateTabBar();
+    this.updateViewerHeader(session);
+  },
+
+  updateViewerHeader(session) {
+    const titleEl = document.getElementById('viewer-target-title');
+    if (titleEl && session) {
+      titleEl.innerText = session.isConnected ? `Bağlı: ${session.name} (${session.targetHost})` : `Bağlanılıyor: ${session.name}`;
+    }
+    const statsEl = document.getElementById('session-stats');
+    if (statsEl && session) {
+      statsEl.innerText = `${session.fps} FPS | ${session.latency} ms | ${session.bandwidth} KB/s`;
+    }
+  },
+
+  toggleGridMode() {
+    this.isGridMode = !this.isGridMode;
+    this.updateGridClasses();
+    if (!this.isGridMode && this.activeId) {
+      this.switchToSession(this.activeId);
+    }
+  },
+
+  closeSession(id) {
+    const session = this.sessions.get(id);
+    if (!session) return;
+
+    if (session.ws) {
+      try { session.ws.close(); } catch (e) {}
+    }
+    if (session.pingInterval) {
+      clearInterval(session.pingInterval);
+    }
+    if (session.wrapper && session.wrapper.parentNode) {
+      session.wrapper.parentNode.removeChild(session.wrapper);
+    }
+
+    this.sessions.delete(id);
+
+    if (this.activeId === id) {
+      const remainingIds = Array.from(this.sessions.keys());
+      if (remainingIds.length > 0) {
+        this.switchToSession(remainingIds[remainingIds.length - 1]);
+      } else {
+        this.activeId = null;
+        activeWs = null;
+        canvas = null;
+        ctx = null;
+        this.updateTabBar();
+        switchNavTab('quick-connect');
+      }
+    } else {
+      this.updateTabBar();
+    }
+  }
+};
+
+function switchToSessionTab(tabId) {
+  if (tabId === 'dashboard') {
+    switchNavTab(currentTab === 'remote-viewer' ? 'quick-connect' : currentTab);
+    sessionManager.updateTabBar();
+  } else {
+    sessionManager.switchToSession(tabId);
+  }
+}
+
+function openNewConnectionTab() {
+  switchNavTab('quick-connect');
+  sessionManager.updateTabBar();
+  const input = document.getElementById('target-input');
+  if (input) {
+    input.focus();
+    input.select();
+  }
+}
+
+function toggleMultiGridMode() {
+  sessionManager.toggleGridMode();
+}
+
+function closeCurrentSession() {
+  if (sessionManager.activeId) {
+    sessionManager.closeSession(sessionManager.activeId);
+  } else {
+    closeSession();
+  }
+}
+
+function closeLiveSession() {
+  closeCurrentSession();
+}
+
+async function startRemoteSession(target, pin, customName) {
   const cleanTarget = target.trim().replace(/\s+/g, '');
   let targetHost = cleanTarget;
+  let resolvedName = customName || cleanTarget;
 
   // If target doesn't specify an explicit port or is an ID:
   if (!cleanTarget.includes(':')) {
@@ -280,6 +492,7 @@ async function startRemoteSession(target, pin) {
         const data = await res.json();
         if (data && data.found) {
           targetHost = `${data.ip}:${data.port}`;
+          if (data.hostname) resolvedName = data.hostname;
           console.log(`Resolved target ${cleanTarget} -> ${targetHost}`);
         } else if (/^\d+\.\d+\.\d+\.\d+$/.test(cleanTarget)) {
           targetHost = `${cleanTarget}:8080`;
@@ -295,40 +508,101 @@ async function startRemoteSession(target, pin) {
     return;
   }
 
+  const sessionId = 'sess_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl = `${protocol}//${targetHost}/ws/client?pin=${encodeURIComponent(pin)}`;
-  console.log('Connecting remote WebSocket to:', wsUrl);
+  console.log(`[Multi-Session] Starting session ${sessionId} to:`, wsUrl);
 
-  document.getElementById('nav-viewer-btn').style.display = 'inline-flex';
-  switchTab('remote-viewer');
-  document.getElementById('viewer-target-title').innerText = `Bağlanılıyor: ${targetHost}`;
+  // Create DOM elements for this session inside #multi-sessions-grid
+  const gridContainer = document.getElementById('multi-sessions-grid');
+  if (!gridContainer) return;
 
-  activeWs = new WebSocket(wsUrl);
-  activeWs.binaryType = 'arraybuffer';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'session-view-wrapper';
+  wrapper.id = `wrapper-${sessionId}`;
+  wrapper.onclick = () => {
+    if (sessionManager.isGridMode) {
+      sessionManager.switchToSession(sessionId);
+    }
+  };
 
-  activeWs.onopen = () => {
-    document.getElementById('viewer-target-title').innerText = `Bağlı: ${targetHost}`;
-    
-    // Heartbeat & Ping RTT loop
-    pingInterval = setInterval(() => {
-      if (activeWs && activeWs.readyState === WebSocket.OPEN) {
-        activeWs.send(JSON.stringify({ type: 'ping', timestamp: Date.now() }));
+  wrapper.innerHTML = `
+    <div class="session-view-header">
+      <span class="sess-name">🖥️ ${escapeHtml(resolvedName)} (${escapeHtml(targetHost)})</span>
+      <span class="sess-badge" id="badge-${sessionId}">Bağlanıyor...</span>
+    </div>
+    <div class="canvas-sub-wrapper">
+      <canvas id="canvas-${sessionId}" tabindex="0"></canvas>
+    </div>
+  `;
+  gridContainer.appendChild(wrapper);
+
+  const sessCanvas = wrapper.querySelector('canvas');
+  const sessCtx = sessCanvas.getContext('2d');
+
+  const sessionObj = {
+    id: sessionId,
+    target: cleanTarget,
+    targetHost: targetHost,
+    name: resolvedName,
+    pin: pin,
+    ws: null,
+    wrapper: wrapper,
+    canvas: sessCanvas,
+    ctx: sessCtx,
+    remoteWidth: 1920,
+    remoteHeight: 1080,
+    fps: 0,
+    latency: 0,
+    bandwidth: 0,
+    frameCount: 0,
+    bytesReceived: 0,
+    lastFrameTime: performance.now(),
+    pingInterval: null,
+    isConnected: false
+  };
+
+  attachSessionCanvasEvents(sessionObj);
+
+  // Setup WebSocket connection
+  const ws = new WebSocket(wsUrl);
+  ws.binaryType = 'arraybuffer';
+  sessionObj.ws = ws;
+
+  ws.onopen = () => {
+    sessionObj.isConnected = true;
+    const badge = document.getElementById(`badge-${sessionId}`);
+    if (badge) {
+      badge.innerText = 'Canlı';
+      badge.style.background = 'rgba(16, 124, 65, 0.4)';
+    }
+    if (sessionManager.activeId === sessionId) {
+      sessionManager.updateViewerHeader(sessionObj);
+    }
+
+    // Ping loop
+    sessionObj.pingInterval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'ping', timestamp: Date.now() }));
       }
     }, 2000);
   };
 
-  activeWs.onmessage = (event) => {
+  ws.onmessage = (event) => {
     if (typeof event.data === 'string') {
       try {
         const msg = JSON.parse(event.data);
         if (msg.type === 'screen_size') {
-          remoteWidth = msg.width;
-          remoteHeight = msg.height;
-          canvas.width = remoteWidth;
-          canvas.height = remoteHeight;
+          sessionObj.remoteWidth = msg.width;
+          sessionObj.remoteHeight = msg.height;
+          sessCanvas.width = msg.width;
+          sessCanvas.height = msg.height;
         } else if (msg.type === 'pong') {
-          latency = Date.now() - msg.timestamp;
-          updateStatsDisplay();
+          sessionObj.latency = Date.now() - msg.timestamp;
+          if (sessionManager.activeId === sessionId) {
+            latency = sessionObj.latency;
+            sessionManager.updateViewerHeader(sessionObj);
+          }
         } else if (msg.type === 'chat') {
           receiveChatMessage(msg);
         } else if (msg.type === 'file_progress') {
@@ -341,156 +615,175 @@ async function startRemoteSession(target, pin) {
       } catch (e) {}
     } else {
       // Binary JPEG frame
-      const byteLength = event.data.byteLength || 0;
-      bytesReceived += byteLength;
+      const byteLen = event.data.byteLength || 0;
+      sessionObj.bytesReceived += byteLen;
 
       const blob = new Blob([event.data], { type: 'image/jpeg' });
       createImageBitmap(blob).then(bitmap => {
-        if (canvas.width !== bitmap.width || canvas.height !== bitmap.height) {
-          canvas.width = bitmap.width;
-          canvas.height = bitmap.height;
-          remoteWidth = bitmap.width;
-          remoteHeight = bitmap.height;
+        if (sessCanvas.width !== bitmap.width || sessCanvas.height !== bitmap.height) {
+          sessCanvas.width = bitmap.width;
+          sessCanvas.height = bitmap.height;
+          sessionObj.remoteWidth = bitmap.width;
+          sessionObj.remoteHeight = bitmap.height;
         }
-        ctx.drawImage(bitmap, 0, 0);
+        sessCtx.drawImage(bitmap, 0, 0);
         bitmap.close();
 
-        // Push frame to recording stream if actively recording
-        if (recordingStreamTrack && recordingStreamTrack.requestFrame) {
+        // Push frame to recording stream if actively recording this session
+        if (sessionManager.activeId === sessionId && recordingStreamTrack && recordingStreamTrack.requestFrame) {
           try { recordingStreamTrack.requestFrame(); } catch (e) {}
         }
 
-        frameCount++;
+        sessionObj.frameCount++;
         const now = performance.now();
-        if (now - lastFrameTime >= 1000) {
-          fps = Math.round((frameCount * 1000) / (now - lastFrameTime));
-          bandwidth = Math.round(bytesReceived / 1024);
-          frameCount = 0;
-          bytesReceived = 0;
-          lastFrameTime = now;
-          updateStatsDisplay();
+        if (now - sessionObj.lastFrameTime >= 1000) {
+          sessionObj.fps = Math.round((sessionObj.frameCount * 1000) / (now - sessionObj.lastFrameTime));
+          sessionObj.bandwidth = Math.round(sessionObj.bytesReceived / 1024);
+          sessionObj.frameCount = 0;
+          sessionObj.bytesReceived = 0;
+          sessionObj.lastFrameTime = now;
+          if (sessionManager.activeId === sessionId) {
+            fps = sessionObj.fps;
+            bandwidth = sessionObj.bandwidth;
+            sessionManager.updateViewerHeader(sessionObj);
+          }
         }
       });
     }
   };
 
-  activeWs.onclose = () => {
-    document.getElementById('viewer-target-title').innerText = 'Bağlantı Kapandı';
-    document.getElementById('session-stats').innerText = '0 FPS | Offline';
-    if (pingInterval) clearInterval(pingInterval);
+  ws.onclose = () => {
+    sessionObj.isConnected = false;
+    const badge = document.getElementById(`badge-${sessionId}`);
+    if (badge) {
+      badge.innerText = 'Kapandı';
+      badge.style.background = 'rgba(239, 68, 68, 0.4)';
+    }
+    if (sessionObj.pingInterval) clearInterval(sessionObj.pingInterval);
+    if (sessionManager.activeId === sessionId) {
+      sessionManager.updateViewerHeader(sessionObj);
+    }
   };
 
-  activeWs.onerror = (err) => {
-    console.error('WS Error:', err);
-    document.getElementById('viewer-target-title').innerText = `Bağlantı Hatası: ${targetHost}`;
-    alert(`Uzak cihaza (${targetHost}) bağlanırken hata oluştu.\n- Hedef cihazın açık ve erişilebilir olduğunu\n- Girilen PIN kodunun doğruluğunu kontrol edin.`);
+  ws.onerror = (err) => {
+    console.error(`Session ${sessionId} error:`, err);
+    alert(`Uzak cihaza (${resolvedName} - ${targetHost}) bağlanırken hata oluştu.\n- Cihazın açık ve erişilebilir olduğunu\n- Girilen PIN kodunu kontrol edin.`);
   };
+
+  sessionManager.sessions.set(sessionId, sessionObj);
+  sessionManager.switchToSession(sessionId);
 }
 
-function updateStatsDisplay() {
-  const statsEl = document.getElementById('session-stats');
-  if (statsEl) {
-    statsEl.innerText = `${fps} FPS | ${latency} ms | ${bandwidth} KB/s`;
-  }
-}
-
-function closeSession() {
-  if (activeWs) {
-    activeWs.close();
-    activeWs = null;
-  }
-  if (pingInterval) {
-    clearInterval(pingInterval);
-  }
-  document.getElementById('nav-viewer-btn').style.display = 'none';
-  switchTab('quick-connect');
-}
-
-// Canvas Input & Mouse Events
-function initCanvasEvents() {
-  if (!canvas) return;
+function attachSessionCanvasEvents(session) {
+  const c = session.canvas;
+  if (!c) return;
 
   function getNormalizedCoords(e) {
-    const rect = canvas.getBoundingClientRect();
+    const rect = c.getBoundingClientRect();
     const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
     return { x, y };
   }
 
-  canvas.addEventListener('mousemove', (e) => {
-    if (!activeWs || activeWs.readyState !== WebSocket.OPEN) return;
+  c.addEventListener('mousemove', (e) => {
+    if (!session.ws || session.ws.readyState !== WebSocket.OPEN) return;
     const { x, y } = getNormalizedCoords(e);
-    activeWs.send(JSON.stringify({ type: 'mouse_move', x, y }));
+    session.ws.send(JSON.stringify({ type: 'mouse_move', x, y }));
   });
 
-  canvas.addEventListener('mousedown', (e) => {
-    if (!activeWs || activeWs.readyState !== WebSocket.OPEN) return;
+  c.addEventListener('mousedown', (e) => {
+    if (!session.ws || session.ws.readyState !== WebSocket.OPEN) return;
     e.preventDefault();
-    canvas.focus();
+    c.focus();
+    if (sessionManager.activeId !== session.id) {
+      sessionManager.switchToSession(session.id);
+    }
     const { x, y } = getNormalizedCoords(e);
-    activeWs.send(JSON.stringify({ type: 'mouse_down', button: e.button, x, y }));
+    session.ws.send(JSON.stringify({ type: 'mouse_down', button: e.button, x, y }));
   });
 
-  canvas.addEventListener('mouseup', (e) => {
-    if (!activeWs || activeWs.readyState !== WebSocket.OPEN) return;
+  c.addEventListener('mouseup', (e) => {
+    if (!session.ws || session.ws.readyState !== WebSocket.OPEN) return;
     e.preventDefault();
     const { x, y } = getNormalizedCoords(e);
-    activeWs.send(JSON.stringify({ type: 'mouse_up', button: e.button, x, y }));
+    session.ws.send(JSON.stringify({ type: 'mouse_up', button: e.button, x, y }));
   });
 
-  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  c.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  canvas.addEventListener('wheel', (e) => {
-    if (!activeWs || activeWs.readyState !== WebSocket.OPEN) return;
+  c.addEventListener('wheel', (e) => {
+    if (!session.ws || session.ws.readyState !== WebSocket.OPEN) return;
     e.preventDefault();
     const delta = e.deltaY < 0 ? 120 : -120;
-    activeWs.send(JSON.stringify({ type: 'mouse_wheel', delta }));
+    session.ws.send(JSON.stringify({ type: 'mouse_wheel', delta }));
   }, { passive: false });
-
-  // Keyboard events
-  window.addEventListener('keydown', (e) => {
-    if (currentTab !== 'remote-viewer' || !activeWs || activeWs.readyState !== WebSocket.OPEN) return;
-    if (['F5', 'F12'].includes(e.key)) return;
-    e.preventDefault();
-    activeWs.send(JSON.stringify({ type: 'key_down', key: e.key, code: e.code }));
-  });
-
-  window.addEventListener('keyup', (e) => {
-    if (currentTab !== 'remote-viewer' || !activeWs || activeWs.readyState !== WebSocket.OPEN) return;
-    e.preventDefault();
-    activeWs.send(JSON.stringify({ type: 'key_up', key: e.key, code: e.code }));
-  });
 
   // Mobile Touch Emulation
   let touchStartTime = 0;
-  canvas.addEventListener('touchstart', (e) => {
+  c.addEventListener('touchstart', (e) => {
     touchStartTime = performance.now();
     if (e.touches.length === 1) {
       const touch = e.touches[0];
       const { x, y } = getNormalizedCoords(touch);
-      if (activeWs && activeWs.readyState === WebSocket.OPEN) {
-        activeWs.send(JSON.stringify({ type: 'mouse_move', x, y }));
+      if (session.ws && session.ws.readyState === WebSocket.OPEN) {
+        session.ws.send(JSON.stringify({ type: 'mouse_move', x, y }));
       }
     }
   }, { passive: true });
 
-  canvas.addEventListener('touchmove', (e) => {
+  c.addEventListener('touchmove', (e) => {
     if (e.touches.length === 1) {
       const touch = e.touches[0];
       const { x, y } = getNormalizedCoords(touch);
-      if (activeWs && activeWs.readyState === WebSocket.OPEN) {
-        activeWs.send(JSON.stringify({ type: 'mouse_move', x, y }));
+      if (session.ws && session.ws.readyState === WebSocket.OPEN) {
+        session.ws.send(JSON.stringify({ type: 'mouse_move', x, y }));
       }
     }
   }, { passive: true });
 
-  canvas.addEventListener('touchend', (e) => {
+  c.addEventListener('touchend', (e) => {
     const duration = performance.now() - touchStartTime;
-    if (activeWs && activeWs.readyState === WebSocket.OPEN) {
+    if (session.ws && session.ws.readyState === WebSocket.OPEN) {
       const btn = duration > 500 ? 2 : 0;
-      activeWs.send(JSON.stringify({ type: 'mouse_click', button: btn }));
+      session.ws.send(JSON.stringify({ type: 'mouse_click', button: btn }));
     }
   }, { passive: true });
+}
+
+function updateStatsDisplay() {
+  const sess = sessionManager.getActiveSession();
+  if (sess) {
+    sessionManager.updateViewerHeader(sess);
+  }
+}
+
+function closeSession() {
+  if (sessionManager.hasSessions()) {
+    sessionManager.closeSession(sessionManager.activeId);
+  } else {
+    document.getElementById('nav-viewer-btn').style.display = 'none';
+    switchNavTab('quick-connect');
+  }
+}
+
+// Global Canvas Input & Keyboard Events
+function initCanvasEvents() {
+  window.addEventListener('keydown', (e) => {
+    if (currentTab !== 'remote-viewer') return;
+    const ws = getActiveWs();
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    if (['F5', 'F12'].includes(e.key)) return;
+    e.preventDefault();
+    ws.send(JSON.stringify({ type: 'key_down', key: e.key, code: e.code }));
+  });
+
+  window.addEventListener('keyup', (e) => {
+    if (currentTab !== 'remote-viewer') return;
+    const ws = getActiveWs();
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    e.preventDefault();
+    ws.send(JSON.stringify({ type: 'key_up', key: e.key, code: e.code }));
+  });
 }
 
 // Session Controls
@@ -775,13 +1068,6 @@ async function windowMaximize() {
   }
 }
 
-async function windowClose() {
-  try {
-    await fetch('/api/window/close', { method: 'POST' });
-  } catch (e) {
-    window.close();
-  }
-}
 
 // ==================== SESSION VIDEO RECORDING ENGINE (WebM VP9 / H.264) ====================
 let mediaRecorder = null;
