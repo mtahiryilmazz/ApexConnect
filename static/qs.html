@@ -19,6 +19,56 @@
       --text-muted: #9aa0a6;
     }
 
+    html.light {
+      --bg-acrylic: rgba(248, 250, 252, 0.96);
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --card-border: rgba(0, 0, 0, 0.1);
+      --accent-blue: #0067b8;
+      --accent-hover: #0078d4;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+    }
+
+    html.light body {
+      background: #f1f5f9;
+      color: var(--text-main);
+    }
+
+    html.light .titlebar {
+      background: rgba(248, 250, 252, 0.98);
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    html.light .titlebar-title {
+      color: var(--text-main);
+    }
+
+    html.light .id-card {
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+
+    html.light .id-display {
+      color: #0067b8;
+      text-shadow: none;
+    }
+
+    html.light .status-card,
+    html.light .pin-box {
+      background: #ffffff;
+      border: 1px solid var(--card-border);
+    }
+
+    html.light .status-info h4 {
+      color: var(--text-main);
+    }
+
+    html.light .win-btn:hover {
+      background: rgba(0, 0, 0, 0.06);
+      color: var(--text-main);
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -259,11 +309,19 @@
       </svg>
       <span class="titlebar-title">ApexConnect Hızlı Destek</span>
     </div>
-    <div class="titlebar-controls">
-      <button class="win-btn" onclick="window.close()">
+    <div class="titlebar-controls" style="display:flex; align-items:center; -webkit-app-region: no-drag;">
+      <!-- Tema Değiştirici -->
+      <button class="win-btn" onclick="toggleTheme()" title="Açık / Koyu Tema" style="width:32px;height:32px;">
+        <svg id="qs-sun-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <svg id="qs-moon-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </button>
+      <button class="win-btn" onclick="windowMinimize()" title="Simge Durumuna Küçült">
         <svg width="10" height="1" viewBox="0 0 10 1"><path fill="currentColor" d="M0 0h10v1H0z"/></svg>
       </button>
-      <button class="win-btn close" onclick="window.close()">
+      <button class="win-btn" onclick="windowMaximize()" title="Ekranı Kapla / Geri Yükle">
+        <svg width="10" height="10" viewBox="0 0 10 10"><path fill="none" stroke="currentColor" stroke-width="1.2" d="M0.5 0.5h9v9h-9z"/></svg>
+      </button>
+      <button class="win-btn close" onclick="windowClose()" title="Kapat">
         <svg width="10" height="10" viewBox="0 0 10 10"><path fill="currentColor" d="M0 0l5 5-5 5 1 1 5-5 5 5 1-1-5-5 5-5-1-1-5 5-5-5-1 1z"/></svg>
       </button>
     </div>
@@ -350,6 +408,62 @@
       setTimeout(() => span.innerText = 'Kimliği Kopyala', 2000);
     }
 
+    // Theme Handling
+    function initTheme() {
+      const savedTheme = localStorage.getItem('apex_theme') || 'dark';
+      applyTheme(savedTheme);
+    }
+
+    function applyTheme(theme) {
+      const html = document.documentElement;
+      const sun = document.getElementById('qs-sun-icon');
+      const moon = document.getElementById('qs-moon-icon');
+      if (theme === 'light') {
+        html.classList.remove('dark');
+        html.classList.add('light');
+        localStorage.setItem('apex_theme', 'light');
+        if (sun) sun.style.display = 'none';
+        if (moon) moon.style.display = 'block';
+      } else {
+        html.classList.remove('light');
+        html.classList.add('dark');
+        localStorage.setItem('apex_theme', 'dark');
+        if (sun) sun.style.display = 'block';
+        if (moon) moon.style.display = 'none';
+      }
+    }
+
+    function toggleTheme() {
+      const isLight = document.documentElement.classList.contains('light');
+      applyTheme(isLight ? 'dark' : 'light');
+    }
+
+    async function windowMinimize() {
+      try { await fetch('/api/window/minimize', { method: 'POST' }); } catch (e) {}
+    }
+
+    async function windowMaximize() {
+      try {
+        await fetch('/api/window/maximize', { method: 'POST' });
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      } catch (e) {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+    }
+
+    async function windowClose() {
+      try { await fetch('/api/window/close', { method: 'POST' }); } catch (e) { window.close(); }
+    }
+
+    initTheme();
     loadInfo();
     setInterval(loadInfo, 3000);
   </script>

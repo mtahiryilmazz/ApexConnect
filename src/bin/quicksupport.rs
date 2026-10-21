@@ -103,14 +103,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("  [Bilgi] Bilgi İşlem personeli aynı ağdaysa bu cihazı doğrudan görebilir.");
     println!("  [Bilgi] Destek penceresi açılıyor. Çıkmak için pencereyi kapatın.\n");
 
-    // 1. Run HTTP and Remote Desktop WebSocket engine in background Tokio task
-    let app = create_router(state.clone());
-    tokio::spawn(async move {
-        let _ = axum::serve(listener, app).await;
-    });
+    println!("  [Bilgi] Windows 11 Fluent Hızlı Destek Penceresi açılıyor...\n");
 
-    // 2. Run Pure Native Win32 Desktop Window on main thread (Zero Edge, Zero Web Engine)
-    apex_connect::native_qs::NativeQuickSupportGui::run(state);
+    // Automatically open standalone Frameless Fluent QuickSupport window
+    let local_url = format!("http://localhost:{}/qs", selected_port);
+    apex_connect::gui::GuiLauncher::launch(&local_url, "ApexQuickSupport", 440, 640, "QuickSupport");
+
+    let app = create_router(state);
+    axum::serve(listener, app).await?;
 
     Ok(())
 }

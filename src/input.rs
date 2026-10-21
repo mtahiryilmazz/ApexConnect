@@ -283,6 +283,53 @@ impl InputSimulator {
             }
         }
     }
+
+    /// Zero-Trust key release safety: Releases all modifier keys and mouse buttons upon disconnect
+    pub fn release_all_keys(&self) {
+        use windows::Win32::UI::Input::KeyboardAndMouse::*;
+        let modifier_vks = [
+            VK_CONTROL, VK_LCONTROL, VK_RCONTROL,
+            VK_SHIFT, VK_LSHIFT, VK_RSHIFT,
+            VK_MENU, VK_LMENU, VK_RMENU,
+            VK_LWIN, VK_RWIN,
+        ];
+
+        let mut inputs = Vec::new();
+        for &vk in &modifier_vks {
+            inputs.push(INPUT {
+                r#type: INPUT_KEYBOARD,
+                Anonymous: INPUT_0 {
+                    ki: KEYBDINPUT {
+                        wVk: vk,
+                        wScan: 0,
+                        dwFlags: KEYEVENTF_KEYUP,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            });
+        }
+
+        for &flags in &[MOUSEEVENTF_LEFTUP, MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_MIDDLEUP] {
+            inputs.push(INPUT {
+                r#type: INPUT_MOUSE,
+                Anonymous: INPUT_0 {
+                    mi: MOUSEINPUT {
+                        dx: 0,
+                        dy: 0,
+                        mouseData: 0,
+                        dwFlags: flags,
+                        time: 0,
+                        dwExtraInfo: 0,
+                    },
+                },
+            });
+        }
+
+        unsafe {
+            SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
+        }
+    }
 }
 
 fn map_key_to_vk(key: &str) -> Option<VIRTUAL_KEY> {

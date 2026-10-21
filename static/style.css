@@ -26,6 +26,27 @@
   --fluent-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
+/* Windows 11 Light Mode */
+html.light {
+  --fluent-bg-mica: #f3f4f6;
+  --fluent-bg-acrylic: rgba(255, 255, 255, 0.88);
+  --fluent-bg-card: rgba(255, 255, 255, 0.8);
+  --fluent-bg-card-hover: rgba(243, 244, 246, 0.95);
+  --fluent-sidebar-bg: rgba(241, 245, 249, 0.95);
+  
+  --fluent-border: rgba(0, 0, 0, 0.1);
+  --fluent-border-subtle: rgba(0, 0, 0, 0.05);
+  --fluent-accent: #0067b8;
+  --fluent-accent-light: #0078d4;
+  --fluent-accent-glow: rgba(0, 103, 184, 0.25);
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+
+  --fluent-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -127,6 +148,46 @@ body {
   box-shadow: 0 0 8px #10b981;
 }
 
+/* Titlebar Actions (Theme Toggle & Windows Controls) */
+.titlebar-actions {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.theme-toggle-btn {
+  width: 32px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--fluent-border);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: scale(1.05);
+}
+
+.theme-icon {
+  width: 15px;
+  height: 15px;
+  transition: transform 0.3s ease;
+}
+
+/* Theme Icon Visibility */
+html.dark .sun-icon { display: block; }
+html.dark .moon-icon { display: none; }
+html.light .sun-icon { display: none; }
+html.light .moon-icon { display: block; }
+
 /* Windows Window Controls (Min, Max, Close) */
 .window-controls {
   display: flex;
@@ -152,6 +213,85 @@ body {
 }
 
 .win-btn.win-close:hover {
+  background: #e81123;
+  color: #ffffff;
+}
+
+/* Light Mode Overrides */
+html.light body {
+  background-color: var(--fluent-bg-mica);
+  background-image: radial-gradient(at 100% 0%, rgba(0, 120, 212, 0.08) 0px, transparent 50%),
+                    radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.05) 0px, transparent 50%);
+  color: var(--text-primary);
+}
+
+html.light .fluent-titlebar {
+  background: rgba(248, 250, 252, 0.98);
+  border-bottom: 1px solid var(--fluent-border);
+}
+
+html.light .fluent-sidebar {
+  background: var(--fluent-sidebar-bg);
+  border-right: 1px solid var(--fluent-border);
+}
+
+html.light .nav-item {
+  color: var(--text-secondary);
+}
+
+html.light .nav-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-primary);
+}
+
+html.light .nav-item.active {
+  background: rgba(0, 103, 184, 0.12);
+  color: var(--fluent-accent);
+}
+
+html.light .fluent-card,
+html.light .status-banner-card,
+html.light .metric-card,
+html.light .id-display-card,
+html.light .device-card,
+html.light .history-item {
+  background: var(--fluent-bg-card);
+  border: 1px solid var(--fluent-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+html.light .fluent-input {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  color: var(--text-primary);
+}
+
+html.light .fluent-input:focus {
+  border-color: var(--fluent-accent);
+  box-shadow: 0 0 0 2px var(--fluent-accent-glow);
+}
+
+html.light .titlebar-status-pill {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-secondary);
+}
+
+html.light .theme-toggle-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: var(--text-primary);
+}
+
+html.light .theme-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+html.light .win-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-primary);
+}
+
+html.light .win-btn.win-close:hover {
   background: #e81123;
   color: #ffffff;
 }

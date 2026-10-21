@@ -747,3 +747,190 @@ function escapeHtml(str) {
   if (!str) return '';
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+
+// ==================== THEME MANAGEMENT (LIGHT / DARK) ====================
+function initTheme() {
+  const savedTheme = localStorage.getItem('apex_theme') || 'dark';
+  applyTheme(savedTheme);
+}
+
+function applyTheme(theme) {
+  const html = document.documentElement;
+  if (theme === 'light') {
+    html.classList.remove('dark');
+    html.classList.add('light');
+    localStorage.setItem('apex_theme', 'light');
+  } else {
+    html.classList.remove('light');
+    html.classList.add('dark');
+    localStorage.setItem('apex_theme', 'dark');
+  }
+}
+
+function toggleTheme() {
+  const isLight = document.documentElement.classList.contains('light');
+  applyTheme(isLight ? 'dark' : 'light');
+}
+
+// Auto-run theme immediately
+initTheme();
+
+// ==================== FRAMELESS WINDOW CONTROLS ====================
+async function windowMinimize() {
+  try {
+    await fetch('/api/window/minimize', { method: 'POST' });
+  } catch (e) {
+    console.log('Minimize fallback', e);
+  }
+}
+
+async function windowMaximize() {
+  try {
+    await fetch('/api/window/maximize', { method: 'POST' });
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  } catch (e) {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+}
+
+async function windowClose() {
+  try {
+    await fetch('/api/window/close', { method: 'POST' });
+  } catch (e) {
+    window.close();
+  }
+}
+
+// ==================== SESSION VIDEO RECORDING ENGINE (WebM VP9 / H.264) ====================
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordingStartTime = null;
+let recordingTimerInterval = null;
+let chosenMimeType = 'video/webm';
+
+function getBestSupportedMimeType() {
+  const types = [
+    'video/webm; codecs=vp9,opus',
+    'video/webm; codecs=vp9',
+    'video/webm; codecs=h264,opus',
+    'video/webm; codecs=h264',
+    'video/webm',
+    'video/mp4; codecs=avc1'
+  ];
+  for (const t of types) {
+    if (MediaRecorder.isTypeSupported(t)) {
+      return t;
+    }
+  }
+  return 'video/webm';
+}
+
+function toggleSessionRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    stopSessionRecording();
+  } else {
+    startSessionRecording();
+  }
+}
+
+function startSessionRecording() {
+  if (!canvas) {
+    alert('Kayıt başlatılamadı: Aktif uzak masaüstü ekranı bulunamadı.');
+    return;
+  }
+
+  try {
+    chosenMimeType = getBestSupportedMimeType();
+    const stream = canvas.captureStream(30); // 30 FPS smooth video stream
+    recordedChunks = [];
+
+    mediaRecorder = new MediaRecorder(stream, {
+      mimeType: chosenMimeType,
+      videoBitsPerSecond: 2500000 // 2.5 Mbps crisp clarity
+    });
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        recordedChunks.push(event.data);
+      }
+    };
+
+    mediaRecorder.onstop = saveRecordedSession;
+
+    mediaRecorder.start(1000); // 1-second chunks
+    recordingStartTime = Date.now();
+
+    const btn = document.getElementById('btn-record-session');
+    if (btn) {
+      btn.style.background = '#e81123';
+      btn.style.color = '#ffffff';
+      btn.innerHTML = '⏹ Durdur (00:00)';
+    }
+
+    recordingTimerInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+      const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+      const secs = String(elapsed % 60).padStart(2, '0');
+      const recBtn = document.getElementById('btn-record-session');
+      if (recBtn) {
+        recBtn.innerHTML = `⏹ Durdur (${mins}:${secs})`;
+      }
+    }, 1000);
+
+    console.log(`[Video Kaydedici] Kayıt başladı. Format: ${chosenMimeType}`);
+  } catch (err) {
+    console.error('Kayıt başlatılamadı:', err);
+    alert('Ekran kaydı başlatılamadı: ' + err.message);
+  }
+}
+
+function stopSessionRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+  }
+
+  if (recordingTimerInterval) {
+    clearInterval(recordingTimerInterval);
+    recordingTimerInterval = null;
+  }
+
+  const btn = document.getElementById('btn-record-session');
+  if (btn) {
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.innerHTML = '🔴 Kaydet';
+  }
+}
+
+function saveRecordedSession() {
+  if (recordedChunks.length === 0) return;
+
+  const blob = new Blob(recordedChunks, { type: chosenMimeType });
+  const ext = chosenMimeType.includes('mp4') ? 'mp4' : 'webm';
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const fileName = `ApexConnect_Kayit_${timestamp}.${ext}`;
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+
+  setTimeout(() => {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }, 100);
+
+  alert(`Oturum videosu (${(blob.size / (1024 * 1024)).toFixed(2)} MB) başarıyla kaydedildi:\n${fileName}`);
+}
+

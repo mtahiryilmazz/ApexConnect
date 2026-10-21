@@ -8,7 +8,7 @@ use axum::{
     },
     http::{header, HeaderMap, StatusCode},
     response::{Html, IntoResponse, Response},
-    routing::{delete, get},
+    routing::{delete, get, post},
     Json, Router,
 };
 use base64::Engine;
@@ -54,6 +54,9 @@ pub fn create_router(state: SharedState) -> Router {
         .route("/api/audit", get(get_audit_handler))
         .route("/api/policy", get(get_policy_handler).post(update_policy_handler))
         .route("/api/service/status", get(get_service_status_handler))
+        .route("/api/window/minimize", post(window_minimize_handler))
+        .route("/api/window/maximize", post(window_maximize_handler))
+        .route("/api/window/close", post(window_close_handler))
         .route("/ws/client", get(ws_handler))
         .with_state(state)
 }
@@ -642,6 +645,10 @@ async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
         _ = send_task => {},
     };
 
+    // Zero-Trust input release: ensure no keys or mouse buttons remain pressed after session disconnect
+    let input_sim = InputSimulator::new();
+    input_sim.release_all_keys();
+
     // Auto-regenerate random one-time PIN upon session disconnect for zero-trust security
     {
         use rand::Rng;
@@ -657,4 +664,40 @@ async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
         "Uzak oturum sonlandi; guvenlik icin tek kullanimlik PIN otomatik olarak sifirlandi ve yeni PIN uretildi.",
         true,
     );
+}
+
+async fn window_close_handler() -> Json<serde_json::Value> {
+    tokio::spawn(async {
+        tokio::time::sleep(std::time::Duration::from_millis(150)).await;
+        std::process::exit(0);
+    });
+    Json(serde_json::json!({ "status": "ok" }))
+}
+
+async fn window_minimize_handler() -> Json<serde_json::Value> {
+    #[cfg(target_os = "windows")]
+    unsafe {
+        use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, ShowWindow, SW_MINIMIZE};
+        let hwnd = GetForegroundWindow();
+        if hwnd.0 != 0 as _ {
+            let _ = ShowWindow(hwnd, SW_MINIMIZE);
+        }
+    }
+    Json(serde_json::json!({ "status": "ok" }))
+}
+
+async fn window_maximize_handler() -> Json<serde_json::Value> {
+    #[cfg(target_os = "windows")]
+    unsafe {
+        use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, IsZoomed, ShowWindow, SW_MAXIMIZE, SW_RESTORE};
+        let hwnd = GetForegroundWindow();
+        if hwnd.0 != 0 as _ {
+            if IsZoomed(hwnd).as_bool() {
+                let _ = ShowWindow(hwnd, SW_RESTORE);
+            } else {
+                let _ = ShowWindow(hwnd, SW_MAXIMIZE);
+            }
+        }
+    }
+    Json(serde_json::json!({ "status": "ok" }))
 }
