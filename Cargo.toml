@@ -51,4 +51,7 @@ windows = { version = "0.58", features = [
     "Win32_System_LibraryLoader",
     "Win32_System_StationsAndDesktops"
 ] }
+wry = "0.47"
+tao = "0.30"
+
 

@@ -38,7 +38,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .enable_all()
         .build()?;
 
-    let (state, _selected_port) = rt.block_on(async {
+    let (_state, selected_port) = rt.block_on(async {
         let local_ip = get_local_ip();
         let hostname = std::env::var("COMPUTERNAME").unwrap_or_else(|_| "Windows-PC".to_string());
         let device_id = generate_oxidesk_id();
@@ -114,8 +114,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok::<_, Box<dyn std::error::Error>>((state, selected_port))
     })?;
 
-    // Run independent native Fluent desktop GUI
-    oxidesk::native_admin::NativeAdminGui::run(state);
+    let gui_url = format!("http://localhost:{}", selected_port);
+    oxidesk::gui::GuiLauncher::run_native_window(&gui_url, "OxiDesk IT Yönetim Konsolu", 1320, 840);
 
     oxidesk::force_terminate_process();
 }
