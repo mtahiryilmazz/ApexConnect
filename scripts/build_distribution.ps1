@@ -38,7 +38,7 @@ $AdminDst = Join-Path $DistDir "OxiDesk.exe"
 Copy-Item -Path $AdminSrc -Destination $AdminDst -Force
 
 $QsSrc = Join-Path $RepoRoot "target\release\oxidesk_qs.exe"
-$QsDst = Join-Path $DistDir "OxiDesk Hızlı Destek.exe"
+$QsDst = Join-Path $DistDir "OxiDesk-QuickSup.exe"
 Copy-Item -Path $QsSrc -Destination $QsDst -Force
 
 # Yardımcı ve Sunucu Araçları (tools/ alt dizininde)
@@ -61,8 +61,8 @@ ANA PROGRAMLAR:
    - IT Departmanı / Sistem Yöneticisi için tam yetkili masaüstü yönetim konsolu.
    - Ağ tarayıcısı, adres defteri, canlı oturum içi dosya aktarımı, anlık mesajlaşma, oturum video kaydı ve WinUI 3 Fluent tek parça çerçevesiz arayüz içerir.
 
-2. OxiDesk Hızlı Destek.exe:
-   - Şirket personeline dağıtılacak tek tıkla çalışan taşınabilir (portable) Mini Hızlı Destek aracı.
+2. OxiDesk-QuickSup.exe:
+   - Şirket personeline dağıtılacak tek tıkla çalışan taşınabilir (portable) Hızlı Destek aracı.
    - Kurulum gerektirmez, açıldığı anda 9 haneli OxiDesk ID üretir ve IT masasına otomatik SOS anonsu gönderir. Kapatıldığında arka planda açık kalmaz, anında temizlenir.
 
 YARDIMCI VE SUNUCU ARAÇLARI (tools/ Klasörü):
@@ -89,7 +89,7 @@ if (Test-Path $ZipPath) {
 }
 $ItemsToZip = @(
     (Join-Path $DistDir "OxiDesk.exe"),
-    (Join-Path $DistDir "OxiDesk Hızlı Destek.exe"),
+    (Join-Path $DistDir "OxiDesk-QuickSup.exe"),
     (Join-Path $DistDir "KULLANIM_KILAVUZU.txt"),
     $ToolsDir
 )

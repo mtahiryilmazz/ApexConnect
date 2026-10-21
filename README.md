@@ -74,7 +74,7 @@ Program doğrudan kendi bağımsız çerçevesiz penceresinde açılacaktır.
 Proje `scripts/build_distribution.ps1` betiği ile tek komutta hazır dağıtım paketlerine dönüştürülür:
 
 1. **`OxiDesk.exe` (`oxidesk.exe`):** IT Yöneticisi yönetim konsolu.
-2. **`OxiDesk Hızlı Destek.exe` (`oxidesk_qs.exe`):** Kurulumsuz, tek tıkla çalışan taşınabilir (portable) destek aracı.
+2. **`OxiDesk-QuickSup.exe` (`oxidesk_qs.exe`):** Kurulumsuz, tek tıkla çalışan taşınabilir (portable) Hızlı Destek aracı.
 3. **`tools\oxidesk_rendezvous.exe`:** İnternet üzerinden WAN/NAT aşma ve sinyalleşme sunucusu.
 4. **`tools\oxidesk_service.exe`:** Kilit ekranı ve UAC yetkili Windows Arka Plan Hizmeti yöneticisi.
 5. **`OxiDesk-v2.0.0-Windows-x64.zip`:** Tüm araçları içeren dağıtım arşivi.
