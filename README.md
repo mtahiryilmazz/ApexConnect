@@ -1,8 +1,8 @@
 # 🚀 OxiDesk (v2.0.0)
 
-**Windows 11 Fluent Tasarımlı, Rust Tabanlı (Oxid + Desktop), Tek Parça Çerçevesiz (Frameless Native), Sıfır Kurulumlu IT Uzak Masaüstü Ekosistemi**
+**Windows 11 Fluent Tasarımlı, Rust Tabanlı, Tek Parça Çerçevesiz (Frameless Native), Sıfır Kurulumlu IT Uzak Masaüstü Ekosistemi**
 
-**OxiDesk**; modern kurumsal uzak masaüstü ve ağ mimarilerinin en iyi pratiklerinden ilham alarak **Rust** ile geliştirilmiş (adını Rust'ın "Oxide" doğası ile "Desktop" kelimesinin ortak "D" harfinde birleşmesinden almıştır); dış tarayıcı bağımlılığını ve konsol zorunluluğunu ortadan kaldıran, **Windows 11 Fluent Design / WinUI 3** estetiğine sahip bağımsız bir uzak masaüstü ve ağ kontrol ekosistemidir.
+**OxiDesk**; modern kurumsal uzak masaüstü ve ağ mimarilerinin en iyi pratiklerinden ilham alarak **Rust** ile geliştirilmiş, dış tarayıcı bağımlılığını ve konsol zorunluluğunu ortadan kaldıran, **Windows 11 Fluent Design / WinUI 3** estetiğine sahip bağımsız bir uzak masaüstü ve ağ kontrol ekosistemidir.
 
 [![Rust 1.80+](https://img.shields.io/badge/Rust-1.80%2B-orange.svg?style=flat-square&logo=rust)](https://www.rust-lang.org)
 [![Version 2.0.0](https://img.shields.io/badge/Release-v2.0.0-blue.svg?style=flat-square)](https://github.com/mtahiryilmazz/OxiDesk/releases)
@@ -45,7 +45,7 @@
 
 | Karşılaştırma Kriteri | Geleneksel Kurumsal Yazılımlar | Ağır Paket Çözümleri | Temel Form Araçları | **OxiDesk (v2.0)** |
 |---|---|---|---|---|
-| **Çekirdek Dil** | C++, C#, Java | Ağır Framework / Script | C++ / Temel Win32 | **Rust (Oxide Motoru)** |
+| **Çekirdek Dil** | C++, C#, Java | Ağır Framework / Script | C++ / Temel Win32 | **Rust (Sıfır Dış Bağımlılık)** |
 | **Arayüz Tasarımı** | Klasik Ağır Masaüstü | Hantal Dış Tarayıcılar | Eski Tip Form Arayüzü | **Gömülü Çerçevesiz Fluent WinUI 3** |
 | **Dağıtım Boyutu** | 30 MB - 100 MB+ Kurulum | 50 MB - 120 MB | ~5 MB Basit .exe | **Taşınabilir Tek .exe (~2.5 MB)** |
 | **Ekran Motoru** | Standart Video Akışı | Genel Codec / WebRTC | Standart GDI | **GDI + Adaptif Dirty-Rect + DXGI** |
