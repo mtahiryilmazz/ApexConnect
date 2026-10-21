@@ -93,7 +93,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         println!();
         println!("  ===============================================================");
-        println!("  🚀  OxiDesk - IT Uzak Masaüstü ve Cihaz Yönetim Ekosistemi v5.0.0");
+        println!("  🚀  OxiDesk - IT Uzak Masaüstü ve Cihaz Yönetim Ekosistemi v5.5.0");
         println!("  ===============================================================");
         println!("  🖥️   Bilgisayar Adı     : {}", hostname);
         println!("  🆔  Cihaz Kimliği (ID)  : \x1b[1;36m{}\x1b[0m", formatted_id);
@@ -104,7 +104,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("  💻  Yerel Erişim        : \x1b[1;34mhttp://localhost:{}\x1b[0m", selected_port);
         println!("  📡  Ağ Keşfi (UDP)      : Port {} üzerinden aktif", oxidesk::discovery::DISCOVERY_PORT);
         println!("  ===============================================================");
-        println!("  [Bilgi] Saf Win32 AnyDesk Masaüstü Yönetim Konsolu başlatılıyor (Sıfır Edge Bağımlılığı)...\n");
+        println!("  [Bilgi] Bağımsız Native Fluent Masaüstü Yönetim Konsolu başlatılıyor...\n");
 
         let app = create_router(state.clone());
         tokio::spawn(async move {
@@ -114,7 +114,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok::<_, Box<dyn std::error::Error>>((state, selected_port))
     })?;
 
-    // Run 100% pure native Win32 desktop GUI (AnyDesk model - Zero Edge / Zero WebView2 dependency)
+    // Run independent native Fluent desktop GUI
     oxidesk::native_admin::NativeAdminGui::run(state);
 
     oxidesk::force_terminate_process();

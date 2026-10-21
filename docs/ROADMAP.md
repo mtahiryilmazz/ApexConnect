@@ -61,10 +61,11 @@ Bu belge, OxiDesk projesinin kısa, orta ve uzun vadeli mimari, masaüstü x64 u
 
 ---
 
-## 📍 Faz 5: Saf Win32 Native Motor & Sıfır Dış Bağımlılık (Tamamlandı - v5.0.0)
-- [x] **%100 Saf Win32 Native GUI (AnyDesk / RustDesk Standartları):**
-  - Microsoft Edge ve WebView2 motoru gereksinimi masaüstü çalıştırılabilir dosyalarından tamamen kaldırıldı.
+## 📍 Faz 5: Bağımsız Native Frameless WPF Fluent UI Motoru (Tamamlandı - v5.5.0)
+- [x] **%100 Bağımsız Yerel Native Frameless WPF Fluent UI:**
+  - Microsoft Edge, WebView2, `wry` ve `tao` bağımlılıkları tamamen kaldırıldı.
   - Uygulama yanında oluşan `EBWebView` artık klasörleri kalıcı olarak sonlandırıldı.
+  - Standart gri Win32 pencereleri yerine modern Frameless başlık çubuğu, yuvarlatılmış kartlar (`RoundRect`), koyu slate Fluent giriş kutuları ve Windows 11 DWM gölge/yuvarlak köşe efektleri entegre edildi.
   - Bellek (RAM) tüketimi ~15-20 MB seviyesine indirildi, anında sıfır gecikmeyle açılış sağlandı.
 - [x] **Doğrudan Win32 GDI Ekran ve DWM / Layered Window Çözümü:**
   - `OpenInputDesktop` ile aktif kullanıcı masaüstüne bağlanma ve `CAPTUREBLT` ile donanım hızlandırmalı / şeffaf pencerelerdeki siyah ekran sorunu kökten çözüldü.

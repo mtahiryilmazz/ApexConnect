@@ -11,7 +11,6 @@ pub mod audio;
 pub mod policy;
 pub mod audit;
 pub mod service;
-pub mod gui;
 pub mod native_qs;
 pub mod native_admin;
 

@@ -52,25 +52,27 @@ Copy-Item -Path $ServiceSrc -Destination $ServiceDst -Force
 
 # 3. Bilgilendirme Notu
 $ReadmeContent = @"
-OxiDesk Kurumsal Uzak Masaüstü Dağıtım Paketi (v5.0.0 - Pure Win32 Native)
-========================================================================
+OxiDesk Kurumsal Uzak Masaüstü Dağıtım Paketi (v5.5.0 - Bağımsız Native Frameless Fluent UI)
+===========================================================================================
 
-Bu sürüm (v5.0.0), AnyDesk ve RustDesk mimari standartlarında %100 Saf Win32 Native
-olarak geliştirilmiştir. Microsoft Edge veya WebView2 gereksinimi tamamen kaldırılmıştır.
-Gereksiz klasörler (EBWebView vb.) oluşturulmaz, RAM tüketimi ~15-20 MB seviyesindedir.
+Bu sürüm (v5.5.0), %100 Bağımsız Yerel Native Frameless Fluent UI mimarisinde geliştirilmiştir.
+Microsoft Edge veya WebView2 motoru gereksinimi tamamen kaldırılmıştır.
+Gereksiz webview klasörleri veya bağımlılıklar oluşturulmaz, RAM tüketimi ~15-20 MB seviyesindedir.
 
 ANA PROGRAMLAR:
 ---------------
 1. OxiDesk.exe:
-   - IT Departmanı / Sistem Yöneticisi için saf Win32 yerel yönetim konsolu.
-   - Doğrudan GDI ve donanım hızlandırmalı ekran aktarımı, anlık sohbet (neon uyarı bildirimli ve küçültülebilir mini dock),
+   - IT Departmanı / Sistem Yöneticisi için Frameless Fluent UI yerel yönetim konsolu.
+   - Doğrudan çift tamponlu (double-buffered) GDI ve donanım hızlandırmalı ekran aktarımı,
+     koyu Fluent giriş alanları, özel başlık çubuğu, anlık sohbet (neon bildirimli mini dock),
      gelişmiş ayarlar menüsü (kayıt formatı, depolama yolları, kalite), görev yöneticisi ve dosya aktarımı.
-   - İstenirse web/mobil tarayıcılardan doğrudan erişim için arka plan HTTP sunucusu da aktiftir.
+   - Uzaktan tarayıcı veya mobil cihazla bağlanmak isteyenler için arka plan HTTP sunucusu da aktiftir.
 
 2. OxiDesk-QuickSup.exe:
-   - Son kullanıcılara tek tıkla dağıtılan süper hafif (~2.5 MB) taşınabilir Hızlı Destek aracı.
+   - Son kullanıcılara tek tıkla dağıtılan süper hafif (~2.8 MB) taşınabilir Hızlı Destek aracı.
+   - Modern Frameless WPF / Fluent UI tasarımı, Windows 11 yuvarlatılmış köşeler ve koyu mod.
    - Kurulum gerektirmez, Edge gerektirmez, sıfır artık dosya bırakır.
-   - Tek tıkla ID ve PIN üretir, gelen bağlantı onayını yönetir.
+   - Tek tıkla ID ve PIN üretir, kopyalama geri bildirimi ve SOS anonsu içerir.
 
 YARDIMCI VE SUNUCU ARAÇLARI (tools/ Klasörü):
 ----------------------------------------------
@@ -90,7 +92,7 @@ $utf8WithBom = New-Object System.Text.UTF8Encoding($true)
 [System.IO.File]::WriteAllText($kullanimPath, $ReadmeContent, $utf8WithBom)
 
 # 4. Tek Arşiv ZIP Paketi Oluşturma
-$ZipPath = Join-Path $DistDir "OxiDesk-v5.0.0-Windows-x64.zip"
+$ZipPath = Join-Path $DistDir "OxiDesk-v5.5.0-Windows-x64.zip"
 if (Test-Path $ZipPath) {
     Remove-Item -Path $ZipPath -Force
 }

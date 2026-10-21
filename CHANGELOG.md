@@ -4,13 +4,14 @@ Tüm önemli değişiklikler, sürüm yükseltmeleri ve mimari iyileştirmeler b
 
 ---
 
-## [v5.0.0] - 2026-10-21 (Büyük Sürüm: %100 Saf Win32 AnyDesk Mimarisi)
+## [v5.5.0] - 2026-10-21 (Büyük Sürüm: %100 Bağımsız Native Frameless WPF Fluent UI)
 
-### 🚀 Büyük Mimari Dönüşüm (AnyDesk & RustDesk Modeli)
-- **Sıfır Edge / WebView2 Bağımlılığı:** Masaüstü çalıştırılabilir dosyalarından (`OxiDesk.exe` ve `OxiDesk-QuickSup.exe`) Microsoft Edge ve WebView2 motoru gereksinimi tamamen kaldırıldı. Programlar saf Win32 GDI pencereleri (`native_admin.rs` & `native_qs.rs`) olarak bağımsız çalışır.
-- **Sıfır Çöp Klasör:** Uygulamanın yanında oluşan `EBWebView` artık klasörleri kalıcı olarak sonlandırıldı. İzolasyon sağlandı.
-- **Ultra Düşük Kaynak Tüketimi:** Bellek (RAM) kullanımı ~15-20 MB seviyesine indirildi, anında sıfır gecikmeyle açılış sağlandı.
-- **Web Paneli Korundu:** Masaüstü yerel çalışırken, uzaktan tarayıcı veya mobil cihazla bağlanmak isteyenler için arka plan HTTP sunucusu (`http://localhost:8080`) çalışmaya devam eder.
+### 🚀 Büyük Mimari Dönüşüm (Bağımsız Frameless Fluent UI)
+- **Sıfır Edge / WebView2 Bağımlılığı:** Masaüstü çalıştırılabilir dosyalarından (`OxiDesk.exe` ve `OxiDesk-QuickSup.exe`) Microsoft Edge, WebView2, `wry` ve `tao` kütüphaneleri ve parametreleri tamamen kaldırıldı.
+- **Sıfır Çöp Klasör:** Uygulamanın yanında oluşan `EBWebView` ve webview artık klasörleri kalıcı olarak sonlandırıldı.
+- **Frameless WPF Fluent UI:** Eski kalın Win32 çerçeveleri ve gri butonlar yerine; özel taşınabilir koyu Fluent başlık çubuğu (`#0F172A`), Windows 11 DWM yuvarlatılmış köşeler (`RoundRect`), koyu slate Fluent giriş kutuları, parlayan neon Segoe UI göstergeleri ve çift tamponlu sıfır titreme (zero-flicker) çizim entegre edildi.
+- **Ultra Düşük Kaynak Tüketimi:** Bellek (RAM) kullanımı ~15-20 MB seviyesinde, anında sıfır gecikmeyle açılış sağlandı.
+- **Web Paneli Korundu:** Masaüstü bağımsız native çalışırken, uzaktan tarayıcı veya mobil cihazla bağlanmak isteyenler için arka plan HTTP sunucusu (`http://localhost:8080`) çalışmaya devam eder.
 
 ### 🖥️ Ekran Yakalama & Siyah Ekran Çözümü
 - **OpenInputDesktop & Thread Desktop Attachment:** Ekran yakalama iş parçacığı Windows `OpenInputDesktop` API'si ile aktif masaüstüne bağlandı.

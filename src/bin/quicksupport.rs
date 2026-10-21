@@ -93,7 +93,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         println!();
         println!("  ===============================================================");
-        println!("  🚨  OxiDesk Hızlı Destek (QuickSupport Portable v5.0.0 - Saf Win32)");
+        println!("  🚨  OxiDesk Hızlı Destek (QuickSupport Portable v5.5.0 - Native Fluent UI)");
         println!("  ===============================================================");
         println!("  👤  Kullanıcı / Cihaz  : {} ({})", hostname, username);
         println!("  🆔  Oxi Kimliğiniz     : \x1b[1;36m{}\x1b[0m", formatted_id);
