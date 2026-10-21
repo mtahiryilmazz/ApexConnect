@@ -108,13 +108,14 @@ impl DiscoveryEngine {
 
                             let mut disc = state.discovered.lock().unwrap();
                             disc.insert(
-                                ip.clone(),
+                                format!("{}:{}", ip, pkt.port),
                                 DiscoveredDevice {
                                     ip,
                                     hostname: pkt.hostname,
                                     device_id: Some(pkt.device_id),
                                     service_type,
                                     is_online: true,
+                                    port: pkt.port,
                                     is_sos: pkt.is_sos || pkt.magic == "APEX_SOS_V1",
                                     user_name: pkt.user_name,
                                     status_note: pkt.status_note,
@@ -169,6 +170,7 @@ impl DiscoveryEngine {
                         device_id: None,
                         service_type: "ApexConnect Ajanı (HTTP/WS)".to_string(),
                         is_online: true,
+                        port: 8080,
                         is_sos: false,
                         user_name: None,
                         status_note: None,

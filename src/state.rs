@@ -36,12 +36,18 @@ pub struct DiscoveredDevice {
     pub device_id: Option<String>,
     pub service_type: String,
     pub is_online: bool,
+    #[serde(default = "default_port")]
+    pub port: u16,
     #[serde(default)]
     pub is_sos: bool,
     #[serde(default)]
     pub user_name: Option<String>,
     #[serde(default)]
     pub status_note: Option<String>,
+}
+
+fn default_port() -> u16 {
+    8080
 }
 
 pub struct AppState {

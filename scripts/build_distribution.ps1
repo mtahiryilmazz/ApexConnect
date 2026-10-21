@@ -22,26 +22,32 @@ if ($LASTEXITCODE -ne 0) {
     Write-Error "Release derlemesi basarisiz oldu!"
 }
 
-# 2. dist/ dizini olusturma ve kopyalama
+# 2. dist/ ve dist/tools/ dizini olusturma ve kopyalama
 $DistDir = Join-Path $RepoRoot "dist"
+$ToolsDir = Join-Path $DistDir "tools"
 if (-not (Test-Path $DistDir)) {
     New-Item -ItemType Directory -Path $DistDir | Out-Null
 }
+if (-not (Test-Path $ToolsDir)) {
+    New-Item -ItemType Directory -Path $ToolsDir | Out-Null
+}
 
+# Ana Programlar (Kullanıcı için en üst dizinde)
 $AdminSrc = Join-Path $RepoRoot "target\release\apex_connect.exe"
-$AdminDst = Join-Path $DistDir "apex_connect.exe"
+$AdminDst = Join-Path $DistDir "ApexConnect.exe"
 Copy-Item -Path $AdminSrc -Destination $AdminDst -Force
 
 $QsSrc = Join-Path $RepoRoot "target\release\apex_qs.exe"
-$QsDst = Join-Path $DistDir "apex_qs.exe"
+$QsDst = Join-Path $DistDir "ApexQuickSupport.exe"
 Copy-Item -Path $QsSrc -Destination $QsDst -Force
 
+# Yardımcı ve Sunucu Araçları (tools/ alt dizininde)
 $RendezvousSrc = Join-Path $RepoRoot "target\release\apex_rendezvous.exe"
-$RendezvousDst = Join-Path $DistDir "apex_rendezvous.exe"
+$RendezvousDst = Join-Path $ToolsDir "apex_rendezvous.exe"
 Copy-Item -Path $RendezvousSrc -Destination $RendezvousDst -Force
 
 $ServiceSrc = Join-Path $RepoRoot "target\release\apex_service.exe"
-$ServiceDst = Join-Path $DistDir "apex_service.exe"
+$ServiceDst = Join-Path $ToolsDir "apex_service.exe"
 Copy-Item -Path $ServiceSrc -Destination $ServiceDst -Force
 
 # 3. Bilgilendirme Notu
@@ -49,19 +55,23 @@ $ReadmeContent = @"
 ApexConnect Kurumsal Uzak Masaüstü Dağıtım Paketi (v2.0.0)
 ==========================================================
 
-1. apex_connect.exe:
-   - IT Departmanı / Bilgi İşlem personeli için tam yetkili yönetim konsolu.
+ANA PROGRAMLAR:
+---------------
+1. ApexConnect.exe:
+   - IT Departmanı / Sistem Yöneticisi için tam yetkili masaüstü yönetim konsolu.
    - Ağ tarayıcısı, adres defteri, dosya aktarımı, denetim logları ve WinUI 3 Fluent arayüz içerir.
 
-2. apex_qs.exe:
-   - Şirket çalışanlarına dağıtılacak taşınabilir (portable) Mini Hızlı Destek aracı.
+2. ApexQuickSupport.exe:
+   - Şirket personeline dağıtılacak taşınabilir (portable) Mini Hızlı Destek aracı.
    - Kurulum gerektirmez, açıldığı anda 9 haneli Apex ID üretir ve IT masasına otomatik SOS anonsu gönderir.
 
-3. apex_rendezvous.exe:
+YARDIMCI VE SUNUCU ARAÇLARI (tools/ Klasörü):
+----------------------------------------------
+3. tools\apex_rendezvous.exe:
    - Şirket sunucusunda veya bulutta çalıştırılabilen bağımsız WAN Sinyalleşme ve Relay Köprüsü.
    - İnternet üzerindeki NAT ve CGNAT arkasındaki istemcileri birbirine bağlar ve P2P eşleştirme sağlar.
 
-4. apex_service.exe:
+4. tools\apex_service.exe:
    - Windows Hizmeti (Unattended Service) yönetim aracı.
    - Oturum kapalıyken (Winlogon kilit ekranı) ve UAC korumalı pencerelerde tam yetkili uzaktan erişim sağlar.
 
@@ -78,11 +88,10 @@ if (Test-Path $ZipPath) {
     Remove-Item -Path $ZipPath -Force
 }
 $ItemsToZip = @(
-    (Join-Path $DistDir "apex_connect.exe"),
-    (Join-Path $DistDir "apex_qs.exe"),
-    (Join-Path $DistDir "apex_rendezvous.exe"),
-    (Join-Path $DistDir "apex_service.exe"),
-    (Join-Path $DistDir "KULLANIM_KILAVUZU.txt")
+    (Join-Path $DistDir "ApexConnect.exe"),
+    (Join-Path $DistDir "ApexQuickSupport.exe"),
+    (Join-Path $DistDir "KULLANIM_KILAVUZU.txt"),
+    $ToolsDir
 )
 Compress-Archive -Path $ItemsToZip -DestinationPath $ZipPath -Force
 

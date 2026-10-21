@@ -146,7 +146,7 @@ async function startNetworkScan() {
         <td><strong style="color: #60a5fa;">${formatApexId(d.device_id || '-')}</strong></td>
         <td><span class="badge badge-tag">${d.service_type || 'LAN Host'}</span></td>
         <td>
-          <button class="btn btn-primary btn-sm" onclick="connectToTarget('${d.ip}', '${d.device_id}')">
+          <button class="btn btn-primary btn-sm" onclick="connectToTarget('${d.ip}', '${d.device_id || ''}', ${d.port || 8080})">
             Bağlan
           </button>
           <button class="btn btn-secondary btn-sm" onclick="quickAddToBook('${escapeHtml(d.hostname)}', '${d.ip}', '${d.device_id}')">
@@ -266,8 +266,9 @@ function connectToAddressBook(target, pin) {
   initiateConnection();
 }
 
-function connectToTarget(ip, deviceId) {
-  document.getElementById('target-input').value = deviceId || ip;
+function connectToTarget(ip, deviceId, port) {
+  const targetStr = (port && port !== 8080) ? `${ip}:${port}` : (deviceId || `${ip}:${port || 8080}`);
+  document.getElementById('target-input').value = targetStr;
   switchTab('quick-connect');
 }
 
@@ -283,7 +284,7 @@ function initiateConnection() {
   startRemoteSession(target, pin);
 }
 
-function startRemoteSession(target, pin) {
+async function startRemoteSession(target, pin) {
   if (activeWs) {
     activeWs.close();
   }
@@ -291,18 +292,45 @@ function startRemoteSession(target, pin) {
     clearInterval(pingInterval);
   }
 
+  const cleanTarget = target.trim().replace(/\s+/g, '');
+  let targetHost = cleanTarget;
+
+  // If target doesn't specify an explicit port or is an ID:
+  if (!cleanTarget.includes(':')) {
+    try {
+      const res = await fetch(`/api/resolve?target=${encodeURIComponent(cleanTarget)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.found) {
+          targetHost = `${data.ip}:${data.port}`;
+          console.log(`Resolved target ${cleanTarget} -> ${targetHost}`);
+        } else if (/^\d+\.\d+\.\d+\.\d+$/.test(cleanTarget)) {
+          targetHost = `${cleanTarget}:8080`;
+        }
+      }
+    } catch (e) {
+      console.warn('Target resolution fallback:', e);
+    }
+  }
+
+  if (/^\d{6,12}$/.test(targetHost)) {
+    alert(`Apex ID (${target}) yerel ağda çözümlenemedi.\nLütfen hedef bilgisayarın açık olduğundan veya IP:PORT (Örn: 192.168.1.50:8080) şeklinde doğrudan bağlanmayı deneyin.`);
+    return;
+  }
+
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = `${protocol}//${window.location.host}/ws/client?target=${encodeURIComponent(target)}&pin=${encodeURIComponent(pin)}`;
+  const wsUrl = `${protocol}//${targetHost}/ws/client?pin=${encodeURIComponent(pin)}`;
+  console.log('Connecting remote WebSocket to:', wsUrl);
 
   document.getElementById('nav-viewer-btn').style.display = 'inline-flex';
   switchTab('remote-viewer');
-  document.getElementById('viewer-target-title').innerText = `Bağlanılıyor: ${target}`;
+  document.getElementById('viewer-target-title').innerText = `Bağlanılıyor: ${targetHost}`;
 
   activeWs = new WebSocket(wsUrl);
   activeWs.binaryType = 'arraybuffer';
 
   activeWs.onopen = () => {
-    document.getElementById('viewer-target-title').innerText = `Bağlı: ${target}`;
+    document.getElementById('viewer-target-title').innerText = `Bağlı: ${targetHost}`;
     
     // Heartbeat & Ping RTT loop
     pingInterval = setInterval(() => {
@@ -368,7 +396,8 @@ function startRemoteSession(target, pin) {
 
   activeWs.onerror = (err) => {
     console.error('WS Error:', err);
-    alert('Uzak oturuma bağlanırken hata oluştu. PIN veya adres kontrolü yapın.');
+    document.getElementById('viewer-target-title').innerText = `Bağlantı Hatası: ${targetHost}`;
+    alert(`Uzak cihaza (${targetHost}) bağlanırken hata oluştu.\n- Hedef cihazın açık ve erişilebilir olduğunu\n- Girilen PIN kodunun doğruluğunu kontrol edin.`);
   };
 }
 

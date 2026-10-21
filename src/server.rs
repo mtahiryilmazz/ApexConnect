@@ -49,11 +49,131 @@ pub fn create_router(state: SharedState) -> Router {
         .route("/api/files/download/:filename", get(download_file_handler))
         .route("/api/files/open-folder", get(open_folder_handler))
         .route("/api/rendezvous/status", get(get_rendezvous_status_handler))
+        .route("/api/resolve", get(resolve_target_handler))
         .route("/api/audit", get(get_audit_handler))
         .route("/api/policy", get(get_policy_handler).post(update_policy_handler))
         .route("/api/service/status", get(get_service_status_handler))
         .route("/ws/client", get(ws_handler))
         .with_state(state)
+}
+
+#[derive(Deserialize)]
+struct ResolveQuery {
+    target: String,
+}
+
+#[derive(Serialize)]
+struct ResolveResponse {
+    found: bool,
+    ip: String,
+    port: u16,
+    hostname: Option<String>,
+}
+
+async fn resolve_target_handler(
+    State(state): State<SharedState>,
+    Query(query): Query<ResolveQuery>,
+) -> Json<ResolveResponse> {
+    let clean = query.target.replace(" ", "");
+
+    // 1. Check if it's already an explicit host:port or ip:port
+    if clean.contains(':') {
+        let parts: Vec<&str> = clean.split(':').collect();
+        if parts.len() == 2 {
+            if let Ok(p) = parts[1].parse::<u16>() {
+                return Json(ResolveResponse {
+                    found: true,
+                    ip: parts[0].to_string(),
+                    port: p,
+                    hostname: None,
+                });
+            }
+        }
+    }
+
+    // 2. Search in local UDP discovered devices
+    {
+        let disc = state.discovered.lock().unwrap();
+        for (_, dev) in disc.iter() {
+            if let Some(id) = &dev.device_id {
+                if id.replace(" ", "") == clean {
+                    return Json(ResolveResponse {
+                        found: true,
+                        ip: dev.ip.clone(),
+                        port: dev.port,
+                        hostname: Some(dev.hostname.clone()),
+                    });
+                }
+            }
+            if dev.ip == clean {
+                return Json(ResolveResponse {
+                    found: true,
+                    ip: dev.ip.clone(),
+                    port: dev.port,
+                    hostname: Some(dev.hostname.clone()),
+                });
+            }
+        }
+    }
+
+    // 3. Search in address book
+    {
+        let book = state.address_book.lock().unwrap();
+        for item in book.iter() {
+            let item_target = item.target.replace(" ", "");
+            if item.id == clean || item_target == clean {
+                if item_target.contains(':') {
+                    let parts: Vec<&str> = item_target.split(':').collect();
+                    if let Ok(p) = parts[1].parse::<u16>() {
+                        return Json(ResolveResponse {
+                            found: true,
+                            ip: parts[0].to_string(),
+                            port: p,
+                            hostname: Some(item.name.clone()),
+                        });
+                    }
+                }
+                return Json(ResolveResponse {
+                    found: true,
+                    ip: item.target.clone(),
+                    port: 8080,
+                    hostname: Some(item.name.clone()),
+                });
+            }
+        }
+    }
+
+    // 4. If target is a standard IP without port, default to 8080
+    if clean.split('.').count() == 4 {
+        return Json(ResolveResponse {
+            found: true,
+            ip: clean,
+            port: 8080,
+            hostname: None,
+        });
+    }
+
+    // 5. Fallback for self/local testing
+    let self_id = state.info.lock().unwrap().device_id.clone();
+    if self_id.replace(" ", "") == clean {
+        let (ip, port) = {
+            let info = state.info.lock().unwrap();
+            (info.local_ip.clone(), info.port)
+        };
+        return Json(ResolveResponse {
+            found: true,
+            ip,
+            port,
+            hostname: Some("Bu Cihaz".to_string()),
+        });
+    }
+
+    Json(ResolveResponse {
+        found: false,
+        ip: String::new(),
+        port: 0,
+        hostname: None,
+    })
 }
 
 #[derive(Serialize)]
