@@ -20,7 +20,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 
 use crate::state::SharedState;
 
-static mut GLOBAL_STATE: Option<SharedState> = None;
+static GLOBAL_STATE: std::sync::OnceLock<SharedState> = std::sync::OnceLock::new();
 static mut COPY_BTN_HWND: HWND = HWND(0 as _);
 static mut MAIN_HWND: HWND = HWND(0 as _);
 
@@ -32,7 +32,7 @@ pub struct NativeQuickSupportGui;
 impl NativeQuickSupportGui {
     pub fn run(state: SharedState) {
         unsafe {
-            GLOBAL_STATE = Some(state);
+            let _ = GLOBAL_STATE.set(state);
 
             let instance = GetModuleHandleW(None).unwrap_or_default();
             let class_name = w!("OxiDeskQuickSupportNativeClass");
@@ -58,7 +58,7 @@ impl NativeQuickSupportGui {
             let hwnd = CreateWindowExW(
                 WINDOW_EX_STYLE(0),
                 class_name,
-                w!("OxiDesk Hızlı Destek (Native GUI)"),
+                w!("OxiDesk Hızlı Destek v5.0.0 (Saf Win32 AnyDesk Modeli)"),
                 WS_OVERLAPPED | WS_SYSMENU | WS_CLIPCHILDREN,
                 CW_USEDEFAULT,
                 CW_USEDEFAULT,
@@ -163,13 +163,13 @@ unsafe extern "system" fn wnd_proc(
         WM_COMMAND => {
             let id = wparam.0 as usize & 0xFFFF;
             if id == ID_BTN_COPY {
-                if let Some(state) = &GLOBAL_STATE {
+                if let Some(state) = GLOBAL_STATE.get() {
                     let id_str = state.info.lock().unwrap().device_id.clone();
                     copy_to_clipboard(&id_str);
                     let _ = SetWindowTextW(COPY_BTN_HWND, w!("Kopyalandı! ✓"));
                 }
             } else if id == ID_BTN_REFRESH {
-                if let Some(state) = &GLOBAL_STATE {
+                if let Some(state) = GLOBAL_STATE.get() {
                     use rand::Rng;
                     let mut rng = rand::thread_rng();
                     let new_pin: u16 = rng.gen_range(1000..9999);
@@ -276,7 +276,7 @@ unsafe fn paint_native_gui(hdc: HDC, hwnd: HWND) {
     );
 
     // ID Text
-    let (device_id_str, pin_str, hostname, port) = if let Some(state) = &GLOBAL_STATE {
+    let (device_id_str, pin_str, hostname, port) = if let Some(state) = GLOBAL_STATE.get() {
         let info = state.info.lock().unwrap();
         (info.device_id.clone(), info.pin.clone(), info.hostname.clone(), info.port)
     } else {

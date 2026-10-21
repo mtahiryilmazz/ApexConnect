@@ -58,3 +58,23 @@ Bu belge, OxiDesk projesinin kısa, orta ve uzun vadeli mimari, masaüstü x64 u
   - Güvenlik ve denetim logları (`AuditLogger` / `src/audit.rs`) ile kalıcı kayıt (Audit Trail).
 - [x] **Dörtlü İkili (Quad-Binary) Kurumsal Dağıtım Paketi:**
   - `oxidesk.exe`, `oxidesk_qs.exe`, `oxidesk_rendezvous.exe` ve `oxidesk_service.exe` tek komutla derleme ve dağıtım (`scripts/build_distribution.ps1`).
+
+---
+
+## 📍 Faz 5: Saf Win32 Native Motor & Sıfır Dış Bağımlılık (Tamamlandı - v5.0.0)
+- [x] **%100 Saf Win32 Native GUI (AnyDesk / RustDesk Standartları):**
+  - Microsoft Edge ve WebView2 motoru gereksinimi masaüstü çalıştırılabilir dosyalarından tamamen kaldırıldı.
+  - Uygulama yanında oluşan `EBWebView` artık klasörleri kalıcı olarak sonlandırıldı.
+  - Bellek (RAM) tüketimi ~15-20 MB seviyesine indirildi, anında sıfır gecikmeyle açılış sağlandı.
+- [x] **Doğrudan Win32 GDI Ekran ve DWM / Layered Window Çözümü:**
+  - `OpenInputDesktop` ile aktif kullanıcı masaüstüne bağlanma ve `CAPTUREBLT` ile donanım hızlandırmalı / şeffaf pencerelerdeki siyah ekran sorunu kökten çözüldü.
+  - Çözünürlük değişikliklerini dinamik algılayan ve ilk bağlantıda anında anahtar kare (`force_full`) gönderen dayanıklı akış döngüsü.
+- [x] **Gelişmiş Ayarlar Menüsü (8 Kategori & Tam Entegre):**
+  - Özel depolama klasörü seçimi (İndirilenler & Video Kayıtları için klasör açma ve değiştirme).
+  - Canlı video kayıt formatı (WebM VP9, MP4 H.264, WebM VP8) ve bit hızı kalite seçimi (1.5 Mbps, 2.5 Mbps, 5.0 Mbps).
+  - Ses yakalama (WASAPI loopback), bildirim sesleri, donanım hızlandırma ve duvar kağıdı gizleme anahtarları.
+- [x] **Sürüklenebilir Modallar & Sağ Alt Sohbet Bildirim Işığı (Beacon):**
+  - Sohbet, Görev Yöneticisi ve Dosya Aktarımı pencereleri bağımsız sürüklenebilir, üst üste gelmeyen pencere yöneticisine kavuşturuldu.
+  - Sohbet paneli sağ altta açılır popup olarak konumlandırıldı, simge durumuna (`—`) küçültülebilir mini dock eklendi.
+  - Yeni mesaj geldiğinde yanıp sönen neon sinyal ışığı (`beaconPulse`) ve zarif ses efekti entegre edildi.
+

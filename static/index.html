@@ -23,7 +23,7 @@
             </svg>
           </div>
           <span class="app-name">OxiDesk</span>
-          <span class="app-version-badge">v4.0.0 Fluent</span>
+          <span class="app-version-badge">v5.0.0 Fluent</span>
         </div>
 
         <div class="titlebar-status-pill">
@@ -373,12 +373,13 @@
         <!-- ==================== TAB 5: WINUI 3 SETTINGS MENU ==================== -->
         <section id="settings-tab" class="fluent-view">
           <div class="view-header">
-            <h1 class="view-title">Uygulama ve Güvenlik Ayarları</h1>
-            <p class="view-subtitle">Ekran motoru optimizasyonu, şifreleme ve ağ yapılandırma seçenekleri.</p>
+            <h1 class="view-title">Uygulama ve Güvenlik Ayarları (v5.0.0)</h1>
+            <p class="view-subtitle">Ekran motoru optimizasyonu, video kayıt formatı, ses aktarımı, dosya yolları ve ağ yapılandırma seçenekleri.</p>
           </div>
 
+          <!-- 1. Ekran ve Performans Motoru -->
           <div class="settings-group">
-            <h2 class="settings-group-title">Ekran ve Performans Motoru</h2>
+            <h2 class="settings-group-title">🖥️ Ekran ve Performans Motoru</h2>
             
             <div class="fluent-setting-card">
               <div class="setting-text">
@@ -386,7 +387,7 @@
                 <div class="setting-desc">Ekran hareketsizken gereksiz kare aktarımını durdurarak CPU kullanımını %0'a ve ağ trafiğini ~0 Kbps'e düşürür.</div>
               </div>
               <label class="fluent-switch">
-                <input type="checkbox" id="setting-dirty-rect" checked>
+                <input type="checkbox" id="setting-dirty-rect" checked onchange="saveClientSettings()">
                 <span class="switch-slider"></span>
               </label>
             </div>
@@ -396,39 +397,170 @@
                 <div class="setting-name">Maksimum Kare Hızı Limiti</div>
                 <div class="setting-desc">Düşük gecikmeli akıcı ekran deneyimi için hedef FPS değeri.</div>
               </div>
-              <select class="fluent-select" id="setting-fps-limit">
+              <select class="fluent-select" id="setting-fps-limit" onchange="saveClientSettings()">
                 <option value="30" selected>30 FPS (Standart Dengeli)</option>
                 <option value="60">60 FPS (Ultra Akıcı - Oyun / CAD)</option>
                 <option value="15">15 FPS (Düşük Bant Genişliği)</option>
               </select>
             </div>
-          </div>
 
-          <div class="settings-group">
-            <h2 class="settings-group-title">Ağ ve Keşif</h2>
-            
             <div class="fluent-setting-card">
               <div class="setting-text">
-                <div class="setting-name">Otomatik Port Çakışma Koruması</div>
-                <div class="setting-desc">8080 portu meşgul olduğunda çökmek yerine 8081-8090 aralığında otomatik boş port bulur.</div>
+                <div class="setting-name">Donanım Hızlandırma & Donanım Kodlayıcı</div>
+                <div class="setting-desc">Mümkün olduğunda GPU (DirectX 11 / D3D11 / NVENC) donanım yakalama hattını kullanır, sanal makinelerde GDI motoruna otomatik geçer.</div>
               </div>
-              <span class="badge badge-success">Aktif (Otomatik)</span>
+              <label class="fluent-switch">
+                <input type="checkbox" id="setting-hardware-accel" checked onchange="saveClientSettings()">
+                <span class="switch-slider"></span>
+              </label>
             </div>
 
             <div class="fluent-setting-card">
               <div class="setting-text">
-                <div class="setting-name">Yerel Ağ UDP Keşif Yayını (Port 52899)</div>
-                <div class="setting-desc">Diğer OxiDesk cihazlarının bu makineyi otomatik keşfetmesine izin verin.</div>
+                <div class="setting-name">Uzak Masaüstü Duvar Kağıdını Gizle (Performans Modu)</div>
+                <div class="setting-desc">Uzak masaüstü arkaplanını geçici olarak siyah yaparak bant genişliği tasarrufu sağlar.</div>
               </div>
               <label class="fluent-switch">
-                <input type="checkbox" id="setting-udp-discovery" checked>
+                <input type="checkbox" id="setting-remove-wallpaper" onchange="saveClientSettings()">
                 <span class="switch-slider"></span>
               </label>
             </div>
           </div>
 
+          <!-- 2. Video Kayıt ve Oturum Arşivi -->
           <div class="settings-group">
-            <h2 class="settings-group-title">Kriptografi ve Güvenlik</h2>
+            <h2 class="settings-group-title">🎬 Video Kaydı ve Oturum Arşivi</h2>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Otomatik Oturum Kaydı</div>
+                <div class="setting-desc">Uzak masaüstüne bağlandığınız anda oturumu otomatik olarak video olarak kaydetmeye başlar.</div>
+              </div>
+              <label class="fluent-switch">
+                <input type="checkbox" id="setting-auto-record" onchange="saveClientSettings()">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Video Kayıt Formatı</div>
+                <div class="setting-desc">Kaydedilen video dosyasının konteyner ve kodlayıcı formatı.</div>
+              </div>
+              <select class="fluent-select" id="setting-record-format" onchange="saveClientSettings()">
+                <option value="video/webm;codecs=vp9" selected>WebM (VP9 / Opus) - Tavsiye Edilen</option>
+                <option value="video/mp4;codecs=avc1">MP4 (H.264 / AAC) - Standart</option>
+                <option value="video/webm;codecs=vp8">WebM (VP8 / Vorbis) - Eski Sistemler</option>
+              </select>
+            </div>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Video Kayıt Kalitesi & Bitrate</div>
+                <div class="setting-desc">Video dosyası için hedef sıkıştırma bit hızı.</div>
+              </div>
+              <select class="fluent-select" id="setting-record-quality" onchange="saveClientSettings()">
+                <option value="5000000">Ultra Net (5.0 Mbps - 1080p 60fps)</option>
+                <option value="2500000" selected>Yüksek (2.5 Mbps - 1080p 30fps)</option>
+                <option value="1200000">Dengeli (1.2 Mbps - 720p 30fps)</option>
+                <option value="600000">Düşük Boyut (600 Kbps - Arşiv)</option>
+              </select>
+            </div>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Video Kayıtları Depolama Klasörü</div>
+                <div class="setting-desc">Oturum video kayıtlarının kaydedileceği varsayılan klasör konumu.</div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                  <input type="text" id="setting-record-path" class="fluent-input" style="max-width: 320px; font-size: 0.8rem;" value="Downloads\OxiDesk_Recordings">
+                  <button class="btn btn-subtle btn-sm" onclick="openRemoteFolder()">📂 Klasörü Aç</button>
+                  <button class="btn btn-fluent-primary btn-sm" onclick="saveClientSettings()">Kaydet</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Dosya Transferi ve Depolama Konumu -->
+          <div class="settings-group">
+            <h2 class="settings-group-title">📁 Dosya Transferi ve Depolama Konumu</h2>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">İndirilen Dosyaların Kayıt Konumu</div>
+                <div class="setting-desc">Karşı taraftan gönderilen veya indirilen dosyaların kaydedileceği yerel klasör yolu.</div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                  <input type="text" id="setting-download-path" class="fluent-input" style="max-width: 320px; font-size: 0.8rem;" value="Downloads\OxiDesk">
+                  <button class="btn btn-subtle btn-sm" onclick="openRemoteFolder()">📂 Klasörü Aç</button>
+                  <button class="btn btn-fluent-primary btn-sm" onclick="saveClientSettings()">Kaydet</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Transfer Tamamlandığında Klasörü Aç</div>
+                <div class="setting-desc">Dosya transferi %100 olduğunda Windows Gezgini ile indirme klasörünü otomatik gösterir.</div>
+              </div>
+              <label class="fluent-switch">
+                <input type="checkbox" id="setting-open-folder-on-finish" checked onchange="saveClientSettings()">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Şifreli Parçalı Transfer Blok Boyutu</div>
+                <div class="setting-desc">Büyük dosyaların ağ üzerinden aktarılırken bölüneceği şifreli paket boyutu.</div>
+              </div>
+              <select class="fluent-select" id="setting-chunk-size" onchange="saveClientSettings()">
+                <option value="65536" selected>64 KB (Dengeli / Düşük Bellek)</option>
+                <option value="131072">128 KB (Yüksek Hız)</option>
+                <option value="262144">256 KB (Yerel Ağ Gigabit)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 4. Ses ve Canlı İletişim -->
+          <div class="settings-group">
+            <h2 class="settings-group-title">🔊 Ses ve Canlı Bildirimler</h2>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Uzak Bilgisayar Sesini Dinle (WASAPI Loopback)</div>
+                <div class="setting-desc">Uzak cihazın sistem ses çıkışını (müzik, uyarılar, bildirimler) canlı olarak bu cihaza aktarır.</div>
+              </div>
+              <label class="fluent-switch">
+                <input type="checkbox" id="setting-audio-stream" checked onchange="saveClientSettings()">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Yeni Mesaj Geldiğinde Sesli Uyarı Çal</div>
+                <div class="setting-desc">Uzak kullanıcı mesaj yazdığında ve sohbet paneli kapalıyken hafif uyarı melodisi çalar.</div>
+              </div>
+              <label class="fluent-switch">
+                <input type="checkbox" id="setting-sound-notification" checked onchange="saveClientSettings()">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Yeni Mesajda Sağ Alt Bildirim Işığını (Radar) Yak</div>
+                <div class="setting-desc">Sohbet simge durumundayken veya kapalıyken sağ alt yüzen dock'ta neon bildirim ışığını yakar.</div>
+              </div>
+              <label class="fluent-switch">
+                <input type="checkbox" id="setting-light-notification" checked onchange="saveClientSettings()">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 5. Kriptografi ve Güvenlik -->
+          <div class="settings-group">
+            <h2 class="settings-group-title">🛡️ Kriptografi ve Güvenlik</h2>
 
             <div class="fluent-setting-card">
               <div class="setting-text">
@@ -444,15 +576,15 @@
                 <div class="setting-desc">Uzak yönetici ile Windows panosu arasında metin transferine izin ver.</div>
               </div>
               <label class="fluent-switch">
-                <input type="checkbox" id="setting-clipboard-sync" checked>
+                <input type="checkbox" id="setting-clipboard-sync" checked onchange="saveClientSettings()">
                 <span class="switch-slider"></span>
               </label>
             </div>
           </div>
 
-          <!-- Yönetici Parolası ve Gözetimsiz Erişim -->
+          <!-- 6. Yönetici Parolası ve Gözetimsiz Erişim -->
           <div class="settings-group">
-            <h2 class="settings-group-title">Yönetici Parolası ve Gözetimsiz Erişim (Unattended Access)</h2>
+            <h2 class="settings-group-title">🔑 Yönetici Parolası ve Gözetimsiz Erişim (Unattended Access)</h2>
             <div class="fluent-setting-card">
               <div class="setting-text">
                 <div class="setting-name">Kalıcı Yönetici (Master Admin) Parolası</div>
@@ -466,9 +598,9 @@
             </div>
           </div>
 
-          <!-- Dış Ağlar / Merkezi Sunucu (WAN Rendezvous Server) -->
+          <!-- 7. Dış Ağlar / Merkezi Sunucu (WAN Rendezvous Server) -->
           <div class="settings-group">
-            <h2 class="settings-group-title">Dış Ağlar & Merkezi Sunucu (WAN Rendezvous Server)</h2>
+            <h2 class="settings-group-title">🌐 Dış Ağlar & Merkezi Sunucu (WAN Rendezvous Server)</h2>
             <div class="fluent-setting-card">
               <div class="setting-text">
                 <div class="setting-name">Merkezi Sinyal ve Aktarım Sunucusu (WAN Relay)</div>
@@ -486,10 +618,34 @@
             </div>
           </div>
 
+          <!-- 8. Ağ ve Keşif -->
+          <div class="settings-group">
+            <h2 class="settings-group-title">📡 Ağ ve Otomatik Keşif</h2>
+            
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Otomatik Port Çakışma Koruması</div>
+                <div class="setting-desc">8080 portu meşgul olduğunda çökmek yerine 8081-8095 aralığında otomatik boş port bulur.</div>
+              </div>
+              <span class="badge badge-success">Aktif (Otomatik)</span>
+            </div>
+
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Yerel Ağ UDP Keşif Yayını (Port 52899)</div>
+                <div class="setting-desc">Diğer OxiDesk cihazlarının bu makineyi otomatik keşfetmesine izin verin.</div>
+              </div>
+              <label class="fluent-switch">
+                <input type="checkbox" id="setting-udp-discovery" checked onchange="saveClientSettings()">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+
           <div class="settings-group">
             <h2 class="settings-group-title">Uygulama Hakkında</h2>
             <div class="fluent-card about-card">
-              <div style="font-weight: 600; font-size: 1.1rem; color: #fff;">OxiDesk v4.0.0</div>
+              <div style="font-weight: 600; font-size: 1.1rem; color: #fff;">OxiDesk v5.0.0</div>
               <p style="font-size: 0.82rem; color: var(--text-muted); margin: 6px 0 12px 0;">
                 Rust ile geliştirilmiş yüksek performanslı Windows Uzak Masaüstü ekosistemi.
               </p>
@@ -625,14 +781,17 @@
               </div>
             </div>
 
-            <!-- In-Session Chat Popup Modal (Overlaid on Remote Desktop) -->
+            <!-- In-Session Chat Popup Modal (Overlaid on Remote Desktop - Bottom Right Popup) -->
             <div id="session-chat-modal" class="session-modal chat-modal hidden">
-              <div class="session-modal-header">
+              <div class="session-modal-header" id="session-chat-header">
                 <div class="modal-title">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                   <span>Canlı Oturum Sohbeti</span>
                 </div>
-                <button class="modal-close-btn" onclick="toggleSessionChatModal()" title="Kapat">✕</button>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                  <button class="modal-control-btn" onclick="minimizeSessionChat()" title="Küçült">—</button>
+                  <button class="modal-close-btn" onclick="toggleSessionChatModal()" title="Kapat">✕</button>
+                </div>
               </div>
               <div class="session-modal-body chat-body">
                 <div id="session-chat-messages" class="chat-messages-container">
@@ -645,8 +804,39 @@
               </div>
             </div>
 
+            <!-- Floating Minimized Chat Dock Pill (Bottom-Right with Pulsing Beacon) -->
+            <div id="session-chat-dock" class="session-chat-dock hidden" onclick="restoreSessionChat()" title="Sohbeti Genişlet">
+              <span class="beacon-pulse" id="chat-dock-beacon"></span>
+              <span class="dock-icon">💬</span>
+              <span class="dock-title">Canlı Sohbet</span>
+              <span id="dock-unread-badge" class="badge-unread hidden">0</span>
+              <span class="dock-expand-arrow">↗</span>
+            </div>
+
             <!-- Multi-Session Canvas Viewport Workspace -->
             <div class="canvas-viewport" id="canvas-wrapper">
+              <!-- Connection Status & Troubleshooting Overlay -->
+              <div id="viewer-connection-overlay" class="viewer-connection-overlay">
+                <div class="overlay-card" id="overlay-card-content">
+                  <div class="overlay-spinner" id="overlay-spinner"></div>
+                  <div class="overlay-status-icon hidden" id="overlay-status-icon">⚠️</div>
+                  <h3 class="overlay-title" id="overlay-title">Uzak Masaüstüne Bağlanılıyor...</h3>
+                  <p class="overlay-desc" id="overlay-desc">Güvenlik PIN kodu doğrulanıyor, video akışı başlatılıyor.</p>
+                  <div class="overlay-troubleshoot hidden" id="overlay-troubleshoot">
+                    <div class="troubleshoot-title">Olası Nedenler & Çözümler:</div>
+                    <ul>
+                      <li>Hedef bilgisayarda OxiDesk veya QuickSupport açık mı?</li>
+                      <li>Girilen güvenlik PIN veya Yönetici Parolası doğru mu?</li>
+                      <li>Windows Güvenlik Duvarı 8080 portunu engelliyor olabilir.</li>
+                    </ul>
+                    <div style="display: flex; gap: 8px; justify-content: center; margin-top: 14px;">
+                      <button class="btn btn-fluent-primary btn-sm" onclick="retryActiveConnection()">🔄 Yeniden Dene</button>
+                      <button class="btn btn-subtle btn-sm" onclick="switchNavTab('quick-connect')">← Geri Dön</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div id="multi-sessions-grid" class="sessions-grid-container single-active-mode">
                 <!-- Dynamic active session canvases injected here -->
               </div>

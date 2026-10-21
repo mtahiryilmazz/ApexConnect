@@ -28,6 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderRecentConnections();
   checkAdminPasswordStatus();
   checkRendezvousStatus();
+  loadClientSettings();
+  initDraggableModals();
 
   // Native Frameless Window Drag Region
   const dragArea = document.querySelector('.titlebar-drag-area');
@@ -397,7 +399,13 @@ const sessionManager = {
   updateViewerHeader(session) {
     const titleEl = document.getElementById('viewer-target-title');
     if (titleEl && session) {
-      titleEl.innerText = session.isConnected ? `Bağlı: ${session.name} (${session.targetHost})` : `Bağlanılıyor: ${session.name}`;
+      if (session.isError) {
+        titleEl.innerHTML = `<span style="color:#ef4444; font-weight:600;">🔴 Bağlantı Kesildi: ${escapeHtml(session.name)}</span>`;
+      } else if (session.isConnected) {
+        titleEl.innerHTML = `<span style="color:#10b981; font-weight:600;">🟢 Bağlı: ${escapeHtml(session.name)} (${escapeHtml(session.targetHost)})</span>`;
+      } else {
+        titleEl.innerHTML = `<span style="color:#f59e0b; font-weight:600;">🟡 Bağlanılıyor: ${escapeHtml(session.name)}...</span>`;
+      }
     }
     const statsEl = document.getElementById('session-stats');
     if (statsEl && session) {
@@ -516,6 +524,9 @@ async function startRemoteSession(target, pin, customName) {
   const wsUrl = `${protocol}//${targetHost}/ws/client?pin=${encodeURIComponent(pin)}`;
   console.log(`[Multi-Session] Starting session ${sessionId} to:`, wsUrl);
 
+  // Set visual overlay state to connecting
+  setConnectionOverlayState('connecting', `${resolvedName} Bağlanılıyor...`, `${targetHost} adresine güvenlik doğrulaması yapılıyor...`);
+
   // Create DOM elements for this session inside #multi-sessions-grid
   const gridContainer = document.getElementById('multi-sessions-grid');
   if (!gridContainer) return;
@@ -562,7 +573,8 @@ async function startRemoteSession(target, pin, customName) {
     bytesReceived: 0,
     lastFrameTime: performance.now(),
     pingInterval: null,
-    isConnected: false
+    isConnected: false,
+    isError: false
   };
 
   attachSessionCanvasEvents(sessionObj);
@@ -574,6 +586,7 @@ async function startRemoteSession(target, pin, customName) {
 
   ws.onopen = () => {
     sessionObj.isConnected = true;
+    sessionObj.isError = false;
     const badge = document.getElementById(`badge-${sessionId}`);
     if (badge) {
       badge.innerText = 'Canlı';
@@ -581,6 +594,7 @@ async function startRemoteSession(target, pin, customName) {
     }
     if (sessionManager.activeId === sessionId) {
       sessionManager.updateViewerHeader(sessionObj);
+      setConnectionOverlayState('connecting', `${sessionObj.name} Bağlandı!`, 'İlk masaüstü karesi ve çözünürlük bekleniyor...');
     }
 
     addRecentConnection(cleanTarget, resolvedName || cleanTarget, pin);
@@ -619,7 +633,11 @@ async function startRemoteSession(target, pin, customName) {
         }
       } catch (e) {}
     } else {
-      // Binary JPEG frame
+      // Binary JPEG frame - Desktop is LIVE!
+      if (sessionManager.activeId === sessionId) {
+        setConnectionOverlayState('live');
+      }
+
       const byteLen = event.data.byteLength || 0;
       sessionObj.bytesReceived += byteLen;
 
@@ -659,6 +677,7 @@ async function startRemoteSession(target, pin, customName) {
 
   ws.onclose = () => {
     sessionObj.isConnected = false;
+    sessionObj.isError = true;
     const badge = document.getElementById(`badge-${sessionId}`);
     if (badge) {
       badge.innerText = 'Kapandı';
@@ -667,12 +686,18 @@ async function startRemoteSession(target, pin, customName) {
     if (sessionObj.pingInterval) clearInterval(sessionObj.pingInterval);
     if (sessionManager.activeId === sessionId) {
       sessionManager.updateViewerHeader(sessionObj);
+      setConnectionOverlayState('error', `Bağlantı Sonlandı: ${sessionObj.name}`, 'Hedef cihaz oturumu kapattı veya ağ bağlantısı koptu.');
     }
   };
 
   ws.onerror = (err) => {
     console.error(`Session ${sessionId} error:`, err);
-    alert(`Uzak cihaza (${resolvedName} - ${targetHost}) bağlanırken hata oluştu.\n- Cihazın açık ve erişilebilir olduğunu\n- Girilen PIN kodunu kontrol edin.`);
+    sessionObj.isConnected = false;
+    sessionObj.isError = true;
+    if (sessionManager.activeId === sessionId) {
+      sessionManager.updateViewerHeader(sessionObj);
+      setConnectionOverlayState('error', `Bağlantı Kurulamadı: ${sessionObj.name}`, 'Hedef makineye ulaşılamadı (Port 8080 engelli olabilir) veya girilen PIN hatalı.');
+    }
   };
 
   sessionManager.sessions.set(sessionId, sessionObj);
@@ -1115,14 +1140,24 @@ function startSessionRecording() {
   }
 
   try {
-    chosenMimeType = getBestSupportedMimeType();
+    const formatSelect = document.getElementById('setting-record-format');
+    const qualitySelect = document.getElementById('setting-record-quality');
+    const preferredMime = formatSelect ? formatSelect.value : null;
+    const bitrate = qualitySelect ? parseInt(qualitySelect.value) : 2500000;
+
+    if (preferredMime && MediaRecorder.isTypeSupported(preferredMime)) {
+      chosenMimeType = preferredMime;
+    } else {
+      chosenMimeType = getBestSupportedMimeType();
+    }
+
     const stream = canvas.captureStream(30); // 30 FPS stream
     recordedChunks = [];
     recordingStreamTrack = stream.getVideoTracks()[0] || null;
 
     mediaRecorder = new MediaRecorder(stream, {
       mimeType: chosenMimeType,
-      videoBitsPerSecond: 2500000 // 2.5 Mbps crisp clarity
+      videoBitsPerSecond: bitrate
     });
 
     mediaRecorder.ondataavailable = (event) => {
@@ -1335,22 +1370,130 @@ function finishSessionUploadProgress(name) {
   loadSessionFilesList();
 }
 
-// ==================== IN-SESSION CHAT DRAWER ====================
+// ==================== CONNECTION STATUS OVERLAY CONTROLLER ====================
+function setConnectionOverlayState(state, title, desc) {
+  const overlay = document.getElementById('viewer-connection-overlay');
+  const spinner = document.getElementById('overlay-spinner');
+  const icon = document.getElementById('overlay-status-icon');
+  const titleEl = document.getElementById('overlay-title');
+  const descEl = document.getElementById('overlay-desc');
+  const troubleshoot = document.getElementById('overlay-troubleshoot');
+  if (!overlay) return;
+
+  if (state === 'live') {
+    overlay.classList.add('hidden');
+  } else if (state === 'connecting') {
+    overlay.classList.remove('hidden');
+    if (spinner) spinner.classList.remove('hidden');
+    if (icon) icon.classList.add('hidden');
+    if (troubleshoot) troubleshoot.classList.add('hidden');
+    if (titleEl) titleEl.innerText = title || 'Uzak Masaüstüne Bağlanılıyor...';
+    if (descEl) descEl.innerText = desc || 'Güvenlik PIN kodu doğrulanıyor, video akışı başlatılıyor.';
+  } else if (state === 'error' || state === 'closed') {
+    overlay.classList.remove('hidden');
+    if (spinner) spinner.classList.add('hidden');
+    if (icon) icon.classList.remove('hidden');
+    if (troubleshoot) troubleshoot.classList.remove('hidden');
+    if (titleEl) titleEl.innerText = title || 'Bağlantı Kurulamadı veya Kesildi';
+    if (descEl) descEl.innerText = desc || 'Hedef makine ile iletişim sağlanamadı.';
+  }
+}
+
+function retryActiveConnection() {
+  const sess = sessionManager.getActiveSession();
+  if (sess) {
+    const target = sess.target;
+    const pin = sess.pin;
+    const name = sess.name;
+    sessionManager.closeSession(sess.id);
+    startRemoteSession(target, pin, name);
+  }
+}
+
+// ==================== IN-SESSION CHAT DRAWER & MINIMIZED DOCK ====================
 let unreadChatCount = 0;
 let chatMessages = [];
 
 function toggleSessionChatModal() {
   const modal = document.getElementById('session-chat-modal');
+  const dock = document.getElementById('session-chat-dock');
   if (!modal) return;
-  modal.classList.toggle('hidden');
-  if (!modal.classList.contains('hidden')) {
+  if (modal.classList.contains('hidden')) {
+    if (dock) dock.classList.add('hidden');
+    modal.classList.remove('hidden');
+    bringModalToFront(modal);
     unreadChatCount = 0;
-    const badge = document.getElementById('chat-unread-badge');
-    if (badge) badge.classList.add('hidden');
+    updateChatNotificationBadges();
+    const input = document.getElementById('session-chat-input');
+    if (input) input.focus();
+    renderChatMessages();
+  } else {
+    modal.classList.add('hidden');
+  }
+}
+
+function minimizeSessionChat() {
+  const modal = document.getElementById('session-chat-modal');
+  const dock = document.getElementById('session-chat-dock');
+  if (modal) modal.classList.add('hidden');
+  if (dock) dock.classList.remove('hidden');
+}
+
+function restoreSessionChat() {
+  const modal = document.getElementById('session-chat-modal');
+  const dock = document.getElementById('session-chat-dock');
+  if (dock) dock.classList.add('hidden');
+  if (modal) {
+    modal.classList.remove('hidden');
+    bringModalToFront(modal);
+    unreadChatCount = 0;
+    updateChatNotificationBadges();
     const input = document.getElementById('session-chat-input');
     if (input) input.focus();
     renderChatMessages();
   }
+}
+
+function updateChatNotificationBadges() {
+  const dockBeacon = document.getElementById('chat-dock-beacon');
+  const dockBadge = document.getElementById('dock-unread-badge');
+  const toolbarBtn = document.getElementById('btn-session-chat');
+  const toolbarBadge = document.getElementById('chat-unread-badge');
+
+  if (unreadChatCount > 0) {
+    if (dockBeacon) dockBeacon.classList.add('active');
+    if (dockBadge) {
+      dockBadge.innerText = unreadChatCount;
+      dockBadge.classList.remove('hidden');
+    }
+    if (toolbarBtn) toolbarBtn.classList.add('has-unread');
+    if (toolbarBadge) {
+      toolbarBadge.innerText = unreadChatCount;
+      toolbarBadge.classList.remove('hidden');
+    }
+  } else {
+    if (dockBeacon) dockBeacon.classList.remove('active');
+    if (dockBadge) dockBadge.classList.add('hidden');
+    if (toolbarBtn) toolbarBtn.classList.remove('has-unread');
+    if (toolbarBadge) toolbarBadge.classList.add('hidden');
+  }
+}
+
+function playNotificationChime() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.36);
+  } catch (e) {}
 }
 
 function handleChatKeyDown(event) {
@@ -1372,8 +1515,9 @@ function sendChatMessage() {
     timestamp: Math.floor(Date.now() / 1000)
   };
 
-  if (activeWs && activeWs.readyState === WebSocket.OPEN) {
-    activeWs.send(JSON.stringify(msg));
+  const ws = getActiveWs();
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(msg));
   } else {
     fetch('/api/chat', {
       method: 'POST',
@@ -1391,12 +1535,15 @@ function receiveChatMessage(msg) {
   const isMine = msg.sender === 'IT Yöneticisi';
   chatMessages.push({ ...msg, isMine });
   const modal = document.getElementById('session-chat-modal');
-  if (modal && modal.classList.contains('hidden') && !isMine) {
-    unreadChatCount++;
-    const badge = document.getElementById('chat-unread-badge');
-    if (badge) {
-      badge.innerText = unreadChatCount;
-      badge.classList.remove('hidden');
+  const isModalOpen = modal && !modal.classList.contains('hidden');
+
+  if (!isMine) {
+    playNotificationChime();
+    if (!isModalOpen) {
+      unreadChatCount++;
+      updateChatNotificationBadges();
+      const dock = document.getElementById('session-chat-dock');
+      if (dock) dock.classList.remove('hidden');
     }
   }
   renderChatMessages();
@@ -1419,6 +1566,90 @@ function renderChatMessages() {
     }).join('')}
   `;
   container.scrollTop = container.scrollHeight;
+}
+
+// ==================== DRAGGABLE IN-SESSION MODALS MANAGER ====================
+let highestModalZ = 70;
+
+function bringModalToFront(modal) {
+  if (!modal) return;
+  highestModalZ++;
+  modal.style.zIndex = highestModalZ;
+}
+
+function makeModalDraggable(modal, header) {
+  if (!modal || !header) return;
+  let isDragging = false;
+  let startX, startY, startLeft, startTop;
+
+  header.addEventListener('mousedown', (e) => {
+    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('select')) return;
+    isDragging = true;
+    bringModalToFront(modal);
+    startX = e.clientX;
+    startY = e.clientY;
+    const rect = modal.getBoundingClientRect();
+    modal.style.left = rect.left + 'px';
+    modal.style.top = rect.top + 'px';
+    modal.style.right = 'auto';
+    modal.style.bottom = 'auto';
+    startLeft = rect.left;
+    startTop = rect.top;
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    const newLeft = Math.max(10, Math.min(window.innerWidth - modal.offsetWidth - 10, startLeft + dx));
+    const newTop = Math.max(10, Math.min(window.innerHeight - modal.offsetHeight - 10, startTop + dy));
+    modal.style.left = newLeft + 'px';
+    modal.style.top = newTop + 'px';
+  });
+
+  window.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
+
+  modal.addEventListener('mousedown', () => {
+    bringModalToFront(modal);
+  });
+}
+
+function initDraggableModals() {
+  const modals = [
+    { id: 'session-tasks-modal', headerSelector: '.session-modal-header' },
+    { id: 'session-file-modal', headerSelector: '.session-modal-header' },
+    { id: 'session-chat-modal', headerSelector: '.session-modal-header' }
+  ];
+
+  modals.forEach(({ id, headerSelector }) => {
+    const modalEl = document.getElementById(id);
+    if (modalEl) {
+      const headerEl = modalEl.querySelector(headerSelector);
+      if (headerEl) {
+        makeModalDraggable(modalEl, headerEl);
+      }
+    }
+  });
+
+  // Global Escape key to close topmost modal
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const activeModals = [
+        document.getElementById('session-tasks-modal'),
+        document.getElementById('session-file-modal'),
+        document.getElementById('session-chat-modal')
+      ];
+      for (const m of activeModals) {
+        if (m && !m.classList.contains('hidden')) {
+          m.classList.add('hidden');
+          break;
+        }
+      }
+    }
+  });
 }
 
 // ==================== NETWORK DISCOVERY & SOS RADAR ====================
@@ -1758,6 +1989,89 @@ async function saveRendezvousUrl() {
   } catch (e) {
     alert('Hata: ' + e);
   }
+}
+
+// ==================== ADVANCED CLIENT SETTINGS CONTROLLER ====================
+const DEFAULT_CLIENT_SETTINGS = {
+  dirtyRect: true,
+  fpsLimit: "30",
+  hardwareAccel: true,
+  removeWallpaper: false,
+  autoRecord: false,
+  recordFormat: "video/webm;codecs=vp9",
+  recordQuality: "2500000",
+  recordPath: "Downloads\\OxiDesk_Recordings",
+  downloadPath: "Downloads\\OxiDesk",
+  openFolderOnFinish: true,
+  chunkSize: "65536",
+  audioStream: true,
+  soundNotification: true,
+  lightNotification: true,
+  clipboardSync: true,
+  udpDiscovery: true
+};
+
+function loadClientSettings() {
+  let settings = DEFAULT_CLIENT_SETTINGS;
+  try {
+    const saved = localStorage.getItem('oxidesk_client_settings');
+    if (saved) settings = { ...DEFAULT_CLIENT_SETTINGS, ...JSON.parse(saved) };
+  } catch (e) {}
+
+  const setCheckbox = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = Boolean(val);
+  };
+  const setValue = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined) el.value = val;
+  };
+
+  setCheckbox('setting-dirty-rect', settings.dirtyRect);
+  setValue('setting-fps-limit', settings.fpsLimit);
+  setCheckbox('setting-hardware-accel', settings.hardwareAccel);
+  setCheckbox('setting-remove-wallpaper', settings.removeWallpaper);
+  setCheckbox('setting-auto-record', settings.autoRecord);
+  setValue('setting-record-format', settings.recordFormat);
+  setValue('setting-record-quality', settings.recordQuality);
+  setValue('setting-record-path', settings.recordPath);
+  setValue('setting-download-path', settings.downloadPath);
+  setCheckbox('setting-open-folder-on-finish', settings.openFolderOnFinish);
+  setValue('setting-chunk-size', settings.chunkSize);
+  setCheckbox('setting-audio-stream', settings.audioStream);
+  setCheckbox('setting-sound-notification', settings.soundNotification);
+  setCheckbox('setting-light-notification', settings.lightNotification);
+  setCheckbox('setting-clipboard-sync', settings.clipboardSync);
+  setCheckbox('setting-udp-discovery', settings.udpDiscovery);
+}
+
+function saveClientSettings() {
+  const getCheckbox = (id) => document.getElementById(id)?.checked ?? true;
+  const getValue = (id, fallback) => document.getElementById(id)?.value ?? fallback;
+
+  const settings = {
+    dirtyRect: getCheckbox('setting-dirty-rect'),
+    fpsLimit: getValue('setting-fps-limit', "30"),
+    hardwareAccel: getCheckbox('setting-hardware-accel'),
+    removeWallpaper: getCheckbox('setting-remove-wallpaper'),
+    autoRecord: getCheckbox('setting-auto-record'),
+    recordFormat: getValue('setting-record-format', "video/webm;codecs=vp9"),
+    recordQuality: getValue('setting-record-quality', "2500000"),
+    recordPath: getValue('setting-record-path', "Downloads\\OxiDesk_Recordings"),
+    downloadPath: getValue('setting-download-path', "Downloads\\OxiDesk"),
+    openFolderOnFinish: getCheckbox('setting-open-folder-on-finish'),
+    chunkSize: getValue('setting-chunk-size', "65536"),
+    audioStream: getCheckbox('setting-audio-stream'),
+    soundNotification: getCheckbox('setting-sound-notification'),
+    lightNotification: getCheckbox('setting-light-notification'),
+    clipboardSync: getCheckbox('setting-clipboard-sync'),
+    udpDiscovery: getCheckbox('setting-udp-discovery')
+  };
+
+  try {
+    localStorage.setItem('oxidesk_client_settings', JSON.stringify(settings));
+    console.log('[Ayarlar] İstemci ayarları güncellendi:', settings);
+  } catch (e) {}
 }
 
 

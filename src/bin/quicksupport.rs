@@ -37,7 +37,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .enable_all()
         .build()?;
 
-    let (local_url, _selected_port) = rt.block_on(async {
+    let (state, _selected_port) = rt.block_on(async {
         let local_ip = get_local_ip();
         let hostname = std::env::var("COMPUTERNAME").unwrap_or_else(|_| "Windows-PC".to_string());
         let username = std::env::var("USERNAME").unwrap_or_else(|_| "Kullanıcı".to_string());
@@ -93,7 +93,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         println!();
         println!("  ===============================================================");
-        println!("  🚨  OxiDesk Hızlı Destek (QuickSupport Portable v3.0.0)");
+        println!("  🚨  OxiDesk Hızlı Destek (QuickSupport Portable v5.0.0 - Saf Win32)");
         println!("  ===============================================================");
         println!("  👤  Kullanıcı / Cihaz  : {} ({})", hostname, username);
         println!("  🆔  Oxi Kimliğiniz     : \x1b[1;36m{}\x1b[0m", formatted_id);
@@ -103,20 +103,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("  📡  Ağ Keşfi Durumu    : \x1b[1;32mAKTİF (Bilgi İşleme Anons Gönderiliyor)\x1b[0m");
         println!("  ===============================================================");
         println!("  [Bilgi] Bilgi İşlem personeli aynı ağdaysa bu cihazı doğrudan görebilir.");
-        println!("  [Bilgi] Destek penceresi açılıyor. Çıkmak için pencereyi kapatın.\n");
-        println!("  [Bilgi] Windows 11 Fluent Hızlı Destek Penceresi açılıyor...\n");
+        println!("  [Bilgi] Saf Win32 Hızlı Destek Penceresi açılıyor (Sıfır Edge Bağımlılığı)...\n");
 
-        let app = create_router(state);
+        let app = create_router(state.clone());
         tokio::spawn(async move {
             let _ = axum::serve(listener, app).await;
         });
 
-        let local_url = format!("http://localhost:{}/qs", selected_port);
-        Ok::<_, Box<dyn std::error::Error>>((local_url, selected_port))
+        Ok::<_, Box<dyn std::error::Error>>((state, selected_port))
     })?;
 
-    // Run native embedded frameless WebView2 QuickSupport window on main UI thread
-    oxidesk::gui::GuiLauncher::run_native_window(&local_url, "OxiQuickSupport", 480, 680);
+    // Run 100% pure native Win32 QuickSupport desktop window (Zero Edge / Zero WebView2 dependency)
+    oxidesk::native_qs::NativeQuickSupportGui::run(state);
 
     oxidesk::force_terminate_process();
 }

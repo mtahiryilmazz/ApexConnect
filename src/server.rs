@@ -706,12 +706,14 @@ async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
     let tx_stream = tx.clone();
 
     let stream_task = tokio::spawn(async move {
+        let mut force_next = true;
         loop {
             let q = quality_worker.load(Ordering::Relaxed);
             let frame_opt = {
                 let cap = capture_worker.lock().unwrap();
-                cap.capture_frame_adaptive(q, false)
+                cap.capture_frame_adaptive(q, force_next)
             };
+            force_next = false;
 
             match frame_opt {
                 Ok(Some(jpeg_bytes)) => {
@@ -724,7 +726,10 @@ async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
                 }
                 Err(e) => {
                     eprintln!("Capture error: {}", e);
-                    break;
+                    // Do not kill the stream task permanently on transient desktop switch or lock!
+                    sleep(Duration::from_millis(100)).await;
+                    force_next = true;
+                    continue;
                 }
             }
 

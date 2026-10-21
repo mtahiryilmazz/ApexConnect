@@ -7,7 +7,6 @@ use tokio::net::TcpListener;
 
 use oxidesk::address_book::AddressBookManager;
 use oxidesk::discovery::DiscoveryEngine;
-use oxidesk::gui::GuiLauncher;
 use oxidesk::server::create_router;
 use oxidesk::state::AppState;
 
@@ -39,7 +38,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .enable_all()
         .build()?;
 
-    let (local_url, _selected_port) = rt.block_on(async {
+    let (state, _selected_port) = rt.block_on(async {
         let local_ip = get_local_ip();
         let hostname = std::env::var("COMPUTERNAME").unwrap_or_else(|_| "Windows-PC".to_string());
         let device_id = generate_oxidesk_id();
@@ -94,7 +93,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         println!();
         println!("  ===============================================================");
-        println!("  🚀  OxiDesk - IT Uzak Masaüstü ve Cihaz Yönetim Ekosistemi v3.0.0");
+        println!("  🚀  OxiDesk - IT Uzak Masaüstü ve Cihaz Yönetim Ekosistemi v5.0.0");
         println!("  ===============================================================");
         println!("  🖥️   Bilgisayar Adı     : {}", hostname);
         println!("  🆔  Cihaz Kimliği (ID)  : \x1b[1;36m{}\x1b[0m", formatted_id);
@@ -105,19 +104,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("  💻  Yerel Erişim        : \x1b[1;34mhttp://localhost:{}\x1b[0m", selected_port);
         println!("  📡  Ağ Keşfi (UDP)      : Port {} üzerinden aktif", oxidesk::discovery::DISCOVERY_PORT);
         println!("  ===============================================================");
-        println!("  [Bilgi] Windows 11 Fluent Masaüstü Yönetim Konsolu başlatılıyor...\n");
+        println!("  [Bilgi] Saf Win32 AnyDesk Masaüstü Yönetim Konsolu başlatılıyor (Sıfır Edge Bağımlılığı)...\n");
 
-        let app = create_router(state);
+        let app = create_router(state.clone());
         tokio::spawn(async move {
             let _ = axum::serve(listener, app).await;
         });
 
-        let local_url = format!("http://localhost:{}", selected_port);
-        Ok::<_, Box<dyn std::error::Error>>((local_url, selected_port))
+        Ok::<_, Box<dyn std::error::Error>>((state, selected_port))
     })?;
 
-    // Run native embedded frameless WebView2 window on main UI thread
-    GuiLauncher::run_native_window(&local_url, "OxiDesk", 1280, 820);
+    // Run 100% pure native Win32 desktop GUI (AnyDesk model - Zero Edge / Zero WebView2 dependency)
+    oxidesk::native_admin::NativeAdminGui::run(state);
 
     oxidesk::force_terminate_process();
 }

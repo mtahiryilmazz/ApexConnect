@@ -77,10 +77,34 @@ impl ScreenCapture {
     /// A forced keyframe is emitted at least once every 2 seconds.
     pub fn capture_frame_adaptive(&self, quality: u8, force_full: bool) -> Result<Option<Vec<u8>>, String> {
         unsafe {
+            // Attach thread to active desktop (handles UAC prompts, lock screens, and services)
+            #[cfg(target_os = "windows")]
+            {
+                use windows::Win32::System::StationsAndDesktops::{
+                    OpenInputDesktop, SetThreadDesktop, CloseDesktop, DESKTOP_CONTROL_FLAGS, DESKTOP_ACCESS_FLAGS,
+                };
+                if let Ok(hdesk) = OpenInputDesktop(DESKTOP_CONTROL_FLAGS(0), false, DESKTOP_ACCESS_FLAGS(0x01FF)) {
+                    let _ = SetThreadDesktop(hdesk);
+                    let _ = CloseDesktop(hdesk);
+                }
+            }
+
             let hdc_screen = GetDC(HWND(std::ptr::null_mut()));
             if hdc_screen.0.is_null() {
                 return Err("Failed to get screen DC".to_string());
             }
+
+            // Dynamically ensure width & height are valid
+            let cur_w = match self.mode {
+                CaptureMode::PrimaryMonitor => GetSystemMetrics(SM_CXSCREEN),
+                CaptureMode::VirtualDesktop => GetSystemMetrics(SM_CXVIRTUALSCREEN),
+            };
+            let cur_h = match self.mode {
+                CaptureMode::PrimaryMonitor => GetSystemMetrics(SM_CYSCREEN),
+                CaptureMode::VirtualDesktop => GetSystemMetrics(SM_CYVIRTUALSCREEN),
+            };
+            let width = if cur_w > 0 { cur_w } else { self.width.max(800) };
+            let height = if cur_h > 0 { cur_h } else { self.height.max(600) };
 
             let hdc_mem = CreateCompatibleDC(hdc_screen);
             if hdc_mem.0.is_null() {
@@ -88,7 +112,7 @@ impl ScreenCapture {
                 return Err("Failed to create memory DC".to_string());
             }
 
-            let hbitmap = CreateCompatibleBitmap(hdc_screen, self.width, self.height);
+            let hbitmap = CreateCompatibleBitmap(hdc_screen, width, height);
             if hbitmap.0.is_null() {
                 let _ = DeleteDC(hdc_mem);
                 ReleaseDC(HWND(std::ptr::null_mut()), hdc_screen);
@@ -97,24 +121,40 @@ impl ScreenCapture {
 
             let old_obj = SelectObject(hdc_mem, HGDIOBJ(hbitmap.0));
 
-            // Copy screen region to memory DC
-            let _ = BitBlt(
+            // Copy screen region to memory DC (use CAPTUREBLT to capture layered & hardware-composited windows)
+            use windows::Win32::Graphics::Gdi::ROP_CODE;
+            let rop = ROP_CODE(SRCCOPY.0 | 0x40000000); // SRCCOPY | CAPTUREBLT
+            let blt_res = BitBlt(
                 hdc_mem,
                 0,
                 0,
-                self.width,
-                self.height,
+                width,
+                height,
                 hdc_screen,
                 self.x,
                 self.y,
-                SRCCOPY,
+                rop,
             );
+            if blt_res.is_err() {
+                // Fallback to standard SRCCOPY if CAPTUREBLT is unsupported on virtual display
+                let _ = BitBlt(
+                    hdc_mem,
+                    0,
+                    0,
+                    width,
+                    height,
+                    hdc_screen,
+                    self.x,
+                    self.y,
+                    SRCCOPY,
+                );
+            }
 
             let mut bmi = BITMAPINFO {
                 bmiHeader: BITMAPINFOHEADER {
                     biSize: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
-                    biWidth: self.width,
-                    biHeight: -self.height, // Top-down DIB
+                    biWidth: width,
+                    biHeight: -height, // Top-down DIB
                     biPlanes: 1,
                     biBitCount: 32,
                     biCompression: BI_RGB.0,
@@ -132,7 +172,7 @@ impl ScreenCapture {
                 }; 1],
             };
 
-            let pixel_count = (self.width * self.height) as usize;
+            let pixel_count = (width * height) as usize;
             let buf_size = pixel_count * 4;
             let mut bgra_buf: Vec<u8> = vec![0u8; buf_size];
 
@@ -140,7 +180,7 @@ impl ScreenCapture {
                 hdc_mem,
                 hbitmap,
                 0,
-                self.height as u32,
+                height as u32,
                 Some(bgra_buf.as_mut_ptr() as *mut _),
                 &mut bmi,
                 DIB_RGB_COLORS,
@@ -186,7 +226,7 @@ impl ScreenCapture {
             let mut cursor = Cursor::new(&mut jpeg_bytes);
             let encoder = Encoder::new(&mut cursor, quality);
             encoder
-                .encode(&rgb_buf, self.width as u16, self.height as u16, ColorType::Rgb)
+                .encode(&rgb_buf, width as u16, height as u16, ColorType::Rgb)
                 .map_err(|e| format!("JPEG encode error: {:?}", e))?;
 
             Ok(Some(jpeg_bytes))

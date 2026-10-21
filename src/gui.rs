@@ -23,6 +23,24 @@ impl GuiLauncher {
         let window = Arc::new(window);
         let win_for_ipc = window.clone();
 
+        // Prevent EBWebView / .WebView2 folder creation next to executable:
+        // Direct all WebView2 caches and runtime files to %LOCALAPPDATA%\OxiDesk\WebView2
+        let user_data_dir = std::env::var_os("LOCALAPPDATA")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(std::env::temp_dir)
+            .join("OxiDesk")
+            .join("WebView2");
+        let _ = std::fs::create_dir_all(&user_data_dir);
+        std::env::set_var("WEBVIEW2_USER_DATA_FOLDER", &user_data_dir);
+
+        // Also clean up any legacy EBWebView directory in current working folder if present
+        if let Ok(cwd) = std::env::current_dir() {
+            let legacy_eb = cwd.join("EBWebView");
+            if legacy_eb.exists() && legacy_eb.is_dir() {
+                let _ = std::fs::remove_dir_all(&legacy_eb);
+            }
+        }
+
         let _webview = WebViewBuilder::new()
             .with_url(url)
             .with_ipc_handler(move |req| {

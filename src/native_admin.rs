@@ -16,19 +16,16 @@ use windows::Win32::UI::WindowsAndMessaging::{
     GetWindowTextLengthW, GetWindowTextW, PostQuitMessage, RegisterClassW, SetWindowTextW,
     ShowWindow, BS_PUSHBUTTON, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, ES_AUTOHSCROLL,
     HMENU, MSG, SW_SHOW, WINDOW_EX_STYLE, WINDOW_STYLE, WM_COMMAND, WM_CREATE,
-    WM_DESTROY, WM_KEYDOWN, WM_KEYUP, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE,
-    WM_MOUSEWHEEL, WM_PAINT, WM_RBUTTONDOWN, WM_RBUTTONUP, WNDCLASSW, WS_BORDER,
+    WM_DESTROY, WM_PAINT, WNDCLASSW, WS_BORDER,
     WS_CHILD, WS_CLIPCHILDREN, WS_OVERLAPPED, WS_OVERLAPPEDWINDOW, WS_SYSMENU,
     WS_TABSTOP, WS_VISIBLE,
 };
 
 use crate::state::SharedState;
 
-static mut GLOBAL_ADMIN_STATE: Option<SharedState> = None;
+static GLOBAL_ADMIN_STATE: std::sync::OnceLock<SharedState> = std::sync::OnceLock::new();
 static mut TARGET_EDIT_HWND: HWND = HWND(0 as _);
 static mut PIN_EDIT_HWND: HWND = HWND(0 as _);
-static mut STATUS_TEXT_HWND: HWND = HWND(0 as _);
-static mut DISCOVERED_LIST_HWND: HWND = HWND(0 as _);
 static mut MAIN_ADMIN_HWND: HWND = HWND(0 as _);
 
 const ID_BTN_COPY_ID: usize = 201;
@@ -42,7 +39,7 @@ pub struct NativeAdminGui;
 impl NativeAdminGui {
     pub fn run(state: SharedState) {
         unsafe {
-            GLOBAL_ADMIN_STATE = Some(state);
+            let _ = GLOBAL_ADMIN_STATE.set(state);
 
             let instance = GetModuleHandleW(None).unwrap_or_default();
             let class_name = w!("OxiDeskAdminNativeClass");
@@ -68,7 +65,7 @@ impl NativeAdminGui {
             let hwnd = CreateWindowExW(
                 WINDOW_EX_STYLE(0),
                 class_name,
-                w!("OxiDesk - IT Uzak Masaüstü Yönetim Konsolu (Native Fluent)"),
+                w!("OxiDesk - IT Uzak Masaüstü Yönetim Konsolu v5.0.0 (Saf Win32 AnyDesk Modeli)"),
                 WS_OVERLAPPED | WS_SYSMENU | WS_CLIPCHILDREN,
                 CW_USEDEFAULT,
                 CW_USEDEFAULT,
@@ -263,12 +260,12 @@ unsafe extern "system" fn admin_wnd_proc(
         WM_COMMAND => {
             let id = wparam.0 as usize & 0xFFFF;
             if id == ID_BTN_COPY_ID {
-                if let Some(state) = &GLOBAL_ADMIN_STATE {
+                if let Some(state) = GLOBAL_ADMIN_STATE.get() {
                     let id_str = state.info.lock().unwrap().device_id.clone();
                     copy_to_clipboard(&id_str);
                 }
             } else if id == ID_BTN_REFRESH_PIN {
-                if let Some(state) = &GLOBAL_ADMIN_STATE {
+                if let Some(state) = GLOBAL_ADMIN_STATE.get() {
                     use rand::Rng;
                     let mut rng = rand::thread_rng();
                     let new_pin: u16 = rng.gen_range(1000..9999);
@@ -293,7 +290,7 @@ unsafe extern "system" fn admin_wnd_proc(
                     launch_native_viewer(&target, &pin);
                 }
             } else if id == ID_BTN_SCAN {
-                if let Some(state) = &GLOBAL_ADMIN_STATE {
+                if let Some(state) = GLOBAL_ADMIN_STATE.get() {
                     let local_ip = state.info.lock().unwrap().local_ip.clone();
                     let st = state.clone();
                     tokio::spawn(async move {
@@ -304,7 +301,7 @@ unsafe extern "system" fn admin_wnd_proc(
                     });
                 }
             } else if id == ID_BTN_FILL_DISCOVERED {
-                if let Some(state) = &GLOBAL_ADMIN_STATE {
+                if let Some(state) = GLOBAL_ADMIN_STATE.get() {
                     let disc = state.discovered.lock().unwrap();
                     if let Some((_, dev)) = disc.iter().next() {
                         let target_str = dev.device_id.clone().unwrap_or_else(|| format!("{}:{}", dev.ip, dev.port));
@@ -382,7 +379,7 @@ unsafe fn paint_admin_gui(hdc: HDC, hwnd: HWND) {
     let mut c1_head = RECT { left: 45, top: 85, right: 395, bottom: 105 };
     draw_text_helper(hdc, "BU CİHAZI YÖNETİME AÇ", &mut c1_head, DT_LEFT | DT_SINGLELINE | DT_NOPREFIX);
 
-    let (device_id_str, pin_str, local_ip, port) = if let Some(state) = &GLOBAL_ADMIN_STATE {
+    let (device_id_str, pin_str, local_ip, port) = if let Some(state) = GLOBAL_ADMIN_STATE.get() {
         let info = state.info.lock().unwrap();
         (info.device_id.clone(), info.pin.clone(), info.local_ip.clone(), info.port)
     } else {
@@ -454,7 +451,7 @@ unsafe fn paint_admin_gui(hdc: HDC, hwnd: HWND) {
     // Discovered Devices Listing
     SelectObject(hdc, label_font);
     let mut y_offset = 395;
-    if let Some(state) = &GLOBAL_ADMIN_STATE {
+    if let Some(state) = GLOBAL_ADMIN_STATE.get() {
         let disc = state.discovered.lock().unwrap();
         if disc.is_empty() {
             SetTextColor(hdc, COLORREF(0x0078808A));
@@ -493,7 +490,7 @@ struct ViewerState {
     status: Arc<Mutex<String>>,
 }
 
-static mut VIEWER_STATE: Option<Arc<ViewerState>> = None;
+static VIEWER_STATE: std::sync::RwLock<Option<Arc<ViewerState>>> = std::sync::RwLock::new(None);
 
 fn launch_native_viewer(target: &str, pin: &str) {
     let clean_target = target.replace(" ", "");
@@ -501,20 +498,18 @@ fn launch_native_viewer(target: &str, pin: &str) {
 
     // Resolve target IP/port if it is an OxiDesk ID
     let mut resolved_host = clean_target.clone();
-    unsafe {
-        if let Some(state) = &GLOBAL_ADMIN_STATE {
-            let disc = state.discovered.lock().unwrap();
-            for (_, dev) in disc.iter() {
-                if let Some(id) = &dev.device_id {
-                    if id.replace(" ", "") == clean_target {
-                        resolved_host = format!("{}:{}", dev.ip, dev.port);
-                        break;
-                    }
-                }
-                if dev.ip == clean_target {
+    if let Some(state) = GLOBAL_ADMIN_STATE.get() {
+        let disc = state.discovered.lock().unwrap();
+        for (_, dev) in disc.iter() {
+            if let Some(id) = &dev.device_id {
+                if id.replace(" ", "") == clean_target {
                     resolved_host = format!("{}:{}", dev.ip, dev.port);
                     break;
                 }
+            }
+            if dev.ip == clean_target {
+                resolved_host = format!("{}:{}", dev.ip, dev.port);
+                break;
             }
         }
     }
@@ -530,9 +525,7 @@ fn launch_native_viewer(target: &str, pin: &str) {
         status: Arc::new(Mutex::new(format!("Bağlanılıyor: {}", resolved_host))),
     });
 
-    unsafe {
-        VIEWER_STATE = Some(viewer_state.clone());
-    }
+    *VIEWER_STATE.write().unwrap() = Some(viewer_state.clone());
 
     // Spawn native viewer thread
     std::thread::spawn(move || {
@@ -654,7 +647,8 @@ unsafe extern "system" fn viewer_wnd_proc(
             let mut client_rect = RECT::default();
             let _ = GetClientRect(hwnd, &mut client_rect);
 
-            if let Some(vs) = &VIEWER_STATE {
+            let vs_opt = VIEWER_STATE.read().unwrap().clone();
+            if let Some(vs) = &vs_opt {
                 let lock = vs.frame_pixels.lock().unwrap();
                 if let Some((bgrx, img_w, img_h)) = lock.as_ref() {
                     let mut bmi = BITMAPINFO {

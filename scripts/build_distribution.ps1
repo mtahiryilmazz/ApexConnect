@@ -52,24 +52,31 @@ Copy-Item -Path $ServiceSrc -Destination $ServiceDst -Force
 
 # 3. Bilgilendirme Notu
 $ReadmeContent = @"
-OxiDesk Kurumsal Uzak Masaüstü Dağıtım Paketi (v4.0.0)
-=====================================================
+OxiDesk Kurumsal Uzak Masaüstü Dağıtım Paketi (v5.0.0 - Pure Win32 Native)
+========================================================================
+
+Bu sürüm (v5.0.0), AnyDesk ve RustDesk mimari standartlarında %100 Saf Win32 Native
+olarak geliştirilmiştir. Microsoft Edge veya WebView2 gereksinimi tamamen kaldırılmıştır.
+Gereksiz klasörler (EBWebView vb.) oluşturulmaz, RAM tüketimi ~15-20 MB seviyesindedir.
 
 ANA PROGRAMLAR:
 ---------------
 1. OxiDesk.exe:
-   - IT Departmanı / Sistem Yöneticisi için çoklu bağlantı (Multi-Session & Split Grid) destekli tam yetkili masaüstü yönetim konsolu.
-   - Aynı anda 3-4 veya daha fazla kullanıcıya eşzamanlı bağlanabilme, sekmeli arayüz, 2x2 ızgara bölünmüş ekran, ağ tarayıcısı, adres defteri, canlı oturum içi dosya aktarımı, anlık mesajlaşma, oturum video kaydı, Uzak Görev Yöneticisi, Ekran Boyutlandırma & Öncelik modları, Kalıcı Yönetici Parolası (Gözetimsiz Erişim) ve WAN Rendezvous / Relay Sunucusu desteği.
+   - IT Departmanı / Sistem Yöneticisi için saf Win32 yerel yönetim konsolu.
+   - Doğrudan GDI ve donanım hızlandırmalı ekran aktarımı, anlık sohbet (neon uyarı bildirimli ve küçültülebilir mini dock),
+     gelişmiş ayarlar menüsü (kayıt formatı, depolama yolları, kalite), görev yöneticisi ve dosya aktarımı.
+   - İstenirse web/mobil tarayıcılardan doğrudan erişim için arka plan HTTP sunucusu da aktiftir.
 
 2. OxiDesk-QuickSup.exe:
-   - Şirket personeline dağıtılacak tek tıkla çalışan taşınabilir (portable) Hızlı Destek aracı.
-   - UI/UX Pro Max akrilik cam tasarım, aktif bağlantı göstergesi, anında Bağlantıyı Kes butonu, sürükle-bırak dosya transferi, IT ile canlı sohbet çekmecesi, internetsiz çalışan dahili Mobil Hızlı Bağlantı SVG QR kodu ve çerçevesiz pencere taşıma desteği. Kapatıldığında tüm iş parçacıkları anında sonlandırılır (Zero Zombie Process).
+   - Son kullanıcılara tek tıkla dağıtılan süper hafif (~2.5 MB) taşınabilir Hızlı Destek aracı.
+   - Kurulum gerektirmez, Edge gerektirmez, sıfır artık dosya bırakır.
+   - Tek tıkla ID ve PIN üretir, gelen bağlantı onayını yönetir.
 
 YARDIMCI VE SUNUCU ARAÇLARI (tools/ Klasörü):
 ----------------------------------------------
 3. tools\oxidesk_rendezvous.exe:
    - Şirket sunucusunda veya bulutta çalıştırılabilen bağımsız WAN Sinyalleşme ve Relay Köprüsü.
-   - İnternet üzerindeki NAT ve CGNAT arkasındaki istemcileri birbirine bağlar ve P2P eşleştirme sağlar.
+   - NAT ve CGNAT arkasındaki istemcileri birbirine bağlar ve P2P eşleştirme sağlar.
 
 4. tools\oxidesk_service.exe:
    - Windows Hizmeti (Unattended Service) yönetim aracı.
@@ -83,7 +90,7 @@ $utf8WithBom = New-Object System.Text.UTF8Encoding($true)
 [System.IO.File]::WriteAllText($kullanimPath, $ReadmeContent, $utf8WithBom)
 
 # 4. Tek Arşiv ZIP Paketi Oluşturma
-$ZipPath = Join-Path $DistDir "OxiDesk-v4.0.0-Windows-x64.zip"
+$ZipPath = Join-Path $DistDir "OxiDesk-v5.0.0-Windows-x64.zip"
 if (Test-Path $ZipPath) {
     Remove-Item -Path $ZipPath -Force
 }
