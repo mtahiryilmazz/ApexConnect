@@ -116,7 +116,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     })?;
 
     // Run native embedded frameless WebView2 QuickSupport window on main UI thread
-    oxidesk::gui::GuiLauncher::run_native_window(&local_url, "OxiQuickSupport", 440, 640);
+    oxidesk::gui::GuiLauncher::run_native_window(&local_url, "OxiQuickSupport", 480, 680);
 
     oxidesk::force_terminate_process();
 }

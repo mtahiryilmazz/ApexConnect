@@ -44,13 +44,49 @@ impl FileTransferManager {
         self.storage_dir.clone()
     }
 
-    /// Sanitize filename to prevent directory traversal
+    /// Sanitize filename to prevent directory traversal, UNC NTLM leaks, and DOS device conflicts
     fn sanitize_filename(filename: &str) -> String {
-        let path = Path::new(filename);
-        path.file_name()
+        let clean = filename.trim().replace('\\', "/");
+        if clean.starts_with("//") || clean.starts_with('/') {
+            return "safe_file_upload".to_string();
+        }
+
+        let path = Path::new(&clean);
+        let raw_name = path
+            .file_name()
             .and_then(|n| n.to_str())
-            .unwrap_or("unnamed_file")
-            .to_string()
+            .unwrap_or("unnamed_file");
+
+        // Remove illegal Windows characters
+        let mut filtered = String::new();
+        for c in raw_name.chars() {
+            if !matches!(c, '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*') && !c.is_control() {
+                filtered.push(c);
+            }
+        }
+        if filtered.is_empty() {
+            filtered = "unnamed_file".to_string();
+        }
+
+        // Prevent Windows reserved device names (CON, PRN, AUX, NUL, COM1-9, LPT1-9)
+        let stem = filtered.split('.').next().unwrap_or("").to_ascii_uppercase();
+        let reserved = [
+            "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7",
+            "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+        ];
+        if reserved.contains(&stem.as_str()) {
+            return format!("safe_{}", filtered);
+        }
+
+        filtered
+    }
+
+    /// Save full binary file directly
+    pub fn save_file(&self, filename: &str, data: &[u8]) -> Result<String, String> {
+        let safe_name = Self::sanitize_filename(filename);
+        let dest_path = self.storage_dir.join(&safe_name);
+        fs::write(&dest_path, data).map_err(|e| format!("Dosya yazılamadı: {}", e))?;
+        Ok(safe_name)
     }
 
     /// Begin a chunked file upload

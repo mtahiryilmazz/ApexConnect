@@ -5,6 +5,47 @@ Bu proje [Semantik Versiyonlama (SemVer)](https://semver.org/lang/tr/) standartl
 
 ---
 
+## [4.0.0] - 2026-10-21 - QuickSupport UI/UX Pro Max, Gözetimsiz Yönetici Parolası, Uzak Görev Yöneticisi & WAN Sunucusu
+
+### 🚀 Yeni Özellikler (Major Features)
+- **QuickSupport UI/UX Pro Max Yenilemesi (`OxiDesk-QuickSup.exe`)**:
+  - **🛑 Anında Bağlantıyı Kes (Disconnect Active Session)**:
+    - Uzak bağlantı kurulduğunda canlı durum rozeti kırmızıya döner (`🔴 Aktif Bağlantı Sürüyor`) ve ışıldayan kırmızı "Bağlantıyı Kes" butonu belirir.
+    - Tıklandığında aktif WebSocket oturumu sunucu tarafında anında koparılır ve Sıfır Güven (Zero-Trust) gereği geçici PIN kodu otomatik yenilenir.
+  - **💬 İki Yönlü Canlı Sohbet Çekmecesi (Bidirectional Live Chat)**:
+    - QuickSupport kullanıcısı ile IT uzmanı arasındaki canlı mesajlaşma Tokio broadcast kanalı (`chat_tx`) ile WebSocket akışına bağlandı; yazılan mesajların karşı tarafa anında iletilmesi sağlandı.
+  - **📁 Sürükle-Bırak Dosya Aktarım Çekmecesi (Drag & Drop File Transfer)**:
+    - Sürükle-bırak veya dosya seçimi ile doğrudan `%USERPROFILE%\Downloads\OxiDesk` klasörüne yükleme.
+    - Yükleme ilerleme çubuğu, son aktarılan dosyalar listesi ve tek tıkla klasörü açma butonu.
+  - **📱 Mobil Hızlı Bağlantı SVG QR Kodu (Pure Offline Mobile QR)**:
+    - Dış internete veya CDN'e bağımlı olmayan saf JavaScript SVG QR kod üreteci. Telefon veya tablet kamerasıyla taranarak mobil tarayıcıdan anında bağlanma.
+  - **🪟 Çerçevesiz Pencere Taşıma Onarımı (Frameless Window Dragging)**:
+    - WebView2'de fare tıklamalarını engelleyen CSS drag kuralları temizlendi; `mousedown` olayı doğrudan Win32 `ReleaseCapture` ve `WM_SYSCOMMAND` (0xF012) mesajına bağlanarak pencerenin kusursuz sürüklenmesi sağlandı.
+- **Kalıcı Yönetici Parolası & Gözetimsiz Erişim (Unattended Access Master Password)**:
+  - Bilgisayar sahibinin belirleyebileceği kalıcı yönetici parolası (`%APPDATA%\OxiDesk\admin_secret.key` üzerinde güvenle saklanır).
+  - İstemciden **OxiDesk ID + Yönetici Parolası** girildiğinde, karşı tarafta onay veya geçici PIN gerekmeden otomatik tam yetkili oturum başlatılır.
+- **Uzak Görev Yöneticisi (Remote Process Explorer & Task Manager)**:
+  - Uzak oturum araç çubuğuna eklenen `📊 Görevler` modalı ile uzak bilgisayardaki tüm çalışan süreçlerin (PID, İşlem Adı, Bellek Kullanımı) anlık listelenmesi.
+  - Donan veya istenmeyen işlemleri uzaktan tek tıkla zorla sonlandırma (`taskkill /F /PID`).
+- **Ekran Boyutlandırma ve Aktarım Önceliği (Scaling & Priority Modes)**:
+  - **Ekran Boyutlandırma**: `⛶ Ekrana Sığdır (Fit)`, `1:1 Orijinal Boyut (Pixel-Perfect)` ve `↔ Uzat / Doldur (Stretch)`.
+  - **Aktarım Önceliği**:
+    - `⚡ Hız Öncelikli (Speed)`: 60 FPS ultra düşük gecikmeli interaktif akış.
+    - `🎨 Kalite Öncelikli (Quality)`: CAD, grafik ve küçük metinler için yüksek netlik modu.
+    - `⚖️ Dengeli (Balanced)`: Standart 30 FPS optimize veri tüketimi.
+- **Ana Ekranda Önceki Bağlantılar Kart Tasarımı (Recent Connections Cards)**:
+  - Daha önce bağlanılan bilgisayarların adı, kimliği ve çevrimiçi durumlarını gösteren modern kartlar ile tek tıkla anında yeniden bağlanabilme.
+- **Otomatik WAN Rendezvous / Relay Sunucusu Kurulum ve Yapılandırma Araçları**:
+  - Farklı internet ağları ve kurumsal güvenlik duvarları (NAT/CGNAT) arkasındaki cihazları bağlamak için:
+    - Windows için: `scripts/setup_wan_server.ps1` (Otomatik Firewall kuralı açma, WAN IP tespiti, servis veya batch başlatıcı).
+    - Linux / VPS için: `scripts/setup_wan_server.sh` (UFW/Firewalld, Docker ve systemd otomatik kurulumu).
+    - İstemci ayarlarından merkezi sunucu URL'sini test etme ve kaydetme (`/api/rendezvous/config`).
+- **Dağıtım Paketi Güncellemesi**:
+  - `Cargo.toml` sürümü `4.0.0` olarak güncellendi.
+  - Kurumsal tek paket arşiv `OxiDesk-v4.0.0-Windows-x64.zip` olarak hazırlandı.
+
+---
+
 ## [3.0.0] - 2026-10-21 - Çoklu Eşzamanlı Bağlantı (Multi-Session) & Çekirdek Seviyesinde Temiz Kapanma
 
 ### 🚀 Yeni Özellikler (Major Features)

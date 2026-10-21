@@ -23,7 +23,7 @@
             </svg>
           </div>
           <span class="app-name">OxiDesk</span>
-          <span class="app-version-badge">v3.0.0 Fluent</span>
+          <span class="app-version-badge">v4.0.0 Fluent</span>
         </div>
 
         <div class="titlebar-status-pill">
@@ -233,6 +233,19 @@
               </div>
             </div>
           </div>
+
+          <!-- Önceki Bağlantılar (Recent Connections) Kartları -->
+          <div class="recent-connections-section" style="margin-top: 1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.75rem;">
+              <h3 style="font-size: 0.92rem; font-weight: 600; color: var(--text-main); display:flex; align-items:center; gap:6px;">
+                <span>🕒 Önceki Bağlantılar</span>
+              </h3>
+              <button class="btn btn-subtle btn-xs" onclick="renderRecentConnections()">🔄 Yenile</button>
+            </div>
+            <div id="recent-connections-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;">
+              <!-- JS generates dynamic recent cards -->
+            </div>
+          </div>
         </section>
 
         <!-- ==================== TAB 2: NETWORK DISCOVERY ==================== -->
@@ -437,10 +450,46 @@
             </div>
           </div>
 
+          <!-- Yönetici Parolası ve Gözetimsiz Erişim -->
+          <div class="settings-group">
+            <h2 class="settings-group-title">Yönetici Parolası ve Gözetimsiz Erişim (Unattended Access)</h2>
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Kalıcı Yönetici (Master Admin) Parolası</div>
+                <div class="setting-desc">Bu parolayı tanımladığınızda, <strong>OxiDesk ID + Yönetici Parolası</strong> ile karşı tarafta kullanıcı onayına ve geçici PIN'e gerek kalmadan doğrudan bağlanabilirsiniz.</div>
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                  <input type="password" id="setting-admin-password" class="fluent-input" style="max-width: 250px; padding: 5px 10px; font-size: 0.8rem;" placeholder="Yeni yönetici parolası girin...">
+                  <button class="btn btn-fluent-primary btn-sm" onclick="saveAdminPassword()">Kaydet</button>
+                </div>
+              </div>
+              <span class="badge" id="admin-password-badge">Kontrol ediliyor...</span>
+            </div>
+          </div>
+
+          <!-- Dış Ağlar / Merkezi Sunucu (WAN Rendezvous Server) -->
+          <div class="settings-group">
+            <h2 class="settings-group-title">Dış Ağlar & Merkezi Sunucu (WAN Rendezvous Server)</h2>
+            <div class="fluent-setting-card">
+              <div class="setting-text">
+                <div class="setting-name">Merkezi Sinyal ve Aktarım Sunucusu (WAN Relay)</div>
+                <div class="setting-desc">Farklı internet ağlarındaki bilgisayarlara bağlanabilmek için kurumsal veya genel Rendezvous sunucusu adresi.</div>
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                  <input type="text" id="setting-rendezvous-url" class="fluent-input" style="max-width: 320px; padding: 5px 10px; font-size: 0.8rem;" value="ws://127.0.0.1:8095/ws/signaling" placeholder="ws://ip:port/ws/signaling">
+                  <button class="btn btn-fluent-primary btn-sm" onclick="saveRendezvousUrl()">Kaydet & Test Et</button>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.74rem; color: var(--text-muted); line-height: 1.5;">
+                  <strong>Docker ile Hızlı Sunucu Kurulumu:</strong><br>
+                  <code style="background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px; font-size: 0.73rem; user-select: all; display: inline-block; margin-top: 4px;">docker run -d -p 8095:8095 --name oxidesk-relay oxidesk/relay:latest</code>
+                </div>
+              </div>
+              <span class="badge badge-success" id="rendezvous-badge">Aktif</span>
+            </div>
+          </div>
+
           <div class="settings-group">
             <h2 class="settings-group-title">Uygulama Hakkında</h2>
             <div class="fluent-card about-card">
-              <div style="font-weight: 600; font-size: 1.1rem; color: #fff;">OxiDesk v3.0.0</div>
+              <div style="font-weight: 600; font-size: 1.1rem; color: #fff;">OxiDesk v4.0.0</div>
               <p style="font-size: 0.82rem; color: var(--text-muted); margin: 6px 0 12px 0;">
                 Rust ile geliştirilmiş yüksek performanslı Windows Uzak Masaüstü ekosistemi.
               </p>
@@ -464,7 +513,18 @@
                 <span id="session-stats" class="stats-pill">0 FPS | 0 ms | 0 KB/s</span>
               </div>
 
-              <div class="island-right">
+                <select id="scale-select" onchange="changeScaleMode(this.value)" class="island-select" title="Ekran Boyutlandırma">
+                  <option value="fit" selected>⛶ Sığdır</option>
+                  <option value="original">1:1 Orijinal</option>
+                  <option value="stretch">↔ Doldur</option>
+                </select>
+
+                <select id="priority-select" onchange="changePriorityMode(this.value)" class="island-select" title="Aktarım Önceliği">
+                  <option value="balanced" selected>⚖️ Dengeli</option>
+                  <option value="speed">⚡ Hız</option>
+                  <option value="quality">🎨 Kalite</option>
+                </select>
+
                 <select id="quality-select" onchange="changeQuality(this.value)" class="island-select" title="Görüntü Kalitesi">
                   <option value="40">%40</option>
                   <option value="65" selected>%65</option>
@@ -478,6 +538,7 @@
 
                 <div class="island-divider"></div>
 
+                <button class="island-btn" id="btn-session-tasks" onclick="toggleSessionTasksModal()" title="Uzak Görev Yöneticisi">📊 Görevler</button>
                 <button class="island-btn" onclick="sendClipboardPrompt()" title="Panoya Metin Gönder">📋 Pano</button>
                 <button class="island-btn" id="btn-session-files" onclick="toggleSessionFileModal()" title="Canlı Dosya Aktarımı">📁 Dosyalar</button>
                 <button class="island-btn" id="btn-session-chat" onclick="toggleSessionChatModal()" title="Canlı Sohbet">
@@ -491,6 +552,40 @@
                 <button class="island-btn" onclick="toggleMultiGridMode()" title="Yan Yana Bölünmüş Çoklu Ekran">⊞ Çoklu</button>
                 <button class="island-btn" onclick="toggleFullscreen()" title="Tam Ekran">⛶</button>
                 <button class="island-btn btn-danger-pill" onclick="closeCurrentSession()" title="Bu Bağlantıyı Kes">✕ Çıkış</button>
+              </div>
+            </div>
+
+            <!-- In-Session Remote Task Manager Modal -->
+            <div id="session-tasks-modal" class="session-modal hidden" style="width: 480px; max-height: 500px;">
+              <div class="session-modal-header">
+                <div class="modal-title">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                  <span>Uzak Görev Yöneticisi</span>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <button class="btn btn-subtle btn-xs" onclick="loadRemoteProcesses()" title="Yenile">🔄</button>
+                  <button class="modal-close-btn" onclick="toggleSessionTasksModal()" title="Kapat">✕</button>
+                </div>
+              </div>
+              <div class="session-modal-body" style="padding: 10px;">
+                <div style="display:flex; gap:6px; margin-bottom: 8px;">
+                  <input type="text" id="task-filter-input" class="fluent-input" style="flex:1; padding: 4px 8px; font-size: 0.78rem;" placeholder="İşlem veya PID ara..." oninput="filterProcessList()">
+                </div>
+                <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+                  <table class="fluent-table" style="font-size: 0.75rem;">
+                    <thead>
+                      <tr>
+                        <th>PID</th>
+                        <th>İşlem Adı</th>
+                        <th>Bellek</th>
+                        <th>İşlem</th>
+                      </tr>
+                    </thead>
+                    <tbody id="processes-table-body">
+                      <!-- JS dynamically populates processes -->
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
 

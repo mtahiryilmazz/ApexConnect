@@ -25,8 +25,46 @@ impl InputSimulator {
         }
     }
 
+    /// Detect Windows Secure Desktop (UAC consent prompt, Winlogon lock screen)
+    pub fn is_secure_desktop_active() -> bool {
+        #[cfg(target_os = "windows")]
+        unsafe {
+            use windows::Win32::System::StationsAndDesktops::{
+                OpenInputDesktop, CloseDesktop, GetUserObjectInformationW, UOI_NAME,
+                DESKTOP_CONTROL_FLAGS, DESKTOP_ACCESS_FLAGS,
+            };
+            use windows::Win32::Foundation::HANDLE;
+
+            // DESKTOP_SWITCHDESKTOP = 0x0100
+            if let Ok(hdesktop) = OpenInputDesktop(DESKTOP_CONTROL_FLAGS(0), false, DESKTOP_ACCESS_FLAGS(0x0100)) {
+                let mut buf = [0u16; 64];
+                let mut needed = 0u32;
+                let handle = HANDLE(hdesktop.0);
+                let success = GetUserObjectInformationW(
+                    handle,
+                    UOI_NAME,
+                    Some(buf.as_mut_ptr() as *mut _),
+                    (buf.len() * 2) as u32,
+                    Some(&mut needed),
+                );
+                let _ = CloseDesktop(hdesktop);
+                if success.is_ok() {
+                    let len = buf.iter().position(|&c| c == 0).unwrap_or(buf.len());
+                    let name = String::from_utf16_lossy(&buf[..len]);
+                    return !name.eq_ignore_ascii_case("default");
+                }
+            }
+            false
+        }
+        #[cfg(not(target_os = "windows"))]
+        false
+    }
+
     /// Direct hardware cursor positioning for ultra-low-latency mouse moves (unbuffered fast-path)
     pub fn mouse_move_fast(&self, norm_x: f64, norm_y: f64) {
+        if Self::is_secure_desktop_active() {
+            return;
+        }
         let px = (norm_x.clamp(0.0, 1.0) * self.screen_width as f64) as i32;
         let py = (norm_y.clamp(0.0, 1.0) * self.screen_height as f64) as i32;
         unsafe {
@@ -56,6 +94,11 @@ impl InputSimulator {
     }
 
     pub fn mouse_down(&self, button: u8) {
+        if Self::is_secure_desktop_active() {
+            self.release_all_keys();
+            return;
+        }
+
         let flags = match button {
             0 => MOUSEEVENTF_LEFTDOWN,
             1 => MOUSEEVENTF_MIDDLEDOWN,
@@ -245,7 +288,17 @@ impl InputSimulator {
     }
 
     pub fn key_down(&self, key: &str, _code: &str) {
+        if Self::is_secure_desktop_active() {
+            self.release_all_keys();
+            return;
+        }
+
         if let Some(vk) = map_key_to_vk(key) {
+            let mut flags = windows::Win32::UI::Input::KeyboardAndMouse::KEYBD_EVENT_FLAGS(0);
+            if is_extended_key(vk) {
+                flags |= windows::Win32::UI::Input::KeyboardAndMouse::KEYEVENTF_EXTENDEDKEY;
+            }
+
             unsafe {
                 let input = INPUT {
                     r#type: INPUT_KEYBOARD,
@@ -253,7 +306,7 @@ impl InputSimulator {
                         ki: KEYBDINPUT {
                             wVk: vk,
                             wScan: 0,
-                            dwFlags: windows::Win32::UI::Input::KeyboardAndMouse::KEYBD_EVENT_FLAGS(0),
+                            dwFlags: flags,
                             time: 0,
                             dwExtraInfo: 0,
                         },
@@ -266,6 +319,11 @@ impl InputSimulator {
 
     pub fn key_up(&self, key: &str, _code: &str) {
         if let Some(vk) = map_key_to_vk(key) {
+            let mut flags = KEYEVENTF_KEYUP;
+            if is_extended_key(vk) {
+                flags |= windows::Win32::UI::Input::KeyboardAndMouse::KEYEVENTF_EXTENDEDKEY;
+            }
+
             unsafe {
                 let input = INPUT {
                     r#type: INPUT_KEYBOARD,
@@ -273,7 +331,7 @@ impl InputSimulator {
                         ki: KEYBDINPUT {
                             wVk: vk,
                             wScan: 0,
-                            dwFlags: KEYEVENTF_KEYUP,
+                            dwFlags: flags,
                             time: 0,
                             dwExtraInfo: 0,
                         },
@@ -355,4 +413,12 @@ fn map_key_to_vk(key: &str) -> Option<VIRTUAL_KEY> {
         "CapsLock" => Some(VK_CAPITAL),
         _ => None,
     }
+}
+
+fn is_extended_key(vk: windows::Win32::UI::Input::KeyboardAndMouse::VIRTUAL_KEY) -> bool {
+    use windows::Win32::UI::Input::KeyboardAndMouse::*;
+    matches!(
+        vk,
+        VK_UP | VK_DOWN | VK_LEFT | VK_RIGHT | VK_HOME | VK_END | VK_PRIOR | VK_NEXT | VK_DELETE | VK_INSERT | VK_RCONTROL | VK_RMENU
+    )
 }

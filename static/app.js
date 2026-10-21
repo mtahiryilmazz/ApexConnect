@@ -25,6 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFileList();
   initDropZone();
   startNetworkScan(true);
+  renderRecentConnections();
+  checkAdminPasswordStatus();
+  checkRendezvousStatus();
 
   // Native Frameless Window Drag Region
   const dragArea = document.querySelector('.titlebar-drag-area');
@@ -579,6 +582,8 @@ async function startRemoteSession(target, pin, customName) {
     if (sessionManager.activeId === sessionId) {
       sessionManager.updateViewerHeader(sessionObj);
     }
+
+    addRecentConnection(cleanTarget, resolvedName || cleanTarget, pin);
 
     // Ping loop
     sessionObj.pingInterval = setInterval(() => {
@@ -1492,5 +1497,268 @@ function quickConnectTo(target) {
     pinInput.focus();
   }
 }
+
+// ==================== REMOTE TASK MANAGER ====================
+let remoteProcesses = [];
+
+function toggleSessionTasksModal() {
+  const m = document.getElementById('session-tasks-modal');
+  if (!m) return;
+  m.classList.toggle('hidden');
+  if (!m.classList.contains('hidden')) {
+    loadRemoteProcesses();
+  }
+}
+
+async function loadRemoteProcesses() {
+  const tbody = document.getElementById('processes-table-body');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:12px;color:var(--text-muted);">İşlemler taranıyor...</td></tr>';
+  try {
+    const res = await fetch('/api/processes');
+    if (!res.ok) throw new Error('Hata');
+    remoteProcesses = await res.json();
+    renderProcessesTable(remoteProcesses);
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ef4444;padding:12px;">Uzak işlem listesi alınamadı.</td></tr>';
+  }
+}
+
+function renderProcessesTable(list) {
+  const tbody = document.getElementById('processes-table-body');
+  if (!tbody) return;
+  if (!list || list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:12px;color:var(--text-muted);">İşlem bulunamadı.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(p => `
+    <tr>
+      <td><code>${p.pid}</code></td>
+      <td><strong>${escapeHtml(p.name)}</strong></td>
+      <td>${escapeHtml(p.memory)}</td>
+      <td>
+        <button class="btn btn-subtle btn-xs" style="color:#ef4444;" onclick="killRemoteProcess('${p.pid}', '${escapeHtml(p.name)}')">Sonlandır</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterProcessList() {
+  const q = (document.getElementById('task-filter-input')?.value || '').toLowerCase().trim();
+  if (!q) {
+    renderProcessesTable(remoteProcesses);
+    return;
+  }
+  const filtered = remoteProcesses.filter(p => p.name.toLowerCase().includes(q) || p.pid.toString().includes(q));
+  renderProcessesTable(filtered);
+}
+
+async function killRemoteProcess(pid, name) {
+  if (!confirm(`PID ${pid} (${name}) işlemini sonlandırmak istediğinize emin misiniz?`)) return;
+  try {
+    const res = await fetch('/api/processes/kill', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pid: pid, name: name })
+    });
+    if (res.ok) {
+      loadRemoteProcesses();
+    } else {
+      alert('İşlem sonlandırılamadı.');
+    }
+  } catch (e) {
+    alert('Hata: ' + e);
+  }
+}
+
+// ==================== SCALING & TRANSMISSION PRIORITY ====================
+let currentScaleMode = 'fit';
+
+function changeScaleMode(mode) {
+  currentScaleMode = mode;
+  const activeSess = sessionManager.getActiveSession();
+  const c = activeSess ? activeSess.canvas : canvas;
+  if (!c) return;
+
+  if (mode === 'fit') {
+    c.style.maxWidth = '100%';
+    c.style.maxHeight = '100%';
+    c.style.width = 'auto';
+    c.style.height = 'auto';
+    c.style.objectFit = 'contain';
+  } else if (mode === 'original') {
+    c.style.maxWidth = 'none';
+    c.style.maxHeight = 'none';
+    c.style.width = (activeSess?.remoteWidth || remoteWidth) + 'px';
+    c.style.height = (activeSess?.remoteHeight || remoteHeight) + 'px';
+    c.style.objectFit = 'none';
+  } else if (mode === 'stretch') {
+    c.style.maxWidth = '100%';
+    c.style.maxHeight = '100%';
+    c.style.width = '100%';
+    c.style.height = '100%';
+    c.style.objectFit = 'fill';
+  }
+}
+
+function changePriorityMode(mode) {
+  const ws = getActiveWs();
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+  if (mode === 'speed') {
+    ws.send(JSON.stringify({ type: 'set_quality', quality: 45 }));
+    alert('⚡ Hız Öncelikli Mod: Düşük gecikme ve 60 FPS akıcılık aktif.');
+  } else if (mode === 'balanced') {
+    ws.send(JSON.stringify({ type: 'set_quality', quality: 65 }));
+  } else if (mode === 'quality') {
+    ws.send(JSON.stringify({ type: 'set_quality', quality: 85 }));
+    alert('🎨 Kalite Öncelikli Mod: Yüksek netlik ve detaylı görüntü aktif.');
+  }
+}
+
+// ==================== RECENT CONNECTIONS (ÖNCEKİ BAĞLANTILAR) ====================
+function getRecentConnections() {
+  try {
+    return JSON.parse(localStorage.getItem('oxidesk_recent_connections') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function addRecentConnection(target, name, pin) {
+  let list = getRecentConnections();
+  list = list.filter(item => item.target !== target);
+  list.unshift({
+    target,
+    name: name || target,
+    pin: pin || '',
+    timestamp: Date.now()
+  });
+  if (list.length > 8) list = list.slice(0, 8);
+  localStorage.setItem('oxidesk_recent_connections', JSON.stringify(list));
+  renderRecentConnections();
+}
+
+function renderRecentConnections() {
+  const container = document.getElementById('recent-connections-grid');
+  if (!container) return;
+  const list = getRecentConnections();
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; padding: 16px; text-align: center; color: var(--text-muted); background: var(--card-bg); border-radius: 8px; border: 1px dashed var(--card-border); font-size: 0.8rem;">
+        Henüz önceki bağlantı geçmişi bulunmuyor. Bir cihaza bağlandığınızda burada listelenecektir.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = list.map(item => {
+    const formattedId = formatApexId(item.target);
+    const dateStr = new Date(item.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return `
+      <div class="fluent-card" style="padding: 12px; display: flex; flex-direction: column; gap: 8px; border-radius: 8px; background: var(--card-bg); border: 1px solid var(--card-border);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <strong style="font-size: 0.84rem; color: var(--text-main);">${escapeHtml(item.name)}</strong>
+            <div style="font-family: monospace; font-size: 0.78rem; color: #38bdf8; margin-top: 2px;">${formattedId}</div>
+          </div>
+          <span class="badge badge-success" style="font-size: 0.65rem;">🟢 Kayıtlı</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 6px; border-top: 1px solid var(--card-border);">
+          <span style="font-size: 0.7rem; color: var(--text-muted);">${dateStr}</span>
+          <button class="btn btn-fluent-primary btn-xs" onclick="quickConnectRecent('${item.target}', '${item.pin}')">
+            ⚡ Bağlan
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function quickConnectRecent(target, pin) {
+  document.getElementById('target-input').value = target;
+  document.getElementById('pin-input').value = pin || '';
+  initiateConnection();
+}
+
+// ==================== ADMIN PASSWORD & UNATTENDED ACCESS ====================
+async function checkAdminPasswordStatus() {
+  const badge = document.getElementById('admin-password-badge');
+  if (!badge) return;
+  try {
+    const res = await fetch('/api/admin-password');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.is_set) {
+        badge.className = 'badge badge-success';
+        badge.innerText = 'Parola Belirlendi (Aktif)';
+      } else {
+        badge.className = 'badge badge-offline';
+        badge.innerText = 'Henüz Belirlenmedi';
+      }
+    }
+  } catch (e) {}
+}
+
+async function saveAdminPassword() {
+  const input = document.getElementById('setting-admin-password');
+  if (!input) return;
+  const pwd = input.value.trim();
+  if (!pwd) {
+    alert('Lütfen geçerli bir yönetici parolası girin.');
+    return;
+  }
+  try {
+    const res = await fetch('/api/admin-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwd })
+    });
+    if (res.ok) {
+      input.value = '';
+      alert('Yönetici parolası başarıyla kaydedildi! Artık OxiDesk ID + Bu Parola ile karşı tarafta onay olmadan gözetimsiz bağlanabilirsiniz.');
+      checkAdminPasswordStatus();
+    }
+  } catch (e) {
+    alert('Kaydedilirken hata oluştu: ' + e);
+  }
+}
+
+// ==================== WAN RENDEZVOUS SERVER ====================
+async function checkRendezvousStatus() {
+  const badge = document.getElementById('rendezvous-badge');
+  const input = document.getElementById('setting-rendezvous-url');
+  if (!badge) return;
+  try {
+    const res = await fetch('/api/rendezvous/status');
+    if (res.ok) {
+      const data = await res.json();
+      if (input && data.server_url) input.value = data.server_url;
+      badge.innerText = data.status || 'Aktif';
+      badge.className = 'badge badge-success';
+    }
+  } catch (e) {}
+}
+
+async function saveRendezvousUrl() {
+  const input = document.getElementById('setting-rendezvous-url');
+  if (!input) return;
+  const url = input.value.trim();
+  if (!url) return;
+  try {
+    const res = await fetch('/api/rendezvous/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ server_url: url })
+    });
+    if (res.ok) {
+      alert(`WAN Rendezvous Sunucusu kaydedildi: ${url}`);
+      checkRendezvousStatus();
+    }
+  } catch (e) {
+    alert('Hata: ' + e);
+  }
+}
+
 
 

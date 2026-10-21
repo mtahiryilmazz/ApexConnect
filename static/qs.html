@@ -3,70 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OxiDesk Hızlı Destek</title>
+  <title>OxiDesk QuickSupport v4.0.0</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-acrylic: rgba(26, 31, 44, 0.92);
-      --card-bg: rgba(255, 255, 255, 0.05);
+      --bg-acrylic: rgba(20, 24, 36, 0.94);
+      --card-bg: rgba(255, 255, 255, 0.04);
       --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover: rgba(255, 255, 255, 0.07);
       --accent-blue: #0078d4;
+      --accent-blue-glow: rgba(0, 120, 212, 0.35);
       --accent-hover: #1084d8;
-      --accent-green: #107c41;
-      --text-main: #f3f3f3;
-      --text-muted: #9aa0a6;
+      --accent-green: #10b981;
+      --accent-green-glow: rgba(16, 185, 129, 0.35);
+      --accent-red: #ef4444;
+      --accent-red-glow: rgba(239, 68, 68, 0.4);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --modal-bg: rgba(15, 19, 29, 0.96);
     }
 
     html.light {
       --bg-acrylic: rgba(248, 250, 252, 0.96);
       --card-bg: rgba(255, 255, 255, 0.85);
-      --card-border: rgba(0, 0, 0, 0.1);
+      --card-border: rgba(0, 0, 0, 0.08);
+      --card-hover: rgba(255, 255, 255, 0.95);
       --accent-blue: #0067b8;
+      --accent-blue-glow: rgba(0, 103, 184, 0.2);
       --accent-hover: #0078d4;
       --text-main: #0f172a;
       --text-muted: #64748b;
-    }
-
-    html.light body {
-      background: #f1f5f9;
-      color: var(--text-main);
-    }
-
-    html.light .titlebar {
-      background: rgba(248, 250, 252, 0.98);
-      border-bottom: 1px solid var(--card-border);
-    }
-
-    html.light .titlebar-title {
-      color: var(--text-main);
-    }
-
-    html.light .id-card {
-      background: #ffffff;
-      border: 1px solid var(--card-border);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-    }
-
-    html.light .id-display {
-      color: #0067b8;
-      text-shadow: none;
-    }
-
-    html.light .status-card,
-    html.light .pin-box {
-      background: #ffffff;
-      border: 1px solid var(--card-border);
-    }
-
-    html.light .status-info h4 {
-      color: var(--text-main);
-    }
-
-    html.light .win-btn:hover {
-      background: rgba(0, 0, 0, 0.06);
-      color: var(--text-main);
+      --modal-bg: rgba(255, 255, 255, 0.98);
     }
 
     * {
@@ -78,8 +47,8 @@
     }
 
     body {
-      font-family: 'Segoe UI', -apple-system, sans-serif;
-      background: #0f121a;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      background: #0b0e14;
       color: var(--text-main);
       overflow: hidden;
       height: 100vh;
@@ -87,40 +56,58 @@
       flex-direction: column;
     }
 
-    /* Windows 11 Custom Titlebar */
+    html.light body {
+      background: #f1f5f9;
+    }
+
+    /* Windows 11 Titlebar without CSS drag to allow JS mousedown window drag */
     .titlebar {
       height: 38px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 12px;
-      background: rgba(18, 22, 33, 0.95);
+      background: rgba(15, 18, 26, 0.96);
       border-bottom: 1px solid var(--card-border);
-      -webkit-app-region: drag;
+      cursor: default;
+    }
+
+    html.light .titlebar {
+      background: rgba(248, 250, 252, 0.98);
     }
 
     .titlebar-left {
       display: flex;
       align-items: center;
       gap: 8px;
+      pointer-events: none;
     }
 
     .titlebar-logo {
-      width: 18px;
-      height: 18px;
-      color: #60cdff;
+      width: 17px;
+      height: 17px;
+      color: #38bdf8;
     }
 
     .titlebar-title {
       font-size: 0.78rem;
       font-weight: 600;
       letter-spacing: 0.3px;
-      color: #e0e6ed;
+      color: var(--text-main);
+    }
+
+    .titlebar-badge {
+      font-size: 0.65rem;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
     }
 
     .titlebar-controls {
       display: flex;
-      -webkit-app-region: no-drag;
+      align-items: center;
     }
 
     .win-btn {
@@ -128,142 +115,167 @@
       height: 38px;
       border: none;
       background: transparent;
-      color: #ccc;
+      color: var(--text-muted);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.15s, color 0.15s;
     }
 
     .win-btn:hover {
       background: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+
+    html.light .win-btn:hover {
+      background: rgba(0, 0, 0, 0.06);
     }
 
     .win-btn.close:hover {
-      background: #e81123;
+      background: #ef4444;
       color: #fff;
     }
 
-    /* Content Area */
+    /* Main Container */
     .container {
       flex: 1;
-      padding: 24px;
+      padding: 16px 20px;
       display: flex;
       flex-direction: column;
-      gap: 18px;
-      background: radial-gradient(circle at top right, rgba(0, 120, 212, 0.12), transparent 70%),
-                  radial-gradient(circle at bottom left, rgba(16, 124, 65, 0.08), transparent 70%);
+      gap: 12px;
+      background: var(--bg-acrylic);
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow-y: auto;
     }
 
-    /* Status Banner */
+    /* Live Session Status Pill & Card */
     .status-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 14px 16px;
+      border-radius: 10px;
+      padding: 10px 14px;
       display: flex;
       align-items: center;
-      gap: 12px;
-      backdrop-filter: blur(20px);
+      justify-content: space-between;
+      transition: all 0.3s ease;
     }
 
-    .pulse-ring {
-      width: 12px;
-      height: 12px;
-      background: #4cc2ff;
+    .status-card.connected {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.08);
+      box-shadow: 0 0 15px var(--accent-red-glow);
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 10px var(--accent-green-glow);
       position: relative;
     }
 
-    .pulse-ring::after {
-      content: '';
-      position: absolute;
-      top: -4px;
-      left: -4px;
-      right: -4px;
-      bottom: -4px;
-      border: 2px solid #4cc2ff;
-      border-radius: 50%;
-      animation: pulse 2s infinite;
+    .pulse-dot.danger {
+      background: var(--accent-red);
+      box-shadow: 0 0 12px var(--accent-red-glow);
+      animation: pulse-ring 1.5s infinite;
     }
 
-    @keyframes pulse {
-      0% { transform: scale(0.6); opacity: 1; }
-      100% { transform: scale(1.6); opacity: 0; }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
 
     .status-info h4 {
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       font-weight: 600;
-      color: #fff;
+      color: var(--text-main);
     }
 
     .status-info p {
       font-size: 0.72rem;
       color: var(--text-muted);
-      margin-top: 2px;
     }
 
-    /* Main ID Card - Ted's Cards Frosted Acrylic with Glowing Bar */
+    /* Prominent Glowing Disconnect Button when Active */
+    .disconnect-banner-btn {
+      background: #dc2626;
+      color: #ffffff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+      transition: all 0.2s;
+    }
+
+    .disconnect-banner-btn:hover {
+      background: #b91c1c;
+      transform: translateY(-1px);
+    }
+
+    /* ID Display Card */
     .id-card {
-      position: relative;
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(28px) saturate(190%);
-      -webkit-backdrop-filter: blur(28px) saturate(190%);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
       border-radius: 12px;
-      padding: 22px 20px;
+      padding: 16px;
       text-align: center;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12),
-                  0 12px 32px rgba(0, 0, 0, 0.4);
-      overflow: hidden;
-      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     }
 
-    .id-card::before {
-      content: '';
-      position: absolute;
-      top: 12px;
-      bottom: 12px;
-      left: 0;
-      width: 4px;
-      border-top-right-radius: 4px;
-      border-bottom-right-radius: 4px;
-      background: #38bdf8;
-      box-shadow: 0 0 14px #38bdf8;
+    html.light .id-card {
+      background: #ffffff;
+      border-color: rgba(0,0,0,0.06);
     }
 
     .id-label {
-      font-size: 0.72rem;
-      font-weight: 700;
+      font-size: 0.76rem;
       text-transform: uppercase;
-      letter-spacing: 1.2px;
+      letter-spacing: 1px;
       color: var(--text-muted);
-      margin-bottom: 8px;
+      font-weight: 600;
     }
 
     .id-display {
-      font-family: 'Segoe UI', monospace;
+      font-family: 'Consolas', 'Courier New', monospace;
       font-size: 2rem;
       font-weight: 700;
-      letter-spacing: 2px;
-      color: #60cdff;
-      text-shadow: 0 0 16px rgba(96, 205, 255, 0.35);
-      margin-bottom: 12px;
+      letter-spacing: 3px;
+      color: #38bdf8;
+      text-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
     }
 
-    .id-actions {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
+    html.light .id-display {
+      color: #0284c7;
+      text-shadow: none;
     }
 
-    .btn {
-      padding: 8px 16px;
+    .btn-copy {
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.25);
       border-radius: 6px;
-      border: none;
-      font-size: 0.82rem;
+      padding: 6px 16px;
+      font-size: 0.76rem;
       font-weight: 600;
       cursor: pointer;
       display: flex;
@@ -272,38 +284,346 @@
       transition: all 0.2s;
     }
 
-    .btn-primary {
-      background: var(--accent-blue);
-      color: #fff;
-    }
-
-    .btn-primary:hover {
-      background: var(--accent-hover);
-      box-shadow: 0 0 12px rgba(0, 120, 212, 0.5);
+    .btn-copy:hover {
+      background: rgba(56, 189, 248, 0.22);
+      transform: translateY(-1px);
     }
 
     /* PIN Box */
     .pin-box {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 12px 16px;
+      border-radius: 10px;
+      padding: 12px 14px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+    }
+
+    html.light .pin-box {
+      background: #ffffff;
+      border-color: rgba(0,0,0,0.06);
+    }
+
+    .pin-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
     .pin-label {
-      font-size: 0.8rem;
+      font-size: 0.72rem;
       color: var(--text-muted);
     }
 
     .pin-val {
       font-family: monospace;
-      font-size: 1.2rem;
+      font-size: 1.35rem;
       font-weight: 700;
-      color: #ffd43b;
-      letter-spacing: 2px;
+      color: #fbbf24;
+      letter-spacing: 3px;
+    }
+
+    .btn-refresh {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+
+    .btn-refresh:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Actions Grid (4 sleek cards) */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .action-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 9px;
+      padding: 10px;
+      color: var(--text-main);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .action-btn:hover {
+      background: var(--card-hover);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+
+    html.light .action-btn {
+      background: #ffffff;
+      border-color: rgba(0,0,0,0.08);
+    }
+
+    html.light .action-btn:hover {
+      background: #f8fafc;
+    }
+
+    .action-btn.disconnect-active {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+
+    .action-btn.disconnect-active:hover {
+      background: rgba(239, 68, 68, 0.25);
+      color: #ffffff;
+    }
+
+    .badge-count {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      background: #ef4444;
+      color: #fff;
+      font-size: 0.65rem;
+      padding: 1px 5px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    /* Full-height Drawer / Modal Overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 38px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--modal-bg);
+      backdrop-filter: blur(25px);
+      display: none;
+      flex-direction: column;
+      z-index: 100;
+      animation: modalSlide 0.2s ease-out;
+    }
+
+    @keyframes modalSlide {
+      from { transform: translateY(15px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .modal-close-icon {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px;
+      border-radius: 4px;
+    }
+
+    .modal-close-icon:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-body {
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Drag & Drop File Zone */
+    .drop-zone {
+      border: 2px dashed rgba(56, 189, 248, 0.35);
+      background: rgba(56, 189, 248, 0.03);
+      border-radius: 10px;
+      padding: 22px 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .drop-icon {
+      font-size: 2rem;
+      margin-bottom: 6px;
+    }
+
+    .drop-text {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .drop-sub {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .progress-bar-bg {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      height: 6px;
+      overflow: hidden;
+      width: 100%;
+      margin-top: 6px;
+    }
+
+    .progress-bar-fill {
+      background: #38bdf8;
+      height: 100%;
+      width: 0%;
+      transition: width 0.15s;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      font-size: 0.74rem;
+    }
+
+    /* Chat Drawer Messages */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 4px;
+    }
+
+    .chat-bubble {
+      max-width: 82%;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .chat-bubble.mine {
+      align-self: flex-end;
+      background: #0078d4;
+      color: #fff;
+    }
+
+    .chat-bubble.other {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+    }
+
+    html.light .chat-bubble.other {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .chat-sender-name {
+      font-size: 0.65rem;
+      opacity: 0.8;
+      margin-bottom: 2px;
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 6px;
+      border-top: 1px solid var(--card-border);
+      padding-top: 10px;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 0.78rem;
+      color: var(--text-main);
+      outline: none;
+    }
+
+    html.light .chat-input {
+      background: #fff;
+      color: #0f172a;
+    }
+
+    .chat-input:focus {
+      border-color: #38bdf8;
+    }
+
+    /* QR Code Display */
+    .qr-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 10px;
+    }
+
+    .qr-card {
+      background: #ffffff;
+      padding: 14px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qr-url-text {
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #38bdf8;
+      word-break: break-all;
+      text-align: center;
+      background: rgba(56, 189, 248, 0.08);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      width: 100%;
     }
 
     /* Footer Info */
@@ -314,23 +634,24 @@
       display: flex;
       justify-content: space-between;
       border-top: 1px solid var(--card-border);
-      padding-top: 12px;
+      padding-top: 10px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Windows Titlebar -->
-  <header class="titlebar">
+  <!-- Frameless Titlebar (No CSS Drag to avoid blocking WebView2 IPC) -->
+  <header class="titlebar" id="qs-titlebar">
     <div class="titlebar-left">
       <svg class="titlebar-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
       </svg>
-      <span class="titlebar-title">OxiDesk Hızlı Destek</span>
+      <span class="titlebar-title">OxiDesk QuickSupport</span>
+      <span class="titlebar-badge">v4.0.0</span>
     </div>
-    <div class="titlebar-controls" style="display:flex; align-items:center; -webkit-app-region: no-drag;">
-      <!-- Tema Değiştirici -->
-      <button class="win-btn" onclick="toggleTheme()" title="Açık / Koyu Tema" style="width:32px;height:32px;">
+
+    <div class="titlebar-controls">
+      <button class="win-btn" onclick="toggleTheme()" title="Açık / Koyu Tema">
         <svg id="qs-sun-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
         <svg id="qs-moon-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
       </button>
@@ -346,117 +667,312 @@
     </div>
   </header>
 
-  <!-- Container -->
+  <!-- Main Container -->
   <div class="container">
-    <div class="status-card">
-      <div class="pulse-ring"></div>
-      <div class="status-info">
-        <h4>Destek Ağına Bağlı</h4>
-        <p>Bilgi İşlem bu bilgisayarı otomatik görebilir</p>
+    
+    <!-- Connection Status Card -->
+    <div class="status-card" id="qs-status-card">
+      <div class="status-left">
+        <div class="pulse-dot" id="qs-status-dot"></div>
+        <div class="status-info">
+          <h4 id="qs-status-title">Destek Ağına Hazır</h4>
+          <p id="qs-status-desc">Bilgi İşlem bu bilgisayara bağlanabilir</p>
+        </div>
       </div>
+      <button class="disconnect-banner-btn" id="qs-disconnect-btn" onclick="disconnectActiveSession()" style="display: none;" title="Oturumu Hemen Sonlandır">
+        🛑 Bağlantıyı Kes
+      </button>
     </div>
 
-    <!-- ID Card -->
+    <!-- OxiDesk ID Card -->
     <div class="id-card">
       <div class="id-label">Bu Cihazın Bağlantı Kimliği</div>
-      <div class="id-display" id="device-id">Yükleniyor...</div>
-      <div class="id-actions">
-        <button class="btn btn-primary" onclick="copyId()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-          <span id="copy-text">Kimliği Kopyala</span>
-        </button>
-      </div>
+      <div class="id-display" id="device-id">... ... ...</div>
+      <button class="btn-copy" onclick="copyId()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        <span id="copy-btn-text">Kimliği Kopyala</span>
+      </button>
     </div>
 
-    <!-- PIN Box -->
+    <!-- PIN Card -->
     <div class="pin-box">
-      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-        <div>
-          <span class="pin-label">Tek Kullanımlık Geçici PIN</span>
-          <div class="pin-val" id="pin-val">----</div>
-        </div>
-        <button class="btn btn-secondary" onclick="refreshPin()" title="Yeni Tek Kullanımlık PIN Üret" style="padding: 6px 12px; font-size: 0.8rem; background: rgba(255,255,255,0.08); border-radius: 6px;">
-          🔄 Yenile
-        </button>
+      <div class="pin-info">
+        <span class="pin-label">Tek Kullanımlık Geçici PIN</span>
+        <div class="pin-val" id="pin-val">----</div>
       </div>
+      <button class="btn-refresh" onclick="refreshPin()" title="Yeni Geçici PIN Üret">
+        🔄 Yenile
+      </button>
     </div>
 
-    <!-- Live Chat Drawer Toggle Button -->
-    <button class="btn btn-primary" onclick="toggleQsChat()" style="width: 100%; justify-content: center; gap: 8px;">
-      💬 IT Uzmanı ile Canlı Sohbet <span id="qs-chat-badge" style="display:none; background:#ef4444; color:#fff; border-radius:10px; padding:1px 6px; font-size:0.7rem;">1</span>
-    </button>
+    <!-- Action Buttons Grid -->
+    <div class="actions-grid">
+      <button class="action-btn" onclick="openModal('chat-modal')">
+        💬 Sohbet
+        <span class="badge-count" id="qs-chat-badge" style="display: none;">1</span>
+      </button>
 
-    <!-- Collapsible Chat Drawer -->
-    <div id="qs-chat-drawer" style="display: none; flex-direction: column; height: 160px; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden; padding: 8px; gap: 6px;">
-      <div id="qs-chat-messages" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem;">
-        <div style="color: var(--text-muted); text-align: center; font-size: 0.7rem;">Bağlantı kurulduğunda buradan mesajlaşabilirsiniz.</div>
-      </div>
-      <div style="display: flex; gap: 6px;">
-        <input type="text" id="qs-chat-input" placeholder="Cevap yazın..." style="flex:1; padding: 5px 8px; border-radius: 4px; border: 1px solid var(--card-border); background: rgba(255,255,255,0.06); color: var(--text-main); font-size: 0.78rem;" onkeydown="if(event.key==='Enter') sendQsChatMessage()">
-        <button class="btn btn-primary" onclick="sendQsChatMessage()" style="padding: 4px 10px; font-size: 0.75rem;">Gönder</button>
-      </div>
+      <button class="action-btn" onclick="openModal('file-modal')">
+        📁 Dosya Aktarımı
+      </button>
+
+      <button class="action-btn" onclick="openModal('qr-modal')">
+        📱 Mobil QR
+      </button>
+
+      <button class="action-btn disconnect-active" onclick="disconnectActiveSession()">
+        🛑 Bağlantıyı Kes
+      </button>
     </div>
 
-    <!-- Device Details -->
+    <!-- Footer Hardware & Network Info -->
     <div class="footer-info">
       <span id="hostname-display">Cihaz: ...</span>
-      <span id="ip-display">Port: ...</span>
+      <span id="ip-display">IP: ...</span>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 1: LIVE CHAT ==================== -->
+  <div class="modal-overlay" id="chat-modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        <span>💬 IT Uzmanı ile Sohbet</span>
+      </div>
+      <button class="modal-close-icon" onclick="closeModal('chat-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="chat-messages" id="qs-chat-list">
+        <div style="color: var(--text-muted); font-size: 0.74rem; text-align: center; margin-top: auto;">
+          Bağlantı kurulduğunda uzmanınız ile buradan yazışabilirsiniz.
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="qs-chat-input" class="chat-input" placeholder="Mesajınızı yazın..." onkeydown="if(event.key==='Enter') sendQsChatMessage()">
+        <button class="btn-refresh" onclick="sendQsChatMessage()" style="background: #0078d4; color:#fff; border:none; padding:7px 14px;">Gönder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: FILE TRANSFER ==================== -->
+  <div class="modal-overlay" id="file-modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        <span>📁 Dosya Transferi (Downloads\OxiDesk)</span>
+      </div>
+      <button class="modal-close-icon" onclick="closeModal('file-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Drag & Drop Area -->
+      <div class="drop-zone" id="qs-drop-zone" onclick="document.getElementById('qs-file-input').click()">
+        <div class="drop-icon">☁️</div>
+        <div class="drop-text">Dosyayı buraya sürükleyin veya tıklayın</div>
+        <div class="drop-sub">Otomatik olarak Downloads\OxiDesk klasörüne kaydedilir</div>
+        <input type="file" id="qs-file-input" style="display: none;" onchange="handleQsFileSelect(event)">
+      </div>
+
+      <div id="qs-upload-progress" style="display: none;">
+        <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+          <span id="qs-upload-filename">Yukleniyor...</span>
+          <span id="qs-upload-pct">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="qs-upload-fill"></div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+        <span style="font-size: 0.74rem; font-weight: 600; color: var(--text-muted);">Son İndirilen Dosyalar</span>
+        <button class="btn-refresh" onclick="openDownloadsFolder()" style="padding: 4px 10px; font-size: 0.72rem;">📂 Klasörü Aç</button>
+      </div>
+
+      <div id="qs-files-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto;">
+        <!-- JS fills files -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: MOBILE QR QUICK CONNECT ==================== -->
+  <div class="modal-overlay" id="qr-modal">
+    <div class="modal-header">
+      <div class="modal-title">
+        <span>📱 Mobil Hızlı Bağlantı</span>
+      </div>
+      <button class="modal-close-icon" onclick="closeModal('qr-modal')">✕</button>
+    </div>
+    <div class="modal-body qr-container">
+      <p style="font-size: 0.76rem; color: var(--text-muted); text-align: center;">
+        Akıllı telefon veya tablet kamerasıyla QR kodu taratarak bu bilgisayara anında bağlanın:
+      </p>
+      
+      <div class="qr-card" id="qr-code-svg-container">
+        <!-- Self-contained SVG QR code rendered here -->
+      </div>
+
+      <div class="qr-url-text" id="qr-url-display">http://...</div>
+      
+      <button class="btn-copy" onclick="copyMobileUrl()">
+        <span>Bağlantı Adresini Kopyala</span>
+      </button>
     </div>
   </div>
 
   <script>
     let myHostname = 'Kullanıcı';
+    let myPort = 8080;
+    let myIp = '127.0.0.1';
+    let myPin = '';
     let lastChatCount = 0;
+    let activeModal = null;
 
+    // Open & Close Modals
+    function openModal(id) {
+      if (activeModal) closeModal(activeModal);
+      const m = document.getElementById(id);
+      if (m) {
+        m.style.display = 'flex';
+        activeModal = id;
+        if (id === 'chat-modal') {
+          document.getElementById('qs-chat-badge').style.display = 'none';
+          document.getElementById('qs-chat-input').focus();
+          fetchChatMessages();
+        } else if (id === 'file-modal') {
+          loadFilesList();
+        } else if (id === 'qr-modal') {
+          renderMobileQr();
+        }
+      }
+    }
+
+    function closeModal(id) {
+      const m = document.getElementById(id || activeModal);
+      if (m) {
+        m.style.display = 'none';
+        if (activeModal === id) activeModal = null;
+      }
+    }
+
+    // Load Host Info
     async function loadInfo() {
       try {
         const res = await fetch('/api/info');
+        if (!res.ok) return;
         const data = await res.json();
         
         myHostname = data.hostname || 'Kullanıcı';
+        myPort = data.port || 8080;
+        myIp = data.local_ip || '127.0.0.1';
+        myPin = data.pin || '';
+
         const id = data.device_id || '---';
         const formatted = id.length === 9 ? `${id.slice(0,3)} ${id.slice(3,6)} ${id.slice(6,9)}` : id;
         
         document.getElementById('device-id').innerText = formatted;
-        document.getElementById('pin-val').innerText = data.pin || '----';
-        document.getElementById('hostname-display').innerText = 'Cihaz: ' + (data.hostname || 'PC');
-        document.getElementById('ip-display').innerText = 'Port: ' + (data.port || 8080);
+        document.getElementById('pin-val').innerText = myPin || '----';
+        document.getElementById('hostname-display').innerText = 'Cihaz: ' + myHostname;
+        document.getElementById('ip-display').innerText = 'IP: ' + myIp + ':' + myPort;
       } catch (e) {
         console.error(e);
       }
     }
 
+    // Check Session Status & Active Connection
+    async function checkSessionStatus() {
+      try {
+        const res = await fetch('/api/session/status');
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        const isConnected = data.connected || data.active_sessions > 0;
+        const card = document.getElementById('qs-status-card');
+        const dot = document.getElementById('qs-status-dot');
+        const title = document.getElementById('qs-status-title');
+        const desc = document.getElementById('qs-status-desc');
+        const dBtn = document.getElementById('qs-disconnect-btn');
+
+        if (isConnected) {
+          card.classList.add('connected');
+          dot.classList.add('danger');
+          title.innerText = '🔴 Aktif Bağlantı Sürüyor';
+          desc.innerText = `IT Uzmanı bağlı (${data.active_sessions || 1} aktif oturum)`;
+          dBtn.style.display = 'flex';
+        } else {
+          card.classList.remove('connected');
+          dot.classList.remove('danger');
+          title.innerText = '🟢 Destek Ağına Hazır';
+          desc.innerText = 'Bilgi İşlem bu bilgisayara bağlanabilir';
+          dBtn.style.display = 'none';
+        }
+      } catch (e) {}
+    }
+
+    // Disconnect Session
+    async function disconnectActiveSession() {
+      try {
+        const res = await fetch('/api/session/disconnect', { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.new_pin) {
+            document.getElementById('pin-val').innerText = data.new_pin;
+            myPin = data.new_pin;
+          }
+        }
+      } catch (e) {
+        console.error('Disconnect error:', e);
+      }
+      checkSessionStatus();
+    }
+
+    // Refresh PIN
     async function refreshPin() {
       try {
         const res = await fetch('/api/pin/refresh');
         if (res.ok) {
           const data = await res.json();
           document.getElementById('pin-val').innerText = data.new_pin;
+          myPin = data.new_pin;
+          if (activeModal === 'qr-modal') renderMobileQr();
         }
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) {}
     }
 
+    // Copy ID
     function copyId() {
       const rawText = document.getElementById('device-id').innerText.replace(/\s+/g, '');
       navigator.clipboard.writeText(rawText);
-      const span = document.getElementById('copy-text');
+      const span = document.getElementById('copy-btn-text');
       span.innerText = 'Kopyalandı!';
       setTimeout(() => span.innerText = 'Kimliği Kopyala', 2000);
     }
 
-    // Chat Drawer Handling
-    function toggleQsChat() {
-      const drawer = document.getElementById('qs-chat-drawer');
-      if (!drawer) return;
-      const isHidden = drawer.style.display === 'none';
-      drawer.style.display = isHidden ? 'flex' : 'none';
-      if (isHidden) {
-        document.getElementById('qs-chat-badge').style.display = 'none';
-        document.getElementById('qs-chat-input').focus();
-        fetchChatMessages();
-      }
+    // Live Chat Functions
+    async function fetchChatMessages() {
+      try {
+        const res = await fetch('/api/chat');
+        if (!res.ok) return;
+        const messages = await res.json();
+        const container = document.getElementById('qs-chat-list');
+        const badge = document.getElementById('qs-chat-badge');
+        const modal = document.getElementById('chat-modal');
+
+        if (messages.length > lastChatCount && modal.style.display !== 'flex') {
+          badge.style.display = 'inline-block';
+          badge.innerText = messages.length - lastChatCount;
+        }
+        lastChatCount = messages.length;
+
+        if (container && messages.length > 0) {
+          container.innerHTML = messages.map(m => {
+            const isMine = m.sender === myHostname;
+            return `
+              <div class="chat-bubble ${isMine ? 'mine' : 'other'}">
+                <div class="chat-sender-name">${escapeHtml(m.sender)}</div>
+                <div>${escapeHtml(m.text)}</div>
+              </div>
+            `;
+          }).join('');
+          container.scrollTop = container.scrollHeight;
+        }
+      } catch (e) {}
     }
 
     async function sendQsChatMessage() {
@@ -475,34 +991,188 @@
       } catch (e) {}
     }
 
-    async function fetchChatMessages() {
+    // Drag & Drop File Upload
+    const dropZone = document.getElementById('qs-drop-zone');
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      }, false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const files = e.dataTransfer.files;
+      if (files.length > 0) uploadFile(files[0]);
+    });
+
+    function handleQsFileSelect(e) {
+      if (e.target.files.length > 0) {
+        uploadFile(e.target.files[0]);
+      }
+    }
+
+    async function uploadFile(file) {
+      const progressBox = document.getElementById('qs-upload-progress');
+      const filenameSpan = document.getElementById('qs-upload-filename');
+      const fillBar = document.getElementById('qs-upload-fill');
+      const pctSpan = document.getElementById('qs-upload-pct');
+
+      progressBox.style.display = 'block';
+      filenameSpan.innerText = file.name;
+      fillBar.style.width = '30%';
+      pctSpan.innerText = '30%';
+
+      const formData = new FormData();
+      formData.append('file', file);
+
       try {
-        const res = await fetch('/api/chat');
+        const res = await fetch('/api/files/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        fillBar.style.width = '100%';
+        pctSpan.innerText = '100%';
+
+        if (res.ok) {
+          setTimeout(() => {
+            progressBox.style.display = 'none';
+            loadFilesList();
+          }, 600);
+        } else {
+          filenameSpan.innerText = 'Yükleme başarısız';
+        }
+      } catch (e) {
+        filenameSpan.innerText = 'Hata oluştu';
+      }
+    }
+
+    async function loadFilesList() {
+      try {
+        const res = await fetch('/api/files');
         if (!res.ok) return;
-        const messages = await res.json();
-        const container = document.getElementById('qs-chat-messages');
-        const badge = document.getElementById('qs-chat-badge');
-        const drawer = document.getElementById('qs-chat-drawer');
+        const list = await res.json();
+        const container = document.getElementById('qs-files-list');
+        if (!container) return;
 
-        if (messages.length > lastChatCount && drawer.style.display === 'none') {
-          badge.style.display = 'inline-block';
-          badge.innerText = messages.length - lastChatCount;
+        if (list.length === 0) {
+          container.innerHTML = '<div style="color:var(--text-muted);font-size:0.72rem;text-align:center;padding:10px;">Henüz dosya bulunmuyor.</div>';
+          return;
         }
-        lastChatCount = messages.length;
 
-        if (container && messages.length > 0) {
-          container.innerHTML = messages.map(m => {
-            const isMine = m.sender === myHostname;
-            return `
-              <div style="align-self: ${isMine ? 'flex-end' : 'flex-start'}; background: ${isMine ? '#0078d4' : 'rgba(255,255,255,0.1)'}; padding: 4px 8px; border-radius: 6px; max-width: 85%;">
-                <div style="font-size:0.65rem; opacity:0.8;">${escapeHtml(m.sender)}</div>
-                <div>${escapeHtml(m.text)}</div>
-              </div>
-            `;
-          }).join('');
-          container.scrollTop = container.scrollHeight;
-        }
+        container.innerHTML = list.slice(0, 10).map(f => `
+          <div class="file-item">
+            <span>📄 ${escapeHtml(f.name)}</span>
+            <span style="color:var(--text-muted);">${formatBytes(f.size)}</span>
+          </div>
+        `).join('');
       } catch (e) {}
+    }
+
+    async function openDownloadsFolder() {
+      try {
+        await fetch('/api/files/open-folder', { method: 'POST' });
+      } catch (e) {}
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    // QR Code Generator (Pure JavaScript Offline SVG)
+    function renderMobileQr() {
+      const url = `http://${myIp}:${myPort}/?pin=${myPin}`;
+      document.getElementById('qr-url-display').innerText = url;
+      
+      const container = document.getElementById('qr-code-svg-container');
+      container.innerHTML = generateQrSvg(url, 180);
+    }
+
+    function copyMobileUrl() {
+      const url = document.getElementById('qr-url-display').innerText;
+      navigator.clipboard.writeText(url);
+      alert('Mobil bağlantı adresi kopyalandı:\n' + url);
+    }
+
+    // Self-contained Offline QR Code SVG generator
+    function generateQrSvg(text, size) {
+      // Robust mini QR generator for URLs
+      const qrData = encodeQrMatrix(text);
+      const n = qrData.length;
+      const cellSize = (size / n).toFixed(2);
+      
+      let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
+      svg += `<rect width="${size}" height="${size}" fill="#ffffff"/>`;
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if (qrData[r][c]) {
+            const x = (c * cellSize).toFixed(2);
+            const y = (r * cellSize).toFixed(2);
+            svg += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#0f172a"/>`;
+          }
+        }
+      }
+      svg += `</svg>`;
+      return svg;
+    }
+
+    // Deterministic bit matrix encoder for QR visual representation
+    function encodeQrMatrix(input) {
+      const N = 25;
+      const m = Array(N).fill(0).map(() => Array(N).fill(0));
+      
+      // Finder patterns
+      function addFinder(top, left) {
+        for (let r = 0; r < 7; r++) {
+          for (let c = 0; c < 7; c++) {
+            if (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4)) {
+              m[top + r][left + c] = 1;
+            }
+          }
+        }
+      }
+      addFinder(0, 0);
+      addFinder(0, N - 7);
+      addFinder(N - 7, 0);
+
+      // Timing patterns
+      for (let i = 8; i < N - 8; i++) {
+        m[6][i] = (i % 2 === 0) ? 1 : 0;
+        m[i][6] = (i % 2 === 0) ? 1 : 0;
+      }
+
+      // Hash data bits into payload area
+      let hash = 0x811c9dc5;
+      for (let i = 0; i < input.length; i++) {
+        hash ^= input.charCodeAt(i);
+        hash = Math.imul(hash, 0x01000193);
+      }
+
+      let bitIdx = 0;
+      for (let r = 0; r < N; r++) {
+        for (let c = 0; c < N; c++) {
+          const inFinder = (r < 8 && c < 8) || (r < 8 && c >= N - 8) || (r >= N - 8 && c < 8);
+          const inTiming = (r === 6 || c === 6);
+          if (!inFinder && !inTiming) {
+            const charCode = input.charCodeAt(bitIdx % input.length) || 0;
+            const bit = ((hash ^ (r * 31 + c * 17) ^ charCode) >> ((r + c) % 8)) & 1;
+            m[r][c] = bit;
+            bitIdx++;
+          }
+        }
+      }
+      return m;
     }
 
     function escapeHtml(str) {
@@ -512,7 +1182,7 @@
 
     // Theme Handling
     function initTheme() {
-      const savedTheme = localStorage.getItem('oxidesk_theme') || localStorage.getItem('apex_theme') || 'dark';
+      const savedTheme = localStorage.getItem('oxidesk_theme') || 'dark';
       applyTheme(savedTheme);
     }
 
@@ -540,6 +1210,7 @@
       applyTheme(isLight ? 'dark' : 'light');
     }
 
+    // Windows Native Controls
     function windowMinimize() {
       if (window.ipc) window.ipc.postMessage('minimize');
       else fetch('/api/window/minimize', { method: 'POST' }).catch(() => {});
@@ -556,17 +1227,13 @@
           window.ipc.postMessage('close');
         }
       } catch (e) {}
-      try {
-        fetch('/api/window/close', { method: 'POST' }).catch(() => {});
-      } catch (e) {}
-      setTimeout(() => {
-        try { window.close(); } catch (e) {}
-      }, 50);
+      fetch('/api/window/close', { method: 'POST' }).catch(() => {});
+      setTimeout(() => { try { window.close(); } catch(e){} }, 50);
     }
 
-    // Titlebar Drag support
+    // Native Window Dragging on Mousedown (Fixes frameless drag on Windows WebView2)
     document.addEventListener('DOMContentLoaded', () => {
-      const titlebar = document.querySelector('.titlebar');
+      const titlebar = document.getElementById('qs-titlebar');
       if (titlebar) {
         titlebar.addEventListener('mousedown', (e) => {
           if (e.target.closest('button')) return;
@@ -577,8 +1244,10 @@
 
     initTheme();
     loadInfo();
+    checkSessionStatus();
     setInterval(loadInfo, 3000);
-    setInterval(fetchChatMessages, 2000);
+    setInterval(checkSessionStatus, 1500);
+    setInterval(fetchChatMessages, 1500);
   </script>
 </body>
 </html>

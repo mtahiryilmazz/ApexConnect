@@ -47,8 +47,14 @@ pub fn create_router(state: SharedState) -> Router {
         .route("/api/address-book/:id", delete(delete_address_book_handler))
         .route("/api/files", get(get_files_handler))
         .route("/api/files/download/:filename", get(download_file_handler))
+        .route("/api/files/upload", post(upload_file_handler))
         .route("/api/files/open-folder", get(open_folder_handler))
-        .route("/api/rendezvous/status", get(get_rendezvous_status_handler))
+        .route("/api/session/status", get(get_session_status_handler))
+        .route("/api/session/disconnect", post(disconnect_session_handler))
+        .route("/api/admin-password", get(get_admin_password_status_handler).post(set_admin_password_handler))
+        .route("/api/processes", get(get_processes_handler))
+        .route("/api/processes/kill", post(kill_process_handler))
+        .route("/api/rendezvous/status", get(get_rendezvous_status_handler).post(update_rendezvous_config_handler))
         .route("/api/resolve", get(resolve_target_handler))
         .route("/api/pin/refresh", get(refresh_pin_handler))
         .route("/api/audit", get(get_audit_handler))
@@ -228,6 +234,153 @@ async fn get_rendezvous_status_handler(State(_state): State<SharedState>) -> Jso
     })
 }
 
+#[derive(Deserialize)]
+struct UpdateRendezvousDto {
+    pub server_url: String,
+}
+
+async fn update_rendezvous_config_handler(
+    Json(payload): Json<UpdateRendezvousDto>,
+) -> Json<serde_json::Value> {
+    let url = payload.server_url.trim().to_string();
+    std::env::set_var("OXIDESK_RENDEZVOUS_SERVER", &url);
+    Json(serde_json::json!({ "status": "ok", "server_url": url }))
+}
+
+#[derive(Serialize)]
+struct SessionStatusDto {
+    is_active: bool,
+    count: u32,
+}
+
+async fn get_session_status_handler(State(state): State<SharedState>) -> Json<SessionStatusDto> {
+    let count = state.active_session_count.load(std::sync::atomic::Ordering::Relaxed);
+    Json(SessionStatusDto {
+        is_active: count > 0,
+        count,
+    })
+}
+
+async fn disconnect_session_handler(State(state): State<SharedState>) -> Json<serde_json::Value> {
+    let _ = state.session_kill_tx.send(());
+    // Auto-renew temporary PIN
+    {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        let new_pin: u16 = rng.gen_range(1000..9999);
+        let mut info = state.info.lock().unwrap();
+        info.pin = new_pin.to_string();
+    }
+    state.audit_logger.record(
+        "HOST_MANUAL_DISCONNECT",
+        "USER",
+        "127.0.0.1",
+        "Kullanici tarafindan uzaktan baglanti manuel olarak kesildi.",
+        true,
+    );
+    Json(serde_json::json!({ "status": "disconnected" }))
+}
+
+#[derive(Deserialize)]
+struct SetAdminPasswordDto {
+    password: Option<String>,
+}
+
+#[derive(Serialize)]
+struct AdminPasswordStatusDto {
+    has_password: bool,
+}
+
+async fn get_admin_password_status_handler(State(state): State<SharedState>) -> Json<AdminPasswordStatusDto> {
+    let has = state.admin_password.lock().unwrap().as_ref().map_or(false, |p| !p.is_empty());
+    Json(AdminPasswordStatusDto { has_password: has })
+}
+
+async fn set_admin_password_handler(
+    State(state): State<SharedState>,
+    Json(payload): Json<SetAdminPasswordDto>,
+) -> Json<serde_json::Value> {
+    let mut lock = state.admin_password.lock().unwrap();
+    let pwd = payload.password.filter(|s| !s.trim().is_empty());
+    *lock = pwd.clone();
+    crate::state::AppState::save_admin_password(pwd.as_deref());
+    state.audit_logger.record(
+        "ADMIN_PASSWORD_UPDATED",
+        "ADMIN",
+        "127.0.0.1",
+        "Gozetimsiz erisim icin sabit yonetici parolasi guncellendi.",
+        true,
+    );
+    Json(serde_json::json!({ "status": "ok", "has_password": pwd.is_some() }))
+}
+
+#[derive(Deserialize)]
+struct UploadFileDto {
+    name: String,
+    data: String,
+}
+
+async fn upload_file_handler(
+    State(state): State<SharedState>,
+    Json(payload): Json<UploadFileDto>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    use base64::Engine;
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(&payload.data)
+        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+    let saved = state.file_transfer.save_file(&payload.name, &bytes)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+    Ok(Json(serde_json::json!({ "status": "ok", "name": saved })))
+}
+
+#[derive(Serialize)]
+pub struct ProcessDto {
+    pub pid: u32,
+    pub name: String,
+    pub mem: String,
+}
+
+async fn get_processes_handler() -> Json<Vec<ProcessDto>> {
+    let mut list = Vec::new();
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(output) = std::process::Command::new("tasklist.exe")
+            .args(["/FO", "CSV", "/NH"])
+            .output()
+        {
+            let text = String::from_utf8_lossy(&output.stdout);
+            for line in text.lines() {
+                let parts: Vec<&str> = line.split("\",\"").collect();
+                if parts.len() >= 5 {
+                    let name = parts[0].trim_matches('"').to_string();
+                    let pid = parts[1].trim().parse::<u32>().unwrap_or(0);
+                    let mem = parts[4].trim_matches('"').trim().to_string();
+                    if pid > 0 {
+                        list.push(ProcessDto { pid, name, mem });
+                    }
+                }
+            }
+        }
+    }
+    list.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    Json(list)
+}
+
+#[derive(Deserialize)]
+struct KillProcessDto {
+    pid: u32,
+}
+
+async fn kill_process_handler(Json(payload): Json<KillProcessDto>) -> StatusCode {
+    #[cfg(target_os = "windows")]
+    {
+        let _ = std::process::Command::new("taskkill.exe")
+            .args(["/F", "/PID", &payload.pid.to_string()])
+            .output();
+    }
+    StatusCode::OK
+}
+
 async fn get_audit_handler(State(state): State<SharedState>) -> Json<Vec<crate::audit::AuditEvent>> {
     let events = state.audit_logger.get_recent_events();
     Json(events)
@@ -295,6 +448,7 @@ async fn send_chat_handler(
             .as_secs(),
     };
     state.chat_messages.lock().unwrap().push(msg.clone());
+    let _ = state.chat_tx.send(msg.clone());
     Json(msg)
 }
 
@@ -429,11 +583,21 @@ async fn ws_handler(
         false
     };
 
-    // If not trusted unattended device, verify PIN if provided
+    // If not trusted unattended device, verify PIN or Admin Password
     if !is_trusted_device {
         if let Some(pin) = query.pin {
-            if !pin.is_empty() && pin != host_pin {
-                return (StatusCode::UNAUTHORIZED, "Geçersiz PIN").into_response();
+            let is_pin_match = !pin.is_empty() && pin == host_pin;
+            let is_admin_match = {
+                let admin_pwd = state.admin_password.lock().unwrap();
+                if let Some(ref pwd) = *admin_pwd {
+                    !pin.is_empty() && &pin == pwd
+                } else {
+                    false
+                }
+            };
+
+            if !is_pin_match && !is_admin_match {
+                return (StatusCode::UNAUTHORIZED, "Gecersiz PIN veya Yonetici Parolasi").into_response();
             }
         }
     }
@@ -481,6 +645,7 @@ enum ClientEvent {
 }
 
 async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
+    state.active_session_count.fetch_add(1, Ordering::SeqCst);
     let (mut ws_sender, mut ws_receiver) = socket.split();
 
     // MPSC channel to funnel outgoing WebSocket messages from multiple tasks
@@ -493,6 +658,30 @@ async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
                 break;
             }
         }
+    });
+
+    // Chat broadcast listener from HTTP / QS host
+    let mut chat_rx = state.chat_tx.subscribe();
+    let tx_chat = tx.clone();
+    let chat_forward_task = tokio::spawn(async move {
+        while let Ok(msg) = chat_rx.recv().await {
+            let json = serde_json::json!({
+                "type": "chat",
+                "sender": msg.sender,
+                "text": msg.text,
+                "timestamp": msg.timestamp,
+            })
+            .to_string();
+            if tx_chat.send(Message::Text(json)).await.is_err() {
+                break;
+            }
+        }
+    });
+
+    // Host session kill listener (disconnect button clicked on QS)
+    let mut kill_rx = state.session_kill_tx.subscribe();
+    let kill_wait_task = tokio::spawn(async move {
+        let _ = kill_rx.recv().await;
     });
 
     let capture = Arc::new(Mutex::new(ScreenCapture::new()));
@@ -668,14 +857,8 @@ async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
                                     text: text.clone(),
                                     timestamp,
                                 };
-                                state_ctrl.chat_messages.lock().unwrap().push(chat_obj);
-                                let broadcast = serde_json::json!({
-                                    "type": "chat",
-                                    "sender": sender,
-                                    "text": text,
-                                    "timestamp": timestamp
-                                }).to_string();
-                                let _ = tx_ctrl.send(Message::Text(broadcast)).await;
+                                state_ctrl.chat_messages.lock().unwrap().push(chat_obj.clone());
+                                let _ = state_ctrl.chat_tx.send(chat_obj);
                             }
                         }
                     }
@@ -686,32 +869,38 @@ async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
         }
     });
 
-    // Wait until stream terminates or client disconnects
+    // Wait until stream terminates, client disconnects, or host clicks disconnect
     tokio::select! {
         _ = stream_task => {},
         _ = input_task => {},
         _ = send_task => {},
+        _ = chat_forward_task => {},
+        _ = kill_wait_task => {
+            eprintln!("Oturum ana bilgisayar tarafindan sonlandirildi (Disconnect).");
+        },
     };
 
     // Zero-Trust input release: ensure no keys or mouse buttons remain pressed after session disconnect
     let input_sim = InputSimulator::new();
     input_sim.release_all_keys();
 
-    // Auto-regenerate random one-time PIN upon session disconnect for zero-trust security
-    {
+    // Decrement session count and auto-regenerate random one-time PIN upon all sessions disconnect
+    let remaining = state.active_session_count.fetch_sub(1, Ordering::SeqCst);
+    if remaining <= 1 {
         use rand::Rng;
         let mut rng = rand::thread_rng();
         let new_pin: u16 = rng.gen_range(1000..9999);
         let mut info = state.info.lock().unwrap();
         info.pin = new_pin.to_string();
+
+        state.audit_logger.record(
+            "SESSION_DISCONNECTED_PIN_RENEW",
+            "SECURITY",
+            "127.0.0.1",
+            "Uzak oturum sonlandi; guvenlik icin tek kullanimlik PIN otomatik olarak sifirlandi ve yeni PIN uretildi.",
+            true,
+        );
     }
-    state.audit_logger.record(
-        "SESSION_DISCONNECTED_PIN_RENEW",
-        "SECURITY",
-        "127.0.0.1",
-        "Uzak oturum sonlandi; guvenlik icin tek kullanimlik PIN otomatik olarak sifirlandi ve yeni PIN uretildi.",
-        true,
-    );
 }
 
 async fn window_close_handler() -> Json<serde_json::Value> {

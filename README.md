@@ -1,28 +1,49 @@
-# 🚀 OxiDesk (v3.0.0)
+# 🚀 OxiDesk (v4.0.0)
 
-**Windows 11 Fluent Tasarımlı, Çoklu Bağlantı Desteğine Sahip (Multi-Session & Grid View), Rust Tabanlı, Tek Parça Çerçevesiz (Frameless Native) IT Uzak Masaüstü Ekosistemi**
+**Windows 11 Fluent & UI/UX Pro Max Tasarımlı, Çoklu Bağlantı (Multi-Session & Grid View), Gözetimsiz Erişim (Unattended Access), Uzak Görev Yöneticisi ve WAN Sunucu Destekli Rust Uzak Masaüstü Ekosistemi**
 
-**OxiDesk**; modern kurumsal uzak masaüstü ve ağ mimarilerinin en iyi pratiklerinden ilham alarak **Rust** ile geliştirilmiş, aynı anda **3-4 veya daha fazla kullanıcıya eşzamanlı bağlanabilen**, dış tarayıcı bağımlılığını ve konsol zorunluluğunu ortadan kaldıran, **Windows 11 Fluent Design / WinUI 3** estetiğine sahip bağımsız bir uzak masaüstü ve ağ kontrol ekosistemidir.
+**OxiDesk**; modern kurumsal uzak masaüstü ve ağ mimarilerinin en iyi pratiklerinden ilham alarak **Rust** ile geliştirilmiş, aynı anda **3-4 veya daha fazla kullanıcıya eşzamanlı bağlanabilen**, **QuickSupport UI/UX Pro Max** akrilik cam arayüzüne, **Kalıcı Yönetici Parolası ile Gözetimsiz Erişime**, **Uzak Görev Yöneticisine** ve **WAN Rendezvous / Relay Sunucusuna** sahip bağımsız bir kurumsal uzak masaüstü ekosistemidir.
 
 [![Rust 1.80+](https://img.shields.io/badge/Rust-1.80%2B-orange.svg?style=flat-square&logo=rust)](https://www.rust-lang.org)
-[![Version 3.0.0](https://img.shields.io/badge/Release-v3.0.0-blue.svg?style=flat-square)](https://github.com/mtahiryilmazz/OxiDesk/releases)
+[![Version 4.0.0](https://img.shields.io/badge/Release-v4.0.0-blue.svg?style=flat-square)](https://github.com/mtahiryilmazz/OxiDesk/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
 [![Platform Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20%7C%20Server-0078d4.svg?style=flat-square&logo=windows)](https://microsoft.com)
 
 ---
 
-## 🌟 Öne Çıkan Özellikler ve OxiDesk v3.0 Mimarisi
+## 🌟 Öne Çıkan Özellikler ve OxiDesk v4.0 Mimarisi
+
+### 🛡️ QuickSupport UI/UX Pro Max (`OxiDesk-QuickSup.exe`)
+- **🛑 Anında Bağlantıyı Kes (Disconnect):** Aktif oturum algılandığında beliren ışıldayan kırmızı buton ile oturumu sonlandırma ve Sıfır Güven (Zero-Trust) tek kullanımlık PIN'ini otomatik sıfırlama.
+- **💬 İki Yönlü Canlı Sohbet Çekmecesi:** IT uzmanı ile personel arasında gerçek zamanlı mesajlaşma çekmecesi.
+- **📁 Sürükle-Bırak Dosya Aktarım Çekmecesi:** Dosyaları pencereye sürükleyerek `%USERPROFILE%\Downloads\OxiDesk` klasörüne anında gönderme ve tek tıkla klasörü açma.
+- **📱 Internetsiz Mobil Hızlı Bağlantı (SVG QR):** Harici CDN veya kütüphane gerektirmeyen dahili SVG QR kod motoru ile telefon/tablet kamerasından tek dokunuşla bağlanma.
+- **🪟 Akıcı Çerçevesiz Pencere Taşıma:** Win32 `ReleaseCapture` ve `WM_SYSCOMMAND` (0xF012) IPC entegrasyonu ile pürüzsüz pencere sürükleme.
+
+### 🔑 Kalıcı Yönetici Parolası ve Gözetimsiz Erişim (Unattended Access)
+- Ev sahibi veya IT yöneticisi tarafından belirlenen kalıcı parola (`%APPDATA%\OxiDesk\admin_secret.key`).
+- İstemciden **OxiDesk ID + Yönetici Parolası** girildiğinde, karşı tarafta onay veya geçici PIN gerekmeden doğrudan bağlanabilme.
+
+### 📊 Uzak Görev Yöneticisi (Remote Process Explorer)
+- Oturum araç çubuğundaki `📊 Görevler` menüsü ile uzak bilgisayardaki tüm aktif Windows süreçlerini (PID, İsim, Bellek) listeleme ve yanıt vermeyen işlemleri uzaktan sonlandırma (`taskkill`).
+
+### 📐 Ekran Boyutlandırma ve Aktarım Önceliği
+- **Ekran Boyutlandırma:** `⛶ Ekrana Sığdır (Fit)`, `1:1 Orijinal Boyut (Pixel-Perfect)` ve `↔ Uzat / Doldur (Stretch)`.
+- **Aktarım Önceliği:** `⚡ Hız Öncelikli (60 FPS)`, `🎨 Kalite Öncelikli` ve `⚖️ Dengeli`.
+
+### 🕒 Ana Ekranda Önceki Bağlantılar (Recent Connections)
+- Son bağlanılan cihazların adı, kimliği ve çevrimiçi durumlarını gösteren paneller ile tek tıkla hızlı bağlanma.
+
+### 🌐 Dış Ağlar & Otomatik WAN Sunucusu Kurulum Araçları
+- NAT ve kurumsal güvenlik duvarı arkasındaki cihazları bağlamak için `scripts/setup_wan_server.ps1` ve `scripts/setup_wan_server.sh` araçları; tek komutla Docker kurulumu (`docker run -d -p 8095:8095 oxidesk/relay`).
 
 ### 🖥️ Çoklu Uzak Masaüstü Bağlantısı (Multi-Session & Split-Grid)
-- **Eşzamanlı Çoklu Bağlantı:** IT uzmanlarının aynı anda 3-4 farklı istemciye/sunucuya bağlanabilmesi için AnyDesk / Chrome sekmeli sekme çubuğu (`Tab Bar`).
-- **Sekmeler Arası Canlı Geçiş:** Sekmeler arasında gezinirken arka plandaki oturumlar kopmaz, canlı akış ve veri aktarımı kesintisiz devam eder.
-- **Bölünmüş Ekran (2x2 Grid View):** İstenirse 2, 3 veya 4 aktif oturum tek ekranda yan yana veya ızgara düzeninde gerçek zamanlı izlenebilir; tıklanan ekrana klavye/fare odağı anında aktarılır.
-- **İzole Oturum Yönetimi:** Herhangi bir sekmedeki `✕` butonuna basıldığında yalnızca o bağlantı sonlanır; diğer oturumlar çalışmaya devam eder.
+- **Eşzamanlı Çoklu Bağlantı:** IT uzmanlarının aynı anda 3-4 farklı istemciye/sunucuya bağlanabilmesi için sekmeli arayüz (`Tab Bar`).
+- **Bölünmüş Ekran (2x2 Grid View):** İstenirse 2, 3 veya 4 aktif oturum tek ekranda yan yana veya ızgara düzeninde gerçek zamanlı izlenebilir.
 
 ### 🎨 Tek Parça Çerçevesiz Doğal Pencere (Frameless Embedded Native Window)
-- **Wry & Tao Entegrasyonu:** Edge tarayıcısını dışarıdan açma zorunluluğunu ortadan kaldıran, programın doğrudan kendi penceresi içinde çalışan gömülü modern WebView2 motoru.
-- **Tek Üst Çubuk & IPC Kontrolü:** Çift başlık çubuğu hatasını tamamen gideren, Windows 11 Fluent tasarımına uygun simge durumuna küçültme, ekranı kaplama, kapatma ve sürükleme kontrolleri.
-- **Temiz Kapanma Garantisi (Zero Zombie Process):** Hem ana konsol hem de Hızlı Destek penceresi kapatıldığında arka plandaki tüm Tokio iş parçacıkları ve ekran servisleri Win32 `TerminateProcess` (`force_terminate_process`) ile anında temizlenir.
+- Gömülü WebView2 motoru ve IPC kontrolleri.
+- **Temiz Kapanma Garantisi (Zero Zombie Process):** Pencere kapatıldığında arka plandaki tüm iş parçacıkları `TerminateProcess` (`force_terminate_process`) ile anında temizlenir.
 
 ### ⚡ Performans ve Ekran Motoru (`src/capture.rs`)
 - **Adaptif Değişen Kare Tespiti (Dirty-Frame Detection):** 64-bit hızlı hash taramasıyla ekranda hareket olmadığında gereksiz JPEG sıkıştırmayı ve ağ paketlerini durdurur; boşta **%0 CPU** ve **~0 Kbps** bant genişliği tüketir.
