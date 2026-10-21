@@ -250,27 +250,32 @@ async fn update_rendezvous_config_handler(
 #[derive(Serialize)]
 struct SessionStatusDto {
     is_active: bool,
+    connected: bool,
     count: u32,
+    active_sessions: u32,
 }
 
 async fn get_session_status_handler(State(state): State<SharedState>) -> Json<SessionStatusDto> {
     let count = state.active_session_count.load(std::sync::atomic::Ordering::Relaxed);
     Json(SessionStatusDto {
         is_active: count > 0,
+        connected: count > 0,
         count,
+        active_sessions: count,
     })
 }
 
 async fn disconnect_session_handler(State(state): State<SharedState>) -> Json<serde_json::Value> {
     let _ = state.session_kill_tx.send(());
     // Auto-renew temporary PIN
-    {
+    let new_pin_str = {
         use rand::Rng;
         let mut rng = rand::thread_rng();
         let new_pin: u16 = rng.gen_range(1000..9999);
         let mut info = state.info.lock().unwrap();
         info.pin = new_pin.to_string();
-    }
+        info.pin.clone()
+    };
     state.audit_logger.record(
         "HOST_MANUAL_DISCONNECT",
         "USER",
@@ -278,7 +283,7 @@ async fn disconnect_session_handler(State(state): State<SharedState>) -> Json<se
         "Kullanici tarafindan uzaktan baglanti manuel olarak kesildi.",
         true,
     );
-    Json(serde_json::json!({ "status": "disconnected" }))
+    Json(serde_json::json!({ "status": "disconnected", "new_pin": new_pin_str }))
 }
 
 #[derive(Deserialize)]
@@ -340,7 +345,7 @@ pub struct ProcessDto {
     pub mem: String,
 }
 
-async fn get_processes_handler() -> Json<Vec<ProcessDto>> {
+pub fn get_processes_list() -> Vec<ProcessDto> {
     let mut list = Vec::new();
     #[cfg(target_os = "windows")]
     {
@@ -363,7 +368,11 @@ async fn get_processes_handler() -> Json<Vec<ProcessDto>> {
         }
     }
     list.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
-    Json(list)
+    list
+}
+
+async fn get_processes_handler() -> Json<Vec<ProcessDto>> {
+    Json(get_processes_list())
 }
 
 #[derive(Deserialize)]
@@ -642,6 +651,10 @@ enum ClientEvent {
     FileEnd { id: String },
     #[serde(rename = "chat")]
     Chat { sender: String, text: String, timestamp: u64 },
+    #[serde(rename = "get_tasks")]
+    GetTasks,
+    #[serde(rename = "kill_task")]
+    KillTask { pid: u32 },
 }
 
 async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
@@ -865,6 +878,29 @@ async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
                                 state_ctrl.chat_messages.lock().unwrap().push(chat_obj.clone());
                                 let _ = state_ctrl.chat_tx.send(chat_obj);
                             }
+                            ClientEvent::GetTasks => {
+                                let procs = get_processes_list();
+                                let msg = serde_json::json!({
+                                    "type": "tasks_list",
+                                    "tasks": procs
+                                })
+                                .to_string();
+                                let _ = tx_ctrl.send(Message::Text(msg)).await;
+                            }
+                            ClientEvent::KillTask { pid } => {
+                                #[cfg(target_os = "windows")]
+                                {
+                                    let _ = std::process::Command::new("taskkill.exe")
+                                        .args(["/F", "/PID", &pid.to_string()])
+                                        .output();
+                                }
+                                let msg = serde_json::json!({
+                                    "type": "task_killed",
+                                    "pid": pid
+                                })
+                                .to_string();
+                                let _ = tx_ctrl.send(Message::Text(msg)).await;
+                            }
                         }
                     }
                 }
@@ -873,6 +909,13 @@ async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
             }
         }
     });
+
+    let (send_abort, stream_abort, input_abort, chat_abort) = (
+        send_task.abort_handle(),
+        stream_task.abort_handle(),
+        input_task.abort_handle(),
+        chat_forward_task.abort_handle(),
+    );
 
     // Wait until stream terminates, client disconnects, or host clicks disconnect
     tokio::select! {
@@ -884,6 +927,11 @@ async fn handle_remote_socket(socket: WebSocket, state: SharedState) {
             eprintln!("Oturum ana bilgisayar tarafindan sonlandirildi (Disconnect).");
         },
     };
+
+    send_abort.abort();
+    stream_abort.abort();
+    input_abort.abort();
+    chat_abort.abort();
 
     // Zero-Trust input release: ensure no keys or mouse buttons remain pressed after session disconnect
     let input_sim = InputSimulator::new();

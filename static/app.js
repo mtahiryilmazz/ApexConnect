@@ -425,6 +425,9 @@ const sessionManager = {
     const session = this.sessions.get(id);
     if (!session) return;
 
+    if (session.targetHost) {
+      fetch(`http://${session.targetHost}/api/session/disconnect`, { method: 'POST' }).catch(() => {});
+    }
     if (session.ws) {
       try { session.ws.close(); } catch (e) {}
     }
@@ -447,6 +450,7 @@ const sessionManager = {
         canvas = null;
         ctx = null;
         this.updateTabBar();
+        setConnectionOverlayState('closed', 'Oturum Kapatıldı', 'Uzak oturum sonlandırıldı.');
         switchNavTab('quick-connect');
       }
     } else {
@@ -624,6 +628,11 @@ async function startRemoteSession(target, pin, customName) {
           }
         } else if (msg.type === 'chat') {
           receiveChatMessage(msg);
+        } else if (msg.type === 'tasks_list') {
+          remoteProcesses = msg.tasks || [];
+          renderProcessesTable(remoteProcesses);
+        } else if (msg.type === 'task_killed') {
+          loadRemoteProcesses();
         } else if (msg.type === 'file_progress') {
           updateUploadProgress(msg.id, msg.received);
           updateSessionUploadProgress(msg.id, msg.received);
@@ -634,23 +643,20 @@ async function startRemoteSession(target, pin, customName) {
       } catch (e) {}
     } else {
       // Binary JPEG frame - Desktop is LIVE!
-      if (sessionManager.activeId === sessionId) {
-        setConnectionOverlayState('live');
-      }
+      setConnectionOverlayState('live');
 
       const byteLen = event.data.byteLength || 0;
       sessionObj.bytesReceived += byteLen;
 
       const blob = new Blob([event.data], { type: 'image/jpeg' });
-      createImageBitmap(blob).then(bitmap => {
-        if (sessCanvas.width !== bitmap.width || sessCanvas.height !== bitmap.height) {
-          sessCanvas.width = bitmap.width;
-          sessCanvas.height = bitmap.height;
-          sessionObj.remoteWidth = bitmap.width;
-          sessionObj.remoteHeight = bitmap.height;
+      const renderBitmap = (w, h, drawer) => {
+        if (sessCanvas.width !== w || sessCanvas.height !== h) {
+          sessCanvas.width = w;
+          sessCanvas.height = h;
+          sessionObj.remoteWidth = w;
+          sessionObj.remoteHeight = h;
         }
-        sessCtx.drawImage(bitmap, 0, 0);
-        bitmap.close();
+        drawer();
 
         // Push frame to recording stream if actively recording this session
         if (sessionManager.activeId === sessionId && recordingStreamTrack && recordingStreamTrack.requestFrame) {
@@ -671,7 +677,36 @@ async function startRemoteSession(target, pin, customName) {
             sessionManager.updateViewerHeader(sessionObj);
           }
         }
-      });
+      };
+
+      if (window.createImageBitmap) {
+        createImageBitmap(blob).then(bitmap => {
+          renderBitmap(bitmap.width, bitmap.height, () => {
+            sessCtx.drawImage(bitmap, 0, 0);
+            bitmap.close();
+          });
+        }).catch(() => {
+          const img = new Image();
+          const u = URL.createObjectURL(blob);
+          img.onload = () => {
+            renderBitmap(img.width, img.height, () => {
+              sessCtx.drawImage(img, 0, 0);
+              URL.revokeObjectURL(u);
+            });
+          };
+          img.src = u;
+        });
+      } else {
+        const img = new Image();
+        const u = URL.createObjectURL(blob);
+        img.onload = () => {
+          renderBitmap(img.width, img.height, () => {
+            sessCtx.drawImage(img, 0, 0);
+            URL.revokeObjectURL(u);
+          };
+        };
+        img.src = u;
+      }
     }
   };
 
@@ -797,8 +832,16 @@ function closeSession() {
 }
 
 // Global Canvas Input & Keyboard Events
+function isInputElement(el) {
+  if (!el) return false;
+  const tag = (el.tagName || '').toLowerCase();
+  return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable;
+}
+
+// Global Canvas Input & Keyboard Events
 function initCanvasEvents() {
   window.addEventListener('keydown', (e) => {
+    if (isInputElement(e.target) || isInputElement(document.activeElement)) return;
     if (currentTab !== 'remote-viewer') return;
     const ws = getActiveWs();
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -808,6 +851,7 @@ function initCanvasEvents() {
   });
 
   window.addEventListener('keyup', (e) => {
+    if (isInputElement(e.target) || isInputElement(document.activeElement)) return;
     if (currentTab !== 'remote-viewer') return;
     const ws = getActiveWs();
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -818,47 +862,54 @@ function initCanvasEvents() {
 
 // Session Controls
 function changeQuality(val) {
-  if (activeWs && activeWs.readyState === WebSocket.OPEN) {
-    activeWs.send(JSON.stringify({ type: 'set_quality', quality: parseInt(val) }));
+  const ws = getActiveWs();
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'set_quality', quality: parseInt(val, 10) }));
   }
 }
 
 function changeMonitor(mode) {
-  if (activeWs && activeWs.readyState === WebSocket.OPEN) {
-    activeWs.send(JSON.stringify({ type: 'set_monitor', monitor: mode }));
+  const ws = getActiveWs();
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'set_monitor', monitor: mode }));
   }
 }
 
 function sendClipboardPrompt() {
   const text = prompt('Uzak bilgisayarın panosuna (clipboard) yapıştırılacak metin:');
-  if (text && activeWs && activeWs.readyState === WebSocket.OPEN) {
-    activeWs.send(JSON.stringify({ type: 'clipboard', text }));
+  const ws = getActiveWs();
+  if (text && ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'clipboard', text }));
     alert('Metin uzak panoya başarıyla aktarıldı.');
   }
 }
 
 function sendCtrlAltDel() {
-  if (activeWs && activeWs.readyState === WebSocket.OPEN) {
-    activeWs.send(JSON.stringify({ type: 'hotkey', action: 'ctrl_alt_del' }));
+  const ws = getActiveWs();
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'hotkey', action: 'ctrl_alt_del' }));
   }
 }
 
 function sendLeftClick() {
-  if (activeWs && activeWs.readyState === WebSocket.OPEN) {
-    activeWs.send(JSON.stringify({ type: 'mouse_click', button: 0 }));
+  const ws = getActiveWs();
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'mouse_click', button: 0 }));
   }
 }
 
 function sendRightClick() {
-  if (activeWs && activeWs.readyState === WebSocket.OPEN) {
-    activeWs.send(JSON.stringify({ type: 'mouse_click', button: 2 }));
+  const ws = getActiveWs();
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'mouse_click', button: 2 }));
   }
 }
 
 function toggleVirtualKeyboard() {
   const text = prompt('Uzak bilgisayara gönderilecek metni yazın:');
-  if (text && activeWs && activeWs.readyState === WebSocket.OPEN) {
-    activeWs.send(JSON.stringify({ type: 'type_text', text }));
+  const ws = getActiveWs();
+  if (text && ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'type_text', text }));
   }
 }
 
@@ -924,28 +975,64 @@ function formatFileSize(bytes) {
 
 function initDropZone() {
   const dropZone = document.getElementById('file-drop-zone');
-  if (!dropZone) return;
+  if (dropZone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      }, false);
+    });
 
-  ['dragenter', 'dragover'].forEach(eventName => {
-    dropZone.addEventListener(eventName, (e) => {
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      }, false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length > 0) {
+        uploadFile(files[0]);
+      }
+    });
+  }
+
+  // Session viewer drop zones (modal & live canvas)
+  const sessionDropZone = document.getElementById('session-drop-zone');
+  const canvasWrapper = document.getElementById('canvas-wrapper');
+
+  [sessionDropZone, canvasWrapper].forEach(zone => {
+    if (!zone) return;
+    ['dragenter', 'dragover'].forEach(ev => {
+      zone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (zone === sessionDropZone) zone.classList.add('dragover');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(ev => {
+      zone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (zone === sessionDropZone) zone.classList.remove('dragover');
+      }, false);
+    });
+
+    zone.addEventListener('drop', (e) => {
       e.preventDefault();
-      dropZone.classList.add('dragover');
-    }, false);
-  });
-
-  ['dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('dragover');
-    }, false);
-  });
-
-  dropZone.addEventListener('drop', (e) => {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    if (files.length > 0) {
-      uploadFile(files[0]);
-    }
+      e.stopPropagation();
+      const dt = e.dataTransfer;
+      if (dt && dt.files && dt.files.length > 0) {
+        const fileModal = document.getElementById('session-file-modal');
+        if (fileModal && fileModal.classList.contains('hidden')) {
+          fileModal.classList.remove('hidden');
+        }
+        uploadSessionFile(dt.files[0]);
+      }
+    });
   });
 }
 
@@ -1271,21 +1358,36 @@ function toggleSessionFileModal() {
   }
 }
 
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  const chunkSize = 0x8000;
+  for (let i = 0; i < len; i += chunkSize) {
+    const chunk = bytes.subarray(i, Math.min(i + chunkSize, len));
+    binary += String.fromCharCode.apply(null, chunk);
+  }
+  return window.btoa(binary);
+}
+
 async function loadSessionFilesList() {
   const container = document.getElementById('session-files-items');
   if (!container) return;
   try {
-    const res = await fetch('/api/files');
+    const session = sessionManager.getActiveSession();
+    const url = session && session.targetHost ? `http://${session.targetHost}/api/files` : '/api/files';
+    const res = await fetch(url);
     if (!res.ok) return;
     const files = await res.json();
     if (files.length === 0) {
       container.innerHTML = '<div style="color:var(--text-muted);font-size:0.75rem;padding:6px;">Henüz aktarılan dosya yok.</div>';
       return;
     }
+    const dlBase = session && session.targetHost ? `http://${session.targetHost}` : '';
     container.innerHTML = files.slice(0, 8).map(f => `
       <div class="session-file-item">
         <span class="session-file-name" title="${escapeHtml(f.name)}">📄 ${escapeHtml(f.name)}</span>
-        <button class="btn btn-subtle btn-xs" onclick="window.open('/api/files/download/${encodeURIComponent(f.name)}')">İndir</button>
+        <button class="btn btn-subtle btn-xs" onclick="window.open('${dlBase}/api/files/download/${encodeURIComponent(f.name)}')">İndir</button>
       </div>
     `).join('');
   } catch (e) {}
@@ -1297,14 +1399,12 @@ function handleSessionFileSelect(event) {
   uploadSessionFile(file);
 }
 
-function uploadSessionFile(file) {
-  if (!activeWs || activeWs.readyState !== WebSocket.OPEN) {
-    alert('Aktif bir oturum bağlı değil.');
-    return;
-  }
-  const fileId = 'sf_' + Date.now();
-  const chunkSize = 64 * 1024; // 64 KB chunks
-  let offset = 0;
+async function uploadSessionFile(file) {
+  const ws = getActiveWs();
+  const session = sessionManager.getActiveSession();
+  const targetHost = session ? session.targetHost : null;
+
+  if (!file) return;
 
   const progressCard = document.getElementById('session-upload-progress');
   const filenameEl = document.getElementById('session-upload-filename');
@@ -1313,53 +1413,95 @@ function uploadSessionFile(file) {
 
   if (progressCard) progressCard.style.display = 'block';
   if (filenameEl) filenameEl.innerText = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+  if (percentEl) percentEl.innerText = '0%';
+  if (barEl) barEl.style.width = '0%';
 
-  activeWs.send(JSON.stringify({
-    type: 'file_start',
-    id: fileId,
-    name: file.name,
-    size: file.size
-  }));
+  // Method 1: WebSocket chunked transfer (instant streaming)
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    const fileId = 'sf_' + Date.now();
+    const chunkSize = 64 * 1024; // 64 KB chunks
+    let offset = 0;
 
-  const reader = new FileReader();
+    ws.send(JSON.stringify({
+      type: 'file_start',
+      id: fileId,
+      name: file.name,
+      size: file.size
+    }));
 
-  function sendNextChunk() {
-    if (offset >= file.size) {
-      activeWs.send(JSON.stringify({
-        type: 'file_end',
-        id: fileId
-      }));
-      if (percentEl) percentEl.innerText = '100% Tamamlandı';
-      if (barEl) barEl.style.width = '100%';
-      setTimeout(() => {
-        if (progressCard) progressCard.style.display = 'none';
-        loadSessionFilesList();
-      }, 1500);
-      return;
+    const reader = new FileReader();
+
+    function sendNextChunk() {
+      if (offset >= file.size) {
+        ws.send(JSON.stringify({
+          type: 'file_end',
+          id: fileId
+        }));
+        if (percentEl) percentEl.innerText = '100% Tamamlandı';
+        if (barEl) barEl.style.width = '100%';
+        setTimeout(() => {
+          if (progressCard) progressCard.style.display = 'none';
+          loadSessionFilesList();
+        }, 1200);
+        return;
+      }
+
+      const slice = file.slice(offset, offset + chunkSize);
+      reader.onload = (e) => {
+        const arrayBuffer = e.target.result;
+        const base64Data = arrayBufferToBase64(arrayBuffer);
+        ws.send(JSON.stringify({
+          type: 'file_chunk',
+          id: fileId,
+          offset: offset,
+          data: base64Data
+        }));
+
+        offset += chunkSize;
+        const pct = Math.min(100, Math.round((offset / file.size) * 100));
+        if (percentEl) percentEl.innerText = `${pct}%`;
+        if (barEl) barEl.style.width = `${pct}%`;
+
+        setTimeout(sendNextChunk, 8);
+      };
+      reader.readAsArrayBuffer(slice);
     }
 
-    const slice = file.slice(offset, offset + chunkSize);
-    reader.onload = (e) => {
-      const arrayBuffer = e.target.result;
-      const base64Data = arrayBufferToBase64(arrayBuffer);
-      activeWs.send(JSON.stringify({
-        type: 'file_chunk',
-        id: fileId,
-        offset: offset,
-        data: base64Data
-      }));
-
-      offset += chunkSize;
-      const pct = Math.min(100, Math.round((offset / file.size) * 100));
-      if (percentEl) percentEl.innerText = `${pct}%`;
-      if (barEl) barEl.style.width = `${pct}%`;
-
-      setTimeout(sendNextChunk, 10);
-    };
-    reader.readAsArrayBuffer(slice);
+    setTimeout(sendNextChunk, 50);
+    return;
   }
 
-  setTimeout(sendNextChunk, 80);
+  // Method 2: HTTP multipart fallback to remote host
+  if (targetHost) {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      if (barEl) barEl.style.width = '50%';
+      if (percentEl) percentEl.innerText = '50%';
+      const res = await fetch(`http://${targetHost}/api/files/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      if (res.ok) {
+        if (barEl) barEl.style.width = '100%';
+        if (percentEl) percentEl.innerText = '100% Tamamlandı';
+        setTimeout(() => {
+          if (progressCard) progressCard.style.display = 'none';
+          loadSessionFilesList();
+        }, 1200);
+      } else {
+        alert('Dosya yüklenemedi: Hedef makine isteği reddetti.');
+        if (progressCard) progressCard.style.display = 'none';
+      }
+    } catch (err) {
+      alert('Dosya transfer hatası: ' + err.message);
+      if (progressCard) progressCard.style.display = 'none';
+    }
+    return;
+  }
+
+  alert('Aktif bir oturum bağlı değil. Dosya aktarımı için bir bağlantı başlatın.');
+  if (progressCard) progressCard.style.display = 'none';
 }
 
 function updateSessionUploadProgress(id, received) {
@@ -1382,7 +1524,9 @@ function setConnectionOverlayState(state, title, desc) {
 
   if (state === 'live') {
     overlay.classList.add('hidden');
+    overlay.style.display = 'none';
   } else if (state === 'connecting') {
+    overlay.style.display = 'flex';
     overlay.classList.remove('hidden');
     if (spinner) spinner.classList.remove('hidden');
     if (icon) icon.classList.add('hidden');
@@ -1390,6 +1534,7 @@ function setConnectionOverlayState(state, title, desc) {
     if (titleEl) titleEl.innerText = title || 'Uzak Masaüstüne Bağlanılıyor...';
     if (descEl) descEl.innerText = desc || 'Güvenlik PIN kodu doğrulanıyor, video akışı başlatılıyor.';
   } else if (state === 'error' || state === 'closed') {
+    overlay.style.display = 'flex';
     overlay.classList.remove('hidden');
     if (spinner) spinner.classList.add('hidden');
     if (icon) icon.classList.remove('hidden');
@@ -1533,6 +1678,10 @@ function sendChatMessage() {
 
 function receiveChatMessage(msg) {
   const isMine = msg.sender === 'IT Yöneticisi';
+  if (isMine) {
+    const exists = chatMessages.some(m => m.isMine && m.text === msg.text && Math.abs(m.timestamp - msg.timestamp) < 5);
+    if (exists) return;
+  }
   chatMessages.push({ ...msg, isMine });
   const modal = document.getElementById('session-chat-modal');
   const isModalOpen = modal && !modal.classList.contains('hidden');
@@ -1744,9 +1893,18 @@ function toggleSessionTasksModal() {
 async function loadRemoteProcesses() {
   const tbody = document.getElementById('processes-table-body');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:12px;color:var(--text-muted);">İşlemler taranıyor...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:12px;color:var(--text-muted);">Uzak bilgisayarın işlemleri taranıyor...</td></tr>';
+  
+  const ws = getActiveWs();
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'get_tasks' }));
+    return;
+  }
+
+  const session = sessionManager.getActiveSession();
+  const url = session && session.targetHost ? `http://${session.targetHost}/api/processes` : '/api/processes';
   try {
-    const res = await fetch('/api/processes');
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Hata');
     remoteProcesses = await res.json();
     renderProcessesTable(remoteProcesses);
@@ -1785,9 +1943,18 @@ function filterProcessList() {
 }
 
 async function killRemoteProcess(pid, name) {
-  if (!confirm(`PID ${pid} (${name}) işlemini sonlandırmak istediğinize emin misiniz?`)) return;
+  if (!confirm(`Uzak bilgisayardaki PID ${pid} (${name}) işlemini sonlandırmak istediğinize emin misiniz?`)) return;
+  
+  const ws = getActiveWs();
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'kill_task', pid: parseInt(pid, 10) }));
+    return;
+  }
+
+  const session = sessionManager.getActiveSession();
+  const url = session && session.targetHost ? `http://${session.targetHost}/api/processes/kill` : '/api/processes/kill';
   try {
-    const res = await fetch('/api/processes/kill', {
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pid: pid, name: name })

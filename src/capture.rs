@@ -79,15 +79,17 @@ impl ScreenCapture {
         unsafe {
             // Attach thread to active desktop (handles UAC prompts, lock screens, and services)
             #[cfg(target_os = "windows")]
-            {
+            let maybe_desk = {
                 use windows::Win32::System::StationsAndDesktops::{
-                    OpenInputDesktop, SetThreadDesktop, CloseDesktop, DESKTOP_CONTROL_FLAGS, DESKTOP_ACCESS_FLAGS,
+                    OpenInputDesktop, SetThreadDesktop, DESKTOP_CONTROL_FLAGS, DESKTOP_ACCESS_FLAGS,
                 };
                 if let Ok(hdesk) = OpenInputDesktop(DESKTOP_CONTROL_FLAGS(0), false, DESKTOP_ACCESS_FLAGS(0x01FF)) {
                     let _ = SetThreadDesktop(hdesk);
-                    let _ = CloseDesktop(hdesk);
+                    Some(hdesk)
+                } else {
+                    None
                 }
-            }
+            };
 
             let hdc_screen = GetDC(HWND(std::ptr::null_mut()));
             if hdc_screen.0.is_null() {
@@ -191,6 +193,11 @@ impl ScreenCapture {
             let _ = DeleteObject(HGDIOBJ(hbitmap.0));
             let _ = DeleteDC(hdc_mem);
             ReleaseDC(HWND(std::ptr::null_mut()), hdc_screen);
+            #[cfg(target_os = "windows")]
+            if let Some(hdesk) = maybe_desk {
+                use windows::Win32::System::StationsAndDesktops::CloseDesktop;
+                let _ = CloseDesktop(hdesk);
+            }
 
             if lines == 0 {
                 return Err("GetDIBits failed to copy pixels".to_string());
