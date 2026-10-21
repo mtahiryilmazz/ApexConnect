@@ -1,1 +1,13 @@
 /target
+
+# --- Secrets & Sensitive Data ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.pfx
+*.token
+*.cer
+*secret*
+*credentials*
